@@ -45,7 +45,7 @@ jobs:
           upload_exe_with_name: 'GoExport'
           options: '--onefile --name GoExport'
 
-      # Step 6: Upload the built artifact (optional)
+      # Step 6: Upload the built executable
       - name: Upload Executable
         uses: actions/upload-artifact@v2
         with:
