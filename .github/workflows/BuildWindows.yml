@@ -16,4 +16,5 @@ jobs:
 
     - name: Extract Ungoogled Chromium
       run: |
-        Expand-Archive -Path ungoogled-chromium_87.0.4280.141-1.1_windows-x64.zip -DestinationPath ungoogled-chromium
+        mkdir dependencies
+        Expand-Archive -Path ungoogled-chromium_87.0.4280.141-1.1_windows-x64.zip -DestinationPath dependencies/ungoogled-chromium
