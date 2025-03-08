@@ -15,14 +15,18 @@ jobs:
       # Step 2: Download and extract ungoogled-chromium
       - name: Download ungoogled-chromium
         run: |
-          Invoke-WebRequest -Uri "https://github.com/tangalbert919/ungoogled-chromium-binaries/releases/download/87.0.4280.141-1/ungoogled-chromium_87.0.4280.141-1.1_windows-x64.zip" -OutFile "ungoogled-chromium.zip"
-          Expand-Archive -Path "ungoogled-chromium.zip" -DestinationPath "dependencies\ungoogled-chromium"
+          $url = "https://github.com/tangalbert919/ungoogled-chromium-binaries/releases/download/87.0.4280.141-1/ungoogled-chromium_87.0.4280.141-1.1_windows-x64.zip"
+          $output = "ungoogled-chromium.zip"
+          Invoke-WebRequest -Uri $url -OutFile $output
+          Expand-Archive -Path $output -DestinationPath "dependencies\ungoogled-chromium"
 
       # Step 3: Download and extract FFmpeg
       - name: Download FFmpeg
         run: |
-          Invoke-WebRequest -Uri "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl-shared.zip" -OutFile "ffmpeg.zip"
-          Expand-Archive -Path "ffmpeg.zip" -DestinationPath "dependencies\ffmpeg"
+          $url = "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl-shared.zip"
+          $output = "ffmpeg.zip"
+          Invoke-WebRequest -Uri $url -OutFile $output
+          Expand-Archive -Path $output -DestinationPath "dependencies\ffmpeg"
 
       # Step 4: Set up Python and Install Dependencies
       - name: Set up Python 3.6
