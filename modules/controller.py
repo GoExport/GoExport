@@ -1,3 +1,5 @@
+from flask.cli import F
+from numpy import clip
 import helpers
 from modules.editor import Editor
 from modules.navigator import Interface
@@ -11,6 +13,9 @@ class Controller:
         self.browser = Interface()
         self.editor = Editor()
         self.capture = Capture()
+        self.resolution = None
+        self.auto_edit = None
+        self.PROJECT_FOLDER = None  
 
     # Set up
     def setup(self):
@@ -23,8 +28,9 @@ class Controller:
         service_data = AVAILABLE_SERVICES[service]
 
         # Set the resolution
-        resolution = Prompt.ask("[bold red]Required:[/bold red] Please select your desired resolution", choices=list(helpers.get_config("AVAILABLE_SIZES").keys()), default="1280x720")
-        self.width, self.height, self.widescreen = helpers.get_config("AVAILABLE_SIZES")[resolution]
+        if self.resolution is None:
+            self.resolution = Prompt.ask("[bold red]Required:[/bold red] Please select your desired resolution", choices=list(helpers.get_config("AVAILABLE_SIZES").keys()), default="1280x720")
+            self.width, self.height, self.widescreen = helpers.get_config("AVAILABLE_SIZES")[self.resolution]
 
         self.svr_name = service_data["name"]
         self.svr_domain = service_data.get("domain", [])
@@ -32,6 +38,10 @@ class Controller:
         self.svr_api = service_data.get("api", [])
         self.svr_endpoints = service_data.get("endpoints", [])
         self.svr_required = service_data.get("requires", [])
+
+        # Asks if the user wants automated editing
+        if self.auto_edit is None:
+            self.auto_edit = Confirm.ask("Would you like to enable automated editing? (Auto editing may not be perfect and may introduce issues)", default=False)
 
         # Required: Owner Id
         if 'movieOwnerId' in self.svr_required:
@@ -62,6 +72,8 @@ class Controller:
 
         self.RECORDING = helpers.get_path(None, helpers.get_config("DEFAULT_OUTPUT_FILENAME"), self.filename)
         self.RECORDING_EDITED = helpers.get_path(helpers.get_user_folder("Videos"), self.filename)
+        if self.PROJECT_FOLDER is None:
+            self.PROJECT_FOLDER = helpers.get_path(helpers.get_user_folder("Videos"), self.readable_filename)
 
         # Begin generating the URL
         if not self.generate():
@@ -85,8 +97,10 @@ class Controller:
         if not self.capture.start(self.RECORDING, self.width, self.height):
             logger.error("Could not start recording")
             return False
-        self.prestart = self.capture.start_time_ms # get timestamp for when the ffmpeg started
-        
+
+        self.prestart = self.capture.start_time  # Timestamp for when FFmpeg started
+        self.prestart_delay = self.capture.startup_delay or 0  # Ensure delay is accounted for
+
         try:
             self.browser.driver.get(self.svr_url)
         except Exception as e:
@@ -103,33 +117,57 @@ class Controller:
         if not self.browser.await_completed():
             logger.error("Could not wait for completion")
             return False
-        
+
         if not self.capture.stop():
             logger.error("Could not stop the recording")
             return False
+        self.postend = self.capture.end_time  # Timestamp for when FFmpeg ended
+        self.postend_delay = self.capture.end_delay  # Ensure delay is accounted for
 
         # Get timestamps from the browser for when the video started and ended
         timestamps = self.browser.get_timestamps()
-        video_started, video_ended, video_started_offset, video_ended_offset = timestamps # unpack timestamps from the browser
+        video_started, video_ended, video_length, video_started_offset, video_ended_offset = timestamps  # Unpack timestamps
+
+        print(timestamps)
+        print(f"Prestart: {self.prestart}, Prestart Delay: {helpers.ms_to_s(self.prestart_delay)}")
+        print(f"Postend: {self.postend}, Postend Delay: {helpers.ms_to_s(self.postend_delay)}")
 
         if not self.browser.close():
             logger.error("Couldn't stop the browser")
             return False
-        
-        starting = video_started + video_started_offset - self.prestart
-        ending = video_ended + video_ended_offset - self.prestart
 
-        self.start_from = helpers.ms_to_s(starting)
-        self.end_at = helpers.ms_to_s(ending)
+        # Auto editing
+        if self.auto_edit: # true
+            # Get last clip ID and add 1 to it from editor
+            clip_id = len(self.editor.clips)
+            self.editor.add_clip(self.RECORDING, clip_id, self.width, self.height)
 
-        # Get last clip id and add 1 to it from editor
-        clip_id = len(self.editor.clips)
+            # Get the length of the video that we just added
+            clip_length = self.editor.get_clip_length(clip_id)
 
-        # Trim the video first
-        self.editor.add_clip(self.RECORDING, clip_id, self.width, self.height)
-        self.editor.trim(clip_id, self.start_from, self.end_at)
+            # Adjusting timestamps with FFmpeg startup delay
+            ending = clip_length - video_ended_offset - self.postend_delay
+            starting = ending - video_length
 
-        return True
+            self.start_from = helpers.ms_to_s(starting)
+            self.end_at = helpers.ms_to_s(ending)
+
+            # Trim the video first
+            self.editor.trim(clip_id, self.start_from, self.end_at)
+
+            return True
+        else: # false
+            # Create the project folder
+            if not helpers.make_dir(self.PROJECT_FOLDER):
+                logger.error("Could not create the project folder")
+                return False
+            
+            # Copy the recording to the project folder
+            if not helpers.copy_file(self.RECORDING, self.PROJECT_FOLDER):
+                logger.error("Could not copy the recording")
+                return False
+            
+            return True
 
     def final(self, outro=True):
         # Add the outro

@@ -15,6 +15,10 @@ class Editor:
     def trim(self, clip_id: int, start: int, end: int):
         self.clips[clip_id] = self.clips[clip_id].subclipped(start, end)
 
+    # Get the length of a clip
+    def get_clip_length(self, clip_id: int):
+        return self.clips[clip_id].duration * 1000 # ms
+
     # Render the video (The clips is the order)
     def render(self, output: str):
         final_clip = moviepy.concatenate_videoclips(self.clips)

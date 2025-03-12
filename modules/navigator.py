@@ -68,10 +68,12 @@ class Interface:
         return True
     
     def get_timestamps(self):
-        start_record = self.startedDelay - self.driver.execute_script("return window.startRecord")
-        stop_record = self.driver.execute_script("return window.stopRecord") - self.endedDelay
+        start_record = self.driver.execute_script("return window.startRecord")
+        stop_record = self.driver.execute_script("return window.stopRecord")
 
         start_offset = self.startedDelay - start_record # ms delay
         stop_offset = self.endedDelay - stop_record # ms delay
 
-        return [start_record, stop_record, start_offset, stop_offset]
+        length = stop_record - start_record # ms length, negligible delay
+
+        return [start_record, stop_record, length, start_offset, stop_offset]

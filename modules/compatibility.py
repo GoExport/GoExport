@@ -11,11 +11,14 @@ class Compatibility:
         if helpers.get_config("SKIP_COMPAT"):
             return True
         
-        # -- Non-required dependencies
-        # Check if VLC media player using which
-        if shutil.which("vlc") is None:
-            logger.warning("VLC media player not found (Needed for Video Playback)")
-            self.vlc = False
+        # Check OS
+        if helpers.os_is_windows():
+            logger.info("OS: Windows")
+        elif helpers.os_is_linux():
+            logger.info("OS: Linux")
+        else:
+            logger.error("OS: Unsupported")
+            return False
 
         # -- Required dependencies
         # Gather FFMPEG, FFPROBE, and FFPLAY
@@ -25,12 +28,15 @@ class Compatibility:
         
         # Check for FFMPEG, FFPROBE, and FFPLAY
         if not helpers.try_path(ffmpeg):
+            logger.error(f"Failed to locate {ffmpeg}")
             return False
         
         if not helpers.try_path(ffprobe):
+            logger.error(f"Failed to locate {ffprobe}")
             return False
         
         if not helpers.try_path(ffplay):
+            logger.error(f"Failed to locate {ffplay}")
             return False
         
         # Verify validity of FFMPEG, FFPROBE, and FFPLAY
@@ -51,6 +57,7 @@ class Compatibility:
 
         # Check for Chromium
         if not helpers.try_path(chromium):
+            logger.error(f"Failed to locate {chromium}")
             return False
         
         # Gather Chromedriver
@@ -58,11 +65,26 @@ class Compatibility:
 
         # Check for Chromedriver
         if not helpers.try_path(chromedriver):
+            logger.error(f"Failed to locate {chromedriver}")
             return False
         
         # Verify validity of Chromedriver
         if not helpers.try_command(chromedriver, '-v'):
             logger.error(f"Failed to validate {chromedriver}")
+            return False
+
+        if helpers.os_is_windows():
+            # Gather direct drivers
+            recorder = helpers.get_path("C:\\", helpers.get_config("PATH_SCREEN_RECORDER"))
+
+            # Check for direct drivers
+            if not helpers.try_path(recorder):
+                logger.error(f"Failed to locate {recorder}")
+                return False
+        elif helpers.os_is_linux():
+            logger.warning("Screen Recorder unsupported - using x11grab")
+        else:
+            logger.error("Unsupported OS")
             return False
 
         return True

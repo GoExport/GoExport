@@ -1,3 +1,4 @@
+import shutil
 import config
 import os
 import sys
@@ -12,6 +13,15 @@ from modules.logger import logger
 from datetime import datetime
 from datetime import timedelta
 
+def os_is_windows():
+    return sys.platform.startswith("win")
+
+def os_is_linux():
+    return sys.platform.startswith("linux")
+
+def os_is_mac():
+    return sys.platform.startswith("darwin")
+
 def get_python_path():
     return sys.executable
 
@@ -21,10 +31,38 @@ def get_sep():
 def generate_path():
     return f"{datetime.now().strftime('%Y-%m-%d %H-%M-%S')}"
 
+def make_dir(path):
+    original_path = path
+    counter = 1
+    while True:
+        try:
+            os.makedirs(path)
+            return True
+        except FileExistsError:
+            logger.warning(f"Directory {path} already exists.")
+            path = f"{original_path}_{counter}"
+            counter += 1
+        except Exception as e:
+            logger.error(f"Failed to create directory {path}: {e}")
+            return False
+    
+def open_folder(path):
+    """Open a folder in the file system and bring it to the foreground."""
+    try:
+        if os_is_windows():
+            subprocess.Popen(['explorer', path])
+            return True
+        elif os_is_linux():
+            subprocess.run(["xdg-open", path])
+            return True
+        else:
+            return False
+    except Exception as e:
+        logger.error(f"Failed to open folder {path}: {e}")
+        return False
+
 def get_cwd():
     """Get the current working directory, adjusted for PyInstaller."""
-    if getattr(sys, 'frozen', False):  # Running as a PyInstaller EXE
-        return sys._MEIPASS
     return os.getcwd()
 
 def get_path(cwd: str | None = None, *parts):
@@ -43,9 +81,9 @@ def get_path(cwd: str | None = None, *parts):
     return os.path.join(cwd, *flattened_parts)
 
 def get_user_folder(folder: str):
-    if os.name == "nt":
+    if os_is_windows():
         return os.path.join(os.environ["USERPROFILE"], folder)
-    elif os.name == "posix":
+    elif os_is_linux():
         return os.path.join(os.path.expanduser("~"), folder)
     else:
         return None
@@ -61,6 +99,36 @@ def get_resolution(index: int = 0):
 def compare_monitor_resolution(width, height):
     monitor_width, monitor_height = get_resolution()
     return width <= monitor_width and height <= monitor_height
+
+def copy_file(src, dst):
+    original_dst = dst
+    counter = 1
+    while True:
+        try:
+            shutil.copy(src, dst)
+            return True
+        except FileExistsError:
+            name, ext = os.path.splitext(original_dst)
+            dst = f"{name}_{counter}{ext}"
+            counter += 1
+        except Exception as e:
+            logger.error(f"Failed to copy {src} to {dst}: {e}")
+            return False
+
+def move_file(src, dst):
+    original_dst = dst
+    counter = 1
+    while True:
+        try:
+            shutil.move(src, dst)
+            return True
+        except FileExistsError:
+            name, ext = os.path.splitext(original_dst)
+            dst = f"{name}_{counter}{ext}"
+            counter += 1
+        except Exception as e:
+            logger.error(f"Failed to move {src} to {dst}: {e}")
+            return False
 
 def get_url(*parts):
     # Flatten lists/tuples in parts

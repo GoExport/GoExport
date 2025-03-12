@@ -1,6 +1,8 @@
+from math import e
 import config
 import helpers
 from modules import compatibility
+from modules import controller
 from modules.compatibility import Compatibility
 from modules.controller import Controller
 from modules.logger import logger
@@ -17,7 +19,7 @@ def goodbye():
     from art import text2art
     Art = text2art("Goodbye!", font="tarty1")
     print(Art)
-    print("[green]Your video was exported!")
+    print("[green]Thank you for using GoExport!")
 
 def main():
     # Initalize classes
@@ -40,12 +42,6 @@ def main():
             logger.fatal("Unable to export video")
             return False
 
-        # Ask if the user wants to preview the video
-        preview_prompt = Confirm.ask("Would you like to preview the video?", default=False)
-
-        if preview_prompt:
-            controller.editor.preview()
-
         # Ask if user wants to continue
         print("[blue]Adding an additional video will allow you to merge multiple videos together. This is useful if you want to combine multiple videos into one or you've got a multipart series.")
         continue_prompt = Confirm.ask("Would you like to add an additional video?", default=False)
@@ -54,16 +50,32 @@ def main():
             break
 
     # Ask if user wants to include the outro
-    confirm_outro = Confirm.ask("Would you like to include the outro for GoExport?", default=True)
+    if controller.auto_edit:
+        confirm_outro = Confirm.ask("Would you like to include the outro for GoExport?", default=True)
 
-    if not controller.final(confirm_outro):
-        logger.fatal("Unable to edit video")
-        return False
+        if not controller.final(confirm_outro):
+            logger.fatal("Unable to edit video")
+            return False
+    else:
+        confirm_outro = Confirm.ask("Would you like to add the outro for GoExport to your project folder?", default=True)
+
+        # Copy the outro to the project folder
+        if confirm_outro and controller.widescreen:
+            if not helpers.copy_file(helpers.get_path(None, helpers.get_config("OUTRO_WIDE")), helpers.get_path(controller.PROJECT_FOLDER, "outro.mp4")):
+                logger.fatal("Failed to copy the outro to the project folder")
+                return False
+        if confirm_outro and not controller.widescreen:
+            if not helpers.copy_file(helpers.get_path(None, helpers.get_config("OUTRO_STANDARD")), helpers.get_path(controller.PROJECT_FOLDER, "outro.mp4")):
+                logger.fatal("Failed to copy the 4:3 outro to the project folder")
+                return False
 
     goodbye()
 
-    if compatibility.vlc is None:
-        print("[yellow]You don't appear to have VLC media player installed on your system. The encoded video was encoded successfully, but it may not work on the standard media player of your system. VLC media player is recommended for playback.")
+    if not controller.auto_edit:
+        # Ask if user wants to open the folder
+        open_folder = Confirm.ask("Would you like to open the folder containing the video?", default=True)
+        if open_folder:
+            helpers.open_folder(controller.PROJECT_FOLDER)
 
     return True
 

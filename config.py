@@ -73,6 +73,7 @@ PATH_FFPROBE = [DEFAULT_DEPENDENCIES_FILENAME, "ffmpeg", "bin", "ffprobe.exe"]
 PATH_FFPLAY = [DEFAULT_DEPENDENCIES_FILENAME, "ffmpeg", "bin", "ffplay.exe"]
 PATH_CHROMIUM = [DEFAULT_DEPENDENCIES_FILENAME, "ungoogled-chromium", "chrome.exe"]
 PATH_CHROMEDRIVER = [DEFAULT_DEPENDENCIES_FILENAME, "chromedriver", "chromedriver.exe"]
+PATH_SCREEN_RECORDER = ["Program Files (x86)", "Screen Capturer Recorder", "unins000.exe"]
 
 # Development Settings
 DEBUG_MODE = False
