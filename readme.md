@@ -18,7 +18,7 @@ The following is a list of **known supported LVMs**:
 # 📂 Installation
 In order to **install GoExport** you'll need to go to the [latest release](https://github.com/GoExport/GoExport/releases/latest) and download the one that relates to your computer.
 
-You may need to also install the dependencies, which can be found in the [Dependencies](#-dependencies) section. (**Only "Not Included" dependencies need to be manually installed**)
+You may need to also install the dependencies, which can be found in the [Dependencies](https://github.com/GoExport/GoExport?tab=readme-ov-file#%EF%B8%8F-dependencies) section. (**Only "Not Included" dependencies need to be manually installed**)
 
 ## ⚠️ Dependencies
 The project may require that you have installed some dependencies to get started, this is required for GoExport to function properly.
