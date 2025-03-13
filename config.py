@@ -40,13 +40,6 @@ AVAILABLE_SERVICES = {
             "Universal-Wrapper-Player",
             "index.html?environment=local&movieId={movie_id}&playerWidth={width}&playerHeight={height}&isWide={wide}&isVideoRecord=1",
         ],
-        "api": [
-            "http://127.0.0.1:4343",
-            "goapi"
-        ],
-        "endpoints": {
-            "getMovieInfo": "getMovieInfo"
-        }
     },
     "ft": {
         "name": "FlashThemes",
@@ -60,13 +53,6 @@ AVAILABLE_SERVICES = {
             "Universal-Wrapper-Player",
             "index.html?environment=ft&swf=https://lightspeed.flashthemes.net/static/animation/aisd82ij/player.swf?v=2&movieId={movie_id}&ownerId={owner_id}&playerWidth={width}&playerHeight={height}&isWide={wide}&isVideoRecord=1&ut=-1&apiserver=https://flashthemes.net/&autostart=1&storePath=https://flashthemes.net/static/store/<store>?v={owner_id}&clientThemePath=https://lightspeed.flashthemes.net/static/ct/ad44370a650793d9/<client_theme>&isEmbed=1&chain_mids=&ad=0&endStyle=1&isWide={wide}&pwm=1&isSpeedy=1&allowFullScreen=true&allowScriptAccess=always",
         ],
-        "api": [
-            "https://flashthemes.net",
-            "goapi"
-        ],
-        "endpoints": {
-            "getMovieInfo": "getMovieInfo"
-        }
     },
 }
 

@@ -35,8 +35,6 @@ class Controller:
         self.svr_name = service_data["name"]
         self.svr_domain = service_data.get("domain", [])
         self.svr_player = service_data.get("player", [])
-        self.svr_api = service_data.get("api", [])
-        self.svr_endpoints = service_data.get("endpoints", [])
         self.svr_required = service_data.get("requires", [])
 
         # Asks if the user wants automated editing
