@@ -4,11 +4,11 @@
 
 Welcome to GoExport, with this tool, you can export your videos for Wrapper Offline and FlashThemes.
 
-![Static Badge](https://img.shields.io/badge/status-development-orange)
-![GitHub Repo stars](https://img.shields.io/github/stars/GoExport/GoExport)
-![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/GoExport/GoExport/total)
-![GitHub License](https://img.shields.io/github/license/GoExport/GoExport)
-![GitHub Release](https://img.shields.io/github/v/release/GoExport/GoExport)
+![Static Badge](https://img.shields.io/badge/status-development-orange?cacheBuster=true)
+![GitHub Repo stars](https://img.shields.io/github/stars/GoExport/GoExport?cacheBuster=true)
+![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/GoExport/GoExport/total?cacheBuster=true)
+![GitHub License](https://img.shields.io/github/license/GoExport/GoExport?cacheBuster=true)
+![GitHub Release](https://img.shields.io/github/v/release/GoExport/GoExport?cacheBuster=true)
 
 # ✅ Supported
 The following is a list of **known supported LVMs**:
