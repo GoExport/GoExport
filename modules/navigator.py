@@ -28,7 +28,7 @@ class Interface:
 
     def start(self):
         """Initializes and starts the Selenium WebDriver."""
-        self.driver = webdriver.Chrome(options=self.options)
+        self.driver = webdriver.Chrome(options=self.options, service=self.service)
         time.sleep(5) # Show message
         return True
     
