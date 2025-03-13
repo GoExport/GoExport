@@ -77,6 +77,11 @@ def main():
         if open_folder:
             helpers.open_folder(controller.PROJECT_FOLDER)
 
+    # Suggest https://www.openshot.org/download/ (pose it like a question, "Do you have a video editor?")
+    # just print it, don't ask
+    if not controller.auto_edit:
+        print("[blue]If you need a video editor, consider OpenShot Video Editor. It's a free and open-source option available for download [link=https://www.openshot.org/download/]here[/link]. Alternatively, you can use any video editor of your choice. [italic](Not sponsored by OpenShot)[/italic]")
+
     return True
 
 if __name__ == '__main__':

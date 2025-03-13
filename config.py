@@ -40,6 +40,13 @@ AVAILABLE_SERVICES = {
             "Universal-Wrapper-Player",
             "index.html?environment=local&movieId={movie_id}&playerWidth={width}&playerHeight={height}&isWide={wide}&isVideoRecord=1",
         ],
+        "api": [
+            "http://127.0.0.1:4343",
+            "goapi"
+        ],
+        "endpoints": {
+            "getMovieInfo": "getMovieInfo"
+        }
     },
     "ft": {
         "name": "FlashThemes",
