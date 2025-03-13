@@ -8,7 +8,7 @@ Welcome to GoExport, with this tool, you can export your videos for Wrapper Offl
 ![GitHub Repo stars](https://img.shields.io/github/stars/GoExport/GoExport?cacheBuster=true)
 ![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/GoExport/GoExport/total?cacheBuster=true)
 ![GitHub License](https://img.shields.io/github/license/GoExport/GoExport?cacheBuster=true)
-![GitHub Release](https://img.shields.io/github/v/release/GoExport/GoExport?cacheBuster=true)
+![GitHub Release](https://img.shields.io/github/v/release/GoExport/GoExport?include_prereleases&cacheBuster=true)
 
 # ✅ Supported
 The following is a list of **known supported LVMs**:
