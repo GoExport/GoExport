@@ -63,14 +63,7 @@ class Controller:
         else:
             self.movieid = None
 
-        # Get the video info
-        self.svr_api = helpers.get_url(*self.svr_api, self.svr_endpoints["getMovieInfo"])
-        self.video_info = helpers.post_request_to_dict(self.svr_api, {"movieId": self.movieid, "userId": self.ownerid})
-        
-        try:
-            self.readable_filename = f"{helpers.to_filename_safe(self.video_info['movie_info']['title'])}"
-        except:
-            self.readable_filename = helpers.generate_path()
+        self.readable_filename = helpers.generate_path()
         self.filename = f"{self.readable_filename}.mp4"
 
         self.RECORDING = helpers.get_path(None, helpers.get_config("DEFAULT_OUTPUT_FILENAME"), self.filename)
