@@ -10,10 +10,10 @@ from rich.prompt import Confirm
 from rich import print
 
 def welcome():
-    from art import text2art
-    Art = text2art(helpers.get_config("APP_NAME"), font="tarty1")
+    import art
+    Art = art.text2art(helpers.get_config("APP_NAME"), font="tarty1")
     print(Art)
-    print("[yellow]If you are using Wrapper Offline, remember to start it before proceeding or it won't work!")
+    logger.info(f"{helpers.get_config("APP_NAME")} v{helpers.get_config('APP_VERSION')}")
 
 def goodbye():
     from art import text2art
