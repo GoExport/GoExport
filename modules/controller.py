@@ -133,7 +133,7 @@ class Controller:
             
             # Calculate the starting and ending times for the clip
             started = self.prestart_delay + video_started + video_start_offset - self.prestart
-            ended = self.editor.get_clip_length(clip_id)
+            ended = self.editor.get_clip_length(clip_id) - video_end_offset
 
             # Combine the calculated times
             starting = started
