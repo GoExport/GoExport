@@ -9,8 +9,6 @@ from modules.logger import logger
 class Capture:
     def __init__(self):
         self.process = None
-        self.start_time = None
-        self.startup_delay = None  # Store delay estimation
         atexit.register(self.cleanup)
         for sig in (signal.SIGINT, signal.SIGTERM, signal.SIGABRT):
             signal.signal(sig, self._signal_handler)
@@ -42,6 +40,8 @@ class Capture:
                 "dshow",
                 "-i",
                 "video=screen-capture-recorder:audio=virtual-audio-capturer",
+                "-r",
+                "24",
                 "-c:v",
                 "libx264",
                 "-preset",
@@ -74,6 +74,8 @@ class Capture:
                 "x11grab",
                 "-s",
                 f"{width}x{height}",
+                "-r",
+                "24",
                 "-i",
                 ":0.0",
                 "-c:v",
@@ -102,35 +104,36 @@ class Capture:
             logger.error("Unsupported OS")
             return False
 
-        self.start_time = helpers.get_timestamp("FFmpeg starting")
-
         self.process = subprocess.Popen(
             command,
             cwd=helpers.get_cwd(),
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
             shell=False,
             bufsize=0,
+            universal_newlines=True,
         )
 
-        # Read stderr to detect when recording starts
-        for line in iter(self.process.stderr.readline, b""):
-            decoded_line = line.decode("GBK").strip()
-
-            # Detect when FFmpeg starts writing to output
-            if "Output #0" in decoded_line or "Press [q] to stop" in decoded_line:
-                self.startup_delay = helpers.get_timestamp("FFmpeg started") - self.start_time
+        # Wait for FFmpeg to start
+        for line in self.process.stdout:
+            # Check if FFmpeg has started
+            if "Output #0" in line:
+                self.start_time = helpers.get_timestamp("FFmpeg started")
                 break
+            offset = helpers.get_timestamp("FFmpeg starting")
+
+        self.startup_delay = self.start_time - offset
 
         return True
 
     def stop(self):
-        self.end_time = helpers.get_timestamp("FFmpeg ending")
-        self.process.stdin.write("q".encode("GBK"))
+        self.process.stdin.write("q")
+        offset = helpers.get_timestamp("FFmpeg stopping")
         self.process.communicate()
         self.process.wait()
-        self.end_delay = helpers.get_timestamp("FFmpeg ended") - self.end_time
+        self.end_time = helpers.get_timestamp("FFmpeg ended")
+        self.ended_delay = self.end_time - offset
         return True
 
     def __enter__(self):

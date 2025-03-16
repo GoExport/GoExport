@@ -1,5 +1,3 @@
-from flask.cli import F
-from numpy import clip
 import helpers
 from modules.editor import Editor
 from modules.navigator import Interface
@@ -44,7 +42,7 @@ class Controller:
         # Required: Owner Id
         if 'movieOwnerId' in self.svr_required:
             while True:
-                self.ownerid = Prompt.ask("[bold red]Required:[/bold red] Please enter the owner ID")
+                self.ownerid = IntPrompt.ask("[bold red]Required:[/bold red] Please enter the owner ID")
                 if self.ownerid:
                     break
                 print("[bold red]Error:[/bold red] Owner ID cannot be empty. Please enter a valid owner ID.")
@@ -91,9 +89,10 @@ class Controller:
         if not self.capture.start(self.RECORDING, self.width, self.height):
             logger.error("Could not start recording")
             return False
+        self.prestart = self.capture.start_time  # Timestamp for when FFmpeg started (ms)
+        self.prestart_delay = self.capture.startup_delay  # Ensure delay is accounted for (ms)
 
-        self.prestart = self.capture.start_time  # Timestamp for when FFmpeg started
-        self.prestart_delay = self.capture.startup_delay or 0  # Ensure delay is accounted for
+        print(f"Prestart: {self.prestart} | Delay: {self.prestart_delay}")
 
         try:
             self.browser.driver.get(self.svr_url)
@@ -115,16 +114,12 @@ class Controller:
         if not self.capture.stop():
             logger.error("Could not stop the recording")
             return False
-        self.postend = self.capture.end_time  # Timestamp for when FFmpeg ended
-        self.postend_delay = self.capture.end_delay  # Ensure delay is accounted for
+        self.postend = self.capture.end_time  # Timestamp for when FFmpeg ended (ms)
+        self.postend_delay = self.capture.ended_delay  # Ensure delay is accounted for (ms)
 
         # Get timestamps from the browser for when the video started and ended
         timestamps = self.browser.get_timestamps()
-        video_started, video_ended, video_length, video_started_offset, video_ended_offset = timestamps  # Unpack timestamps
-
-        print(timestamps)
-        print(f"Prestart: {self.prestart}, Prestart Delay: {helpers.ms_to_s(self.prestart_delay)}")
-        print(f"Postend: {self.postend}, Postend Delay: {helpers.ms_to_s(self.postend_delay)}")
+        video_started, video_ended, video_length, video_start_offset, video_end_offset = timestamps
 
         if not self.browser.close():
             logger.error("Couldn't stop the browser")
@@ -135,16 +130,21 @@ class Controller:
             # Get last clip ID and add 1 to it from editor
             clip_id = len(self.editor.clips)
             self.editor.add_clip(self.RECORDING, clip_id, self.width, self.height)
+            
+            # Calculate the starting and ending times for the clip
+            started = self.prestart_delay + video_started + video_start_offset - self.prestart
+            ended = self.editor.get_clip_length(clip_id)
 
-            # Get the length of the video that we just added
-            clip_length = self.editor.get_clip_length(clip_id)
+            # Combine the calculated times
+            starting = started
+            ending = ended
 
-            # Adjusting timestamps with FFmpeg startup delay
-            ending = clip_length - video_ended_offset - self.postend_delay
-            starting = ending - video_length
+            print(f"{starting} : {ending}")
 
             self.start_from = helpers.ms_to_s(starting)
             self.end_at = helpers.ms_to_s(ending)
+
+            print(f"{self.start_from} : {self.end_at}")
 
             # Trim the video first
             self.editor.trim(clip_id, self.start_from, self.end_at)
@@ -170,5 +170,6 @@ class Controller:
         elif not self.widescreen and outro:
             self.editor.add_clip(helpers.get_path(None, helpers.get_config("OUTRO_STANDARD")), len(self.editor.clips))
 
+        # Render the video
         self.editor.render(self.RECORDING_EDITED)
         return True

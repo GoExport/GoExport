@@ -19,6 +19,10 @@ class Editor:
     def get_clip_length(self, clip_id: int):
         return self.clips[clip_id].duration * 1000 # ms
 
+    # Check if the frame is mostly black
+    def is_black_frame(self, frame: np.ndarray, threshold: float = 0.1):
+        return np.mean(frame) < threshold
+
     # Render the video (The clips is the order)
     def render(self, output: str):
         final_clip = moviepy.concatenate_videoclips(self.clips)

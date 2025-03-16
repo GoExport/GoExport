@@ -7,7 +7,6 @@ import urllib3, urllib
 import pyautogui
 import subprocess
 import time
-import xmltodict
 import requests
 from modules.logger import logger
 from datetime import datetime
@@ -183,10 +182,10 @@ def try_command(*input):
         logger.error("An unexpected error occurred: %s", e)
         return False
 
-# (Super precise) Timestamp generator
+# (Super precise) Timestamp generator in milliseconds unix time
 def get_timestamp(msg: str = None):
     timestamp = time.time_ns() // 1_000_000
-    print(f"Generated timestamp: {timestamp}" + (f" ({msg})" if msg else ""))
+    logger.debug(f"Generated timestamp: {timestamp} ms" + (f" ({msg})" if msg else ""))
     return timestamp
 
 # Convert milliseconds to seconds
@@ -197,15 +196,6 @@ def ms_to_s(ms):
 def post_request(url: str, data: dict):
     response = requests.post(url, data=data)
     return response
-
-# Convert XML to Dict
-def xml_to_dict(xml):
-    return xmltodict.parse(xml)
-
-# Send a post request and convert the response to a dict
-def post_request_to_dict(url: str, data: dict):
-    response = post_request(url, data)
-    return xml_to_dict(response.text)
 
 # Convert string to filename safe string
 def to_filename_safe(string):
