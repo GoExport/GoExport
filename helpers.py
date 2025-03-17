@@ -21,11 +21,11 @@ def os_is_linux():
 def os_is_mac():
     return sys.platform.startswith("darwin")
 
-def get_python_path():
-    return sys.executable
-
 def is_frozen():
     return getattr(sys, 'frozen', False)
+
+def get_python_path():
+    return sys.executable
 
 def get_sep():
     return os.sep
