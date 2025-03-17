@@ -24,6 +24,9 @@ def os_is_mac():
 def get_python_path():
     return sys.executable
 
+def is_frozen():
+    return getattr(sys, 'frozen', False)
+
 def get_sep():
     return os.sep
 
