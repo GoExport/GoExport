@@ -60,7 +60,7 @@ class Controller:
             self.movieid = None
 
         self.readable_filename = helpers.generate_path()
-        self.filename = f"{self.readable_filename}.mp4"
+        self.filename = f"{self.readable_filename}{helpers.get_config('DEFAULT_OUTPUT_EXTENSION')}"
 
         self.RECORDING = helpers.get_path(None, helpers.get_config("DEFAULT_OUTPUT_FILENAME"), self.filename)
         self.RECORDING_EDITED = helpers.get_path(helpers.get_user_folder("Videos"), self.filename)
