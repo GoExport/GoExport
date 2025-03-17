@@ -2,6 +2,10 @@ import shutil
 import config
 import os
 import sys
+import platform
+import logging
+import GPUtil
+import psutil
 import ctypes
 import urllib3, urllib
 import pyautogui
@@ -24,16 +28,40 @@ def os_is_mac():
 def is_frozen():
     return getattr(sys, 'frozen', False)
 
+def get_arch():
+    return platform.machine()
+
+# Get computer specifications
+def get_computer_specs():
+    specs = {
+        "os": platform.system(),
+        "os_version": platform.version(),
+        "cpu": platform.processor(),
+        "cores": psutil.cpu_count(logical=False),
+        "threads": psutil.cpu_count(logical=True),
+        "ram": round(psutil.virtual_memory().total / (1024 ** 3), 2),
+        "disk": round(psutil.disk_usage("/").total / (1024 ** 3), 2),
+        "gpu": get_gpu_info(),
+    }
+    return specs
+
+def get_gpu_info():
+    gpus = GPUtil.getGPUs()
+    gpu_info = []
+    for gpu in gpus:
+        gpu_info.append({
+            "name": gpu.name,
+            "vram_total": round(gpu.memoryTotal / 1024, 2),  # Convert MB to GB
+            "vram_used": round(gpu.memoryUsed / 1024, 2),    # Convert MB to GB
+            "vram_free": round(gpu.memoryFree / 1024, 2),    # Convert MB to GB
+            "vram_util": round(gpu.memoryUtil * 100),        # Convert to percentage and round up
+        })
+    return gpu_info
+
 def move_mouse_offscreen():
     pyautogui.FAILSAFE = False # All we're doing is moving the mouse offscreen
     width, height = pyautogui.size()
     pyautogui.moveTo(width, height)
-
-def get_python_path():
-    return sys.executable
-
-def get_sep():
-    return os.sep
 
 def generate_path():
     return f"{datetime.now().strftime('%Y-%m-%d %H-%M-%S')}"

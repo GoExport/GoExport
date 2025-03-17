@@ -23,6 +23,25 @@ class Compatibility:
             logger.error("OS: Unsupported")
             return False
         
+        # Get the architecture
+        logger.info(f"Architecture: {helpers.get_arch()}")
+        
+        # Put the system information here
+        system_info = helpers.get_computer_specs()
+        logger.info("System Information:")
+        logger.info(f"  OS: {system_info['os']} {system_info['os_version']}")
+        logger.info(f"  CPU: {system_info['cpu']}")
+        logger.info(f"  Cores: {system_info['cores']}")
+        logger.info(f"  Threads: {system_info['threads']}")
+        logger.info(f"  RAM: {system_info['ram']} GB")
+        logger.info(f"  Disk: {system_info['disk']} GB")
+        for gpu in system_info['gpu']:
+            logger.info(f"GPU: {gpu['name']}")
+            logger.info(f"  VRAM: {gpu['vram_total']} GB")
+            logger.info(f"  VRAM Used: {gpu['vram_used']} GB")
+            logger.info(f"  VRAM Free: {gpu['vram_free']} GB")
+            logger.info(f"  VRAM Utilization: {gpu['vram_util']}%")
+        
         # Check if standalone
         logger.info(f"Executable: {helpers.is_frozen()}")
 

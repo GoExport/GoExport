@@ -21,6 +21,9 @@ def goodbye():
     print(Art)
     print("[green]Thank you for using GoExport!")
 
+def disclaimer():
+    print("[orange]Warning: [bold]This application will create and store logs on your system, they will never leave your system unless you choose to share them, in which case the logs may contain personally identifiable information such as system information, file paths, and other data. It is recommended that you exercise caution when sharing these logs.")
+
 def main():
     # Initalize classes
     compatibility = Compatibility()
@@ -86,6 +89,9 @@ def main():
 
     # Cleanup
     helpers.delete_files_in_folder(helpers.get_path(None, helpers.get_config("DEFAULT_OUTPUT_FILENAME")), helpers.get_config("DEFAULT_OUTPUT_EXTENSION"))
+
+    # Disclaimer
+    disclaimer()
 
     return True
 
