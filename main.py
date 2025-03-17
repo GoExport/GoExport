@@ -64,11 +64,11 @@ def main():
 
         # Copy the outro to the project folder
         if confirm_outro and controller.widescreen:
-            if not helpers.copy_file(helpers.get_path(None, helpers.get_config("OUTRO_WIDE")), helpers.get_path(controller.PROJECT_FOLDER, "outro.mp4")):
+            if not helpers.copy_file(helpers.get_path(None, helpers.get_config("OUTRO_WIDE")), helpers.get_path(controller.PROJECT_FOLDER)):
                 logger.fatal("Failed to copy the outro to the project folder")
                 return False
         if confirm_outro and not controller.widescreen:
-            if not helpers.copy_file(helpers.get_path(None, helpers.get_config("OUTRO_STANDARD")), helpers.get_path(controller.PROJECT_FOLDER, "outro.mp4")):
+            if not helpers.copy_file(helpers.get_path(None, helpers.get_config("OUTRO_STANDARD")), helpers.get_path(controller.PROJECT_FOLDER)):
                 logger.fatal("Failed to copy the 4:3 outro to the project folder")
                 return False
 
@@ -80,10 +80,12 @@ def main():
         if open_folder:
             helpers.open_folder(controller.PROJECT_FOLDER)
 
-    # Suggest https://www.openshot.org/download/ (pose it like a question, "Do you have a video editor?")
-    # just print it, don't ask
+    # Suggest a video editor
     if not controller.auto_edit:
         print("[blue]If you need a video editor, consider OpenShot Video Editor. It's a free and open-source option available for download [link=https://www.openshot.org/download/]here[/link]. Alternatively, you can use any video editor of your choice. [italic](Not sponsored by OpenShot)[/italic]")
+
+    # Cleanup
+    helpers.delete_files_in_folder(helpers.get_path(None, helpers.get_config("DEFAULT_OUTPUT_FILENAME")), helpers.get_config("DEFAULT_OUTPUT_EXTENSION"))
 
     return True
 
