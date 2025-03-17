@@ -13,7 +13,7 @@ def welcome():
     import art
     Art = art.text2art(helpers.get_config("APP_NAME"), font="tarty1")
     print(Art)
-    logger.info(f"{helpers.get_config("APP_NAME")} v{helpers.get_config('APP_VERSION')}")
+    print(f"[green]{helpers.get_config('APP_NAME')} [bold]v{helpers.get_config('APP_VERSION')}")
 
 def goodbye():
     from art import text2art
@@ -32,6 +32,9 @@ def main():
         logger.fatal("You did not pass the compatibility check")
         exit(1)
     logger.info("You passed the compatibility check")
+
+    # Welcome message
+    welcome()
 
     while True:
         if not controller.setup():
@@ -85,8 +88,6 @@ def main():
     return True
 
 if __name__ == '__main__':
-    welcome()
-
     if not main():
         logger.fatal("The application failed to finish")
         exit(1)

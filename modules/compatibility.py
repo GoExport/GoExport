@@ -11,6 +11,9 @@ class Compatibility:
         if helpers.get_config("SKIP_COMPAT"):
             return True
         
+        # Check app
+        logger.info(f"{helpers.get_config("APP_NAME")} v{helpers.get_config('APP_VERSION')}")
+
         # Check OS
         if helpers.os_is_windows():
             logger.info("OS: Windows")
@@ -19,6 +22,9 @@ class Compatibility:
         else:
             logger.error("OS: Unsupported")
             return False
+        
+        # Check if standalone
+        logger.info(f"Executable: {helpers.is_frozen()}")
 
         # -- Required dependencies
         # Gather FFMPEG, FFPROBE, and FFPLAY
