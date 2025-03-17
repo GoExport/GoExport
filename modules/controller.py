@@ -93,6 +93,7 @@ class Controller:
         self.prestart_delay = self.capture.startup_delay  # Ensure delay is accounted for (ms)
 
         print(f"Prestart: {self.prestart} | Delay: {self.prestart_delay}")
+        helpers.move_mouse_offscreen()
 
         try:
             self.browser.driver.get(self.svr_url)

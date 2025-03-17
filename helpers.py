@@ -24,6 +24,10 @@ def os_is_mac():
 def is_frozen():
     return getattr(sys, 'frozen', False)
 
+def move_mouse_offscreen():
+    width, height = pyautogui.size()
+    pyautogui.moveTo(width, height)
+
 def get_python_path():
     return sys.executable
 
