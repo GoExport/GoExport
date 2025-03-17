@@ -94,6 +94,13 @@ def get_user_folder(folder: str):
     else:
         return None
 
+# function to delete contents of a folder that match an extension
+def delete_files_in_folder(folder, extension):
+    logger.info(f"Cleaning up {folder} of {extension} files")
+    for file in os.listdir(folder):
+        if file.endswith(extension):
+            os.remove(os.path.join(folder, file))
+
 def get_config(variable: str):
     return getattr(config, variable, None)
 
@@ -107,6 +114,9 @@ def compare_monitor_resolution(width, height):
     return width <= monitor_width and height <= monitor_height
 
 def copy_file(src, dst):
+    if os.path.isdir(dst):
+        dst = os.path.join(dst, os.path.basename(src))
+    
     original_dst = dst
     counter = 1
     while True:
@@ -122,6 +132,9 @@ def copy_file(src, dst):
             return False
 
 def move_file(src, dst):
+    if os.path.isdir(dst):
+        dst = os.path.join(dst, os.path.basename(src))
+    
     original_dst = dst
     counter = 1
     while True:
