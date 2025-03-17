@@ -25,6 +25,7 @@ def is_frozen():
     return getattr(sys, 'frozen', False)
 
 def move_mouse_offscreen():
+    pyautogui.FAILSAFE = False # All we're doing is moving the mouse offscreen
     width, height = pyautogui.size()
     pyautogui.moveTo(width, height)
 
@@ -95,7 +96,7 @@ def get_user_folder(folder: str):
         return None
 
 # function to delete contents of a folder that match an extension
-def delete_files_in_folder(folder, extension):
+def delete_files_in_folder(folder: str, extension: str):
     logger.info(f"Cleaning up {folder} of {extension} files")
     for file in os.listdir(folder):
         if file.endswith(extension):
