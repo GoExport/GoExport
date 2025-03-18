@@ -51,7 +51,7 @@ class Interface:
         actions.send_keys(Keys.SPACE)
         actions.perform()
         time.sleep(0.5)
-        actions.send_keys("a")
+        actions.send_keys(Keys.ARROW_DOWN)
         actions.perform()
         time.sleep(0.5)
         actions.send_keys(Keys.ENTER)
