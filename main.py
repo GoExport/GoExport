@@ -88,6 +88,7 @@ def main():
         print("[blue]If you need a video editor, consider OpenShot Video Editor. It's a free and open-source option available for download [link=https://www.openshot.org/download/]here[/link]. Alternatively, you can use any video editor of your choice. [italic](Not sponsored by OpenShot)[/italic]")
 
     # Cleanup
+    helpers.time.sleep(2)
     helpers.delete_files_in_folder(helpers.get_path(None, helpers.get_config("DEFAULT_OUTPUT_FILENAME")), helpers.get_config("DEFAULT_OUTPUT_EXTENSION"))
 
     # Disclaimer
