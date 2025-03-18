@@ -1,8 +1,4 @@
-from math import e
-import config
 import helpers
-from modules import compatibility
-from modules import controller
 from modules.compatibility import Compatibility
 from modules.controller import Controller
 from modules.logger import logger
