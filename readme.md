@@ -6,6 +6,7 @@ Welcome to GoExport, with this tool, you can export your videos for Wrapper Offl
 
 ![Static Badge](https://img.shields.io/badge/status-development-orange?cacheBuster=true)
 ![GitHub Repo stars](https://img.shields.io/github/stars/GoExport/GoExport?cacheBuster=true)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/5f3d2b64b62c4d129c8d0c3ba2e8c5cd)](https://app.codacy.com/gh/GoExport/GoExport/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 ![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/GoExport/GoExport/total?cacheBuster=true)
 ![GitHub License](https://img.shields.io/github/license/GoExport/GoExport?cacheBuster=true)
 ![GitHub Release](https://img.shields.io/github/v/release/GoExport/GoExport?include_prereleases&cacheBuster=true)
