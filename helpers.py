@@ -97,7 +97,9 @@ def open_folder(path):
         return False
 
 def get_cwd():
-    """Get the current working directory, adjusted for PyInstaller."""
+    """Get the current working directory, using PyInstaller paths if applicable."""
+    if is_frozen():
+        return sys._MEIPASS
     return os.getcwd()
 
 def get_path(cwd: str | None = None, *parts):
@@ -122,13 +124,6 @@ def get_user_folder(folder: str):
         return os.path.join(os.path.expanduser("~"), folder)
     else:
         return None
-
-# function to delete contents of a folder that match an extension
-def delete_files_in_folder(folder: str, extension: str):
-    logger.info(f"Cleaning up {folder} of {extension} files")
-    for file in os.listdir(folder):
-        if file.endswith(extension):
-            os.remove(os.path.join(folder, file))
 
 def get_config(variable: str):
     return getattr(config, variable, None)
@@ -236,6 +231,10 @@ def get_timestamp(msg: str = None):
     timestamp = time.time_ns() // 1_000_000
     logger.debug(f"Generated timestamp: {timestamp} ms" + (f" ({msg})" if msg else ""))
     return timestamp
+
+# Wait for a certain amount of time
+def wait(seconds: float):
+    time.sleep(seconds)
 
 # Convert milliseconds to seconds
 def ms_to_s(ms):
