@@ -1,17 +1,14 @@
-pyinstaller --onefile --name "GoExport" --icon ./assets/icon.png ./main.py
-if [ -d "dist/assets" ]; then
-    rm -rf dist/assets
-fi
-cp -r assets dist/assets
-if [ -d "dist/dependencies" ]; then
-    rm -rf dist/dependencies
-fi
-cp -r dependencies dist/dependencies
-if [ ! -d "dist/logs" ]; then
-    mkdir -p dist/logs
-fi
-if [ ! -d "dist/data" ]; then
-    mkdir -p dist/data
-fi
+#!/bin/bash
+
+# Remove all files in the data directory
+rm -rf data/*
+
+# Remove all files in the dist directory
+rm -rf dist/*
+
+# Run pyinstaller with the specified options
+pyinstaller --onefile --name "GoExport" --icon ./assets/icon.png --add-data "data:data" --add-data "dependencies:dependencies" --add-data "assets:assets" ./main.py
+
+# Copy readme.md and LICENSE to the dist directory
 cp readme.md dist/
 cp LICENSE dist/

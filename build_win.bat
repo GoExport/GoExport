@@ -1,9 +1,11 @@
-pyinstaller --onefile --name "GoExport" --icon ./assets/icon.png .\main.py
-if exist dist\assets\ rmdir /s /q dist\assets\
-xcopy assets dist\assets\ /s /i /e
-if exist dist\dependencies\ rmdir /s /q dist\dependencies\
-xcopy dependencies dist\dependencies\ /s /i /e
-if not exist dist\logs\ mkdir dist\logs\
-if not exist dist\data\ mkdir dist\data\
+@echo off
+for %%f in (data\*) do if not "%%~nxf"==".gitkeep" del /Q "%%f"
+rmdir /S /Q dist
+pyinstaller --onefile --name "GoExport" --icon ./assets/icon.png ^
+ --add-data "data;data" --add-data "dependencies;dependencies" --add-data "assets;assets" ^
+ --hidden-import=modules.capture --hidden-import=modules.compatibility ^
+ --hidden-import=modules.controller --hidden-import=modules.editor ^
+ --hidden-import=modules.logger --hidden-import=modules.navigator ^
+ .\main.py
 copy readme.md dist\
 copy LICENSE dist\
