@@ -23,6 +23,7 @@ You may need to also install the dependencies, which can be found in the [Depend
 
 ## ⚠️ Dependencies
 The project may require that you have installed some dependencies to get started, this is required for GoExport to function properly.
+- [cleanflash](https://web.archive.org/web/20241221081401/https://cdn.cleanflash.org/CleanFlash_34.0.0.308_Installer.exe): CleanFlash 34 on the internet archive. (**Not Included**)
 - [screen-capture-recorder-to-video-windows-free](https://github.com/rdp/screen-capture-recorder-to-video-windows-free/releases/latest): This will capture the display. (**Not Included**)
 - [FFMPEG (GPLv3)](https://github.com/BtbN/FFmpeg-Builds): To record the screen (Included)
 > This project uses FFmpeg, which can be licensed under the LGPLv2.1, LGPLv3, or GPL. Make sure to check the license before using it. The FFmpeg binaries are included in the project and are licensed under the GPLv3.
