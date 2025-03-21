@@ -1,10 +1,8 @@
 import helpers
 import subprocess
-import time
 import atexit
 import signal
 from modules.logger import logger
-
 
 class Capture:
     def __init__(self):
@@ -68,7 +66,7 @@ class Capture:
                 self.start_time = helpers.get_timestamp("FFmpeg started")
                 break
             offset = helpers.get_timestamp("FFmpeg starting")
-
+        
         self.startup_delay = self.start_time - offset
 
         return True
