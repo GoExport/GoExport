@@ -23,11 +23,13 @@ class Controller:
 
         # Set the LVM
         service = Prompt.ask("[bold red]Required:[/bold red] Please select your desired LVM", choices=options, default=options[0])
+        logger.info(f"User chose {service}")
         service_data = AVAILABLE_SERVICES[service]
 
         # Set the resolution
         if self.resolution is None:
             self.resolution = Prompt.ask("[bold red]Required:[/bold red] Please select your desired resolution", choices=list(helpers.get_config("AVAILABLE_SIZES").keys()), default="1280x720")
+            logger.info(f"User chose {self.resolution}")
             self.width, self.height, self.widescreen = helpers.get_config("AVAILABLE_SIZES")[self.resolution]
 
         self.svr_name = service_data["name"]
@@ -38,11 +40,13 @@ class Controller:
         # Asks if the user wants automated editing
         if self.auto_edit is None:
             self.auto_edit = Confirm.ask("Would you like to enable automated editing? (Auto editing may not be perfect and may introduce issues)", default=False)
+            logger.info(f"User chose to enable auto editing: {self.auto_edit}")
 
         # Required: Owner Id
         if 'movieOwnerId' in self.svr_required:
             while True:
                 self.ownerid = IntPrompt.ask("[bold red]Required:[/bold red] Please enter the owner ID")
+                logger.info(f"User entered owner ID: {self.ownerid}")
                 if self.ownerid:
                     break
                 print("[bold red]Error:[/bold red] Owner ID cannot be empty. Please enter a valid owner ID.")
@@ -53,6 +57,7 @@ class Controller:
         if 'movieId' in self.svr_required:
             while True:
                 self.movieid = Prompt.ask("[bold red]Required:[/bold red] Please enter the movie ID")
+                logger.info(f"User entered movie ID: {self.movieid}")
                 if self.movieid:
                     break
                 print("[bold red]Error:[/bold red] Movie ID cannot be empty. Please enter a valid movie ID.")
