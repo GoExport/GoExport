@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Remove all files in the data directory except .gitkeep
-find data/* ! -name '.gitkeep' -type f -exec rm -f {} +
+find data/* ! -name '.gitignore' -type f -exec rm -f {} +
 
 # Remove all files in the dist directory
 rm -rf dist/*

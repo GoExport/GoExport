@@ -1,5 +1,5 @@
 @echo off
-for %%f in (data\*) do if not "%%~nxf"==".gitkeep" del /Q "%%f"
+for %%f in (data\*) do if not "%%~nxf"==".gitignore" del /Q "%%f"
 rmdir /S /Q dist
 pyinstaller --onefile --name "GoExport" --icon ./assets/icon.png ^
  --add-data "data;data" --add-data "dependencies;dependencies" --add-data "assets;assets" ^
