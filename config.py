@@ -1,6 +1,6 @@
 # Configuration
 APP_NAME = "GoExport"
-APP_VERSION = "0.3.1"
+APP_VERSION = "0.4.0"
 DEFAULT_DEPENDENCIES_FILENAME = "dependencies"
 DEFAULT_OUTPUT_FILENAME = "data"
 DEFAULT_ASSETS_FILENAME = "assets"
@@ -66,6 +66,7 @@ PATH_FFPLAY = [DEFAULT_DEPENDENCIES_FILENAME, "ffmpeg", "bin", "ffplay.exe"]
 PATH_CHROMIUM = [DEFAULT_DEPENDENCIES_FILENAME, "ungoogled-chromium", "chrome.exe"]
 PATH_CHROMEDRIVER = [DEFAULT_DEPENDENCIES_FILENAME, "chromedriver", "chromedriver.exe"]
 PATH_SCREEN_RECORDER = ["Program Files (x86)", "Screen Capturer Recorder", "unins000.exe"]
+PATH_FLASH = ["Program Files (x86)", "Flash Player", "FlashUtil_Uninstall.exe"]
 
 # Development Settings
 DEBUG_MODE = False
