@@ -7,7 +7,6 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support.wait import WebDriverWait
 import urllib
-import time
 
 class Interface:
     def __init__(self):
@@ -30,7 +29,7 @@ class Interface:
     def start(self):
         """Initializes and starts the Selenium WebDriver."""
         self.driver = webdriver.Chrome(options=self.options, service=self.service)
-        time.sleep(5) # Show message
+        helpers.wait(5)
         return True
     
     def close(self):
@@ -47,13 +46,13 @@ class Interface:
         for _ in range(19):
             actions.send_keys(Keys.TAB)
             actions.perform()
-            time.sleep(0.1)
+            helpers.wait(0.1)
         actions.send_keys(Keys.SPACE)
         actions.perform()
-        time.sleep(0.5)
+        helpers.wait(0.5)
         actions.send_keys(Keys.ARROW_DOWN)
         actions.perform()
-        time.sleep(0.5)
+        helpers.wait(0.5)
         actions.send_keys(Keys.ENTER)
         actions.perform()
         self.tried = True
