@@ -125,6 +125,12 @@ def get_user_folder(folder: str):
     else:
         return None
 
+def get_app_folder():
+    if is_frozen():
+        return os.path.dirname(sys.executable)
+    else:
+        return get_cwd()
+
 def get_config(variable: str):
     return getattr(config, variable, None)
 

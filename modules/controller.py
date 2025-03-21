@@ -172,9 +172,9 @@ class Controller:
     def final(self, outro=True):
         # Add the outro
         if self.widescreen and outro:
-            self.editor.add_clip(helpers.get_path(None, helpers.get_config("OUTRO_WIDE")), len(self.editor.clips))
+            self.editor.add_clip(helpers.get_path(helpers.get_app_folder(), helpers.get_config("OUTRO_WIDE")), len(self.editor.clips))
         elif not self.widescreen and outro:
-            self.editor.add_clip(helpers.get_path(None, helpers.get_config("OUTRO_STANDARD")), len(self.editor.clips))
+            self.editor.add_clip(helpers.get_path(helpers.get_app_folder(), helpers.get_config("OUTRO_STANDARD")), len(self.editor.clips))
 
         # Render the video
         self.editor.render(self.RECORDING_EDITED)

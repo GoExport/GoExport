@@ -20,7 +20,7 @@ class Interface:
         self.options.add_argument("force-device-scale-factor=1")
         self.options.add_argument("--high-dpi-support=1")
         self.options.add_argument("--kiosk")
-        self.options.add_argument(f"--app={helpers.convert_to_file_url(helpers.get_path(None, helpers.get_config("DEFAULT_ASSETS_FILENAME"), "start.html"))}")
+        self.options.add_argument(f"--app={helpers.convert_to_file_url(helpers.get_path(helpers.get_app_folder(), helpers.get_config("DEFAULT_ASSETS_FILENAME"), "start.html"))}")
         self.options.add_experimental_option("excludeSwitches", ["enable-automation"])
         self.options.binary_location = chromium
         self.service = Service(executable_path=chromedriver)
