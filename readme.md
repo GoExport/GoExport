@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/logo.webp" alt="Logo">
+  <img src="assets/logo.svg" alt="Logo">
 </p>
 
 Welcome to GoExport, with this tool, you can export your videos for Wrapper Offline and FlashThemes.
