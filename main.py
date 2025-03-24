@@ -23,7 +23,7 @@ def main():
     logger.info("Please wait while we verify dependencies")
     if not compatibility.test():
         logger.fatal("You did not pass the compatibility check")
-        exit(1)
+        return False
     logger.info("You passed the compatibility check")
 
     # Welcome message
@@ -32,7 +32,7 @@ def main():
     while True:
         if not controller.setup():
             logger.fatal("Unable to complete setup")
-            exit(1)
+            return False
         
         if not controller.export():
             logger.fatal("Unable to export video")
@@ -91,4 +91,3 @@ def main():
 if __name__ == '__main__':
     if not main():
         logger.fatal("The application failed to finish")
-        exit(1)
