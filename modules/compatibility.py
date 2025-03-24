@@ -114,8 +114,15 @@ class Compatibility:
             if not helpers.try_path(recorder):
                 logger.error(f"Failed to locate {recorder}")
                 return False
-        elif helpers.os_is_linux():
-            logger.warning("Screen Recorder unsupported - using x11grab")
+
+            # Verify validity of direct drivers
+            if not helpers.find_directshow_device("screen-capture-recorder", False):
+                logger.error(f"Failed to validate {recorder} (cannot find video capture device)")
+                return False
+            
+            if not helpers.find_directshow_device("virtual-audio-capturer", True):
+                logger.error(f"Failed to validate {recorder} (cannot find audio capture device)")
+                return False
         else:
             logger.error("Unsupported OS")
             return False
