@@ -15,6 +15,17 @@ import requests
 from modules.logger import logger
 from datetime import datetime
 from datetime import timedelta
+from pygrabber.dshow_graph import FilterGraph
+
+def remember(key: str, value):
+    setattr(remember, key, value)
+
+def recall(key: str):
+    return getattr(remember, key, None)
+
+def forget(key: str):
+    if hasattr(remember, key):
+        delattr(remember, key)
 
 def os_is_windows():
     return sys.platform.startswith("win")
@@ -231,6 +242,25 @@ def try_command(*input):
     except Exception as e:
         logger.error("An unexpected error occurred: %s", e)
         return False
+
+def list_directshow_devices():
+    graph = FilterGraph()
+    devices = graph.get_input_devices()
+    audio_devices = graph.get_audio_devices()
+    return devices, audio_devices
+
+def find_directshow_device(device_name: str, is_audio: bool = False):
+    graph = FilterGraph()
+    if is_audio:
+        devices = graph.get_audio_devices()
+    else:
+        devices = graph.get_input_devices()
+
+    for idx, device in enumerate(devices):
+        if device_name.lower() in device.lower():  # Case-insensitive search
+            return idx, device
+
+    return False
 
 # (Super precise) Timestamp generator in milliseconds unix time
 def get_timestamp(msg: str = None):
