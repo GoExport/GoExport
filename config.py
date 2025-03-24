@@ -6,6 +6,8 @@ DEFAULT_OUTPUT_FILENAME = "data"
 DEFAULT_ASSETS_FILENAME = "assets"
 DEFAULT_OUTROS_FILENAME = "outro"
 DEFAULT_OUTPUT_EXTENSION = ".mp4"
+DEFAULT_VIDEO_CAPTURE = "screen-capture-recorder"
+DEFAULT_AUDIO_CAPTURE = "virtual-audio-capturer"
 
 AVAILABLE_SIZES = {
     # 4:3

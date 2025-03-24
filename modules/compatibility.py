@@ -116,11 +116,11 @@ class Compatibility:
                 return False
 
             # Verify validity of direct drivers
-            if not helpers.find_directshow_device("screen-capture-recorder", False):
+            if not helpers.find_directshow_device(helpers.get_config("DEFAULT_VIDEO_CAPTURE"), False):
                 logger.error(f"Failed to validate {recorder} (cannot find video capture device)")
                 return False
             
-            if not helpers.find_directshow_device("virtual-audio-capturer", True):
+            if not helpers.find_directshow_device(helpers.get_config("DEFAULT_AUDIO_CAPTURE"), True):
                 logger.error(f"Failed to validate {recorder} (cannot find audio capture device)")
                 return False
         else:
