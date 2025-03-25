@@ -2,6 +2,7 @@ import helpers
 from modules.compatibility import Compatibility
 from modules.controller import Controller
 from modules.logger import logger
+from modules.parameters import Parameters
 from rich.prompt import Confirm
 from rich import print
 
@@ -18,6 +19,7 @@ def main():
     # Initalize classes
     compatibility = Compatibility()
     controller = Controller()
+    parameters = Parameters()
 
     # Run inital compatibility check
     logger.info("Please wait while we verify dependencies")
@@ -40,7 +42,12 @@ def main():
 
         # Ask if user wants to continue
         print("[blue]Adding an additional video will allow you to merge multiple videos together. This is useful if you want to combine multiple videos into one or you've got a multipart series.")
-        continue_prompt = Confirm.ask("Would you like to add an additional video?", default=False)
+        
+        # If no input is enabled, skip this question and default to false
+        if not parameters.no_input:
+            continue_prompt = Confirm.ask("Would you like to add an additional video?", default=False)
+        else:
+            continue_prompt = False
         logger.info(f"User chose to continue: {continue_prompt}")
 
         if not continue_prompt:
@@ -48,7 +55,10 @@ def main():
 
     # Ask if user wants to include the outro
     if controller.auto_edit:
-        confirm_outro = Confirm.ask("Would you like to include the outro for GoExport?", default=True)
+        if not parameters.no_input:
+            confirm_outro = Confirm.ask("Would you like to include the outro for GoExport?", default=True)
+        else:
+            confirm_outro = True
         logger.info(f"User chose to include the outro: {confirm_outro}")
 
         if not controller.final(confirm_outro):
@@ -57,7 +67,11 @@ def main():
         
         print(f"[green]Your video has been successfully exported! [blue bold]It is located at {controller.RECORDING_EDITED}")
     else:
-        confirm_outro = Confirm.ask("Would you like to add the outro for GoExport to your project folder?", default=True)
+        if not parameters.no_input:
+            confirm_outro = Confirm.ask("Would you like to add the outro for GoExport to your project folder?", default=True)
+        else:
+            confirm_outro = True
+        logger.info(f"User chose to include the outro: {confirm_outro}")
 
         # Copy the outro to the project folder
         if confirm_outro and controller.widescreen:
@@ -71,7 +85,10 @@ def main():
 
     if not controller.auto_edit:
         # Ask if user wants to open the folder
-        open_folder = Confirm.ask("Would you like to open the folder containing the video?", default=True)
+        if not parameters.no_input:
+            open_folder = Confirm.ask("Would you like to open the folder containing the video?", default=True)
+        else:
+            open_folder = True
         logger.info(f"User chose to open the folder: {open_folder}")
         if open_folder:
             helpers.open_folder(controller.PROJECT_FOLDER)
@@ -81,10 +98,12 @@ def main():
         print("[blue]If you need a video editor, consider OpenShot Video Editor. It's a free and open-source option available for download [link=https://www.openshot.org/download/]here[/link]. Alternatively, you can use any video editor of your choice. [italic](Not sponsored by OpenShot)[/italic]")
 
     # Disclaimer
-    disclaimer()
+    if not parameters.no_input:
+        disclaimer()
 
     # Sleep for a bit
-    helpers.wait(5)
+    if not parameters.no_input:
+        helpers.wait(5)
 
     return True
 

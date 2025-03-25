@@ -2,6 +2,7 @@ import helpers
 from modules.editor import Editor
 from modules.navigator import Interface
 from modules.capture import Capture
+from modules.parameters import Parameters
 from rich.prompt import Prompt, IntPrompt, FloatPrompt, Confirm
 from rich import print
 from modules.logger import logger
@@ -11,6 +12,7 @@ class Controller:
         self.browser = Interface()
         self.editor = Editor()
         self.capture = Capture()
+        self.parameters = Parameters()
         self.resolution = None
         self.auto_edit = None
         self.PROJECT_FOLDER = None  
@@ -22,13 +24,23 @@ class Controller:
         options = list(AVAILABLE_SERVICES.keys())
 
         # Set the LVM
-        service = Prompt.ask("[bold red]Required:[/bold red] Please select your desired LVM", choices=options, default=options[0])
+        if not self.parameters.no_input:
+            service = Prompt.ask("[bold red]Required:[/bold red] Please select your desired LVM", choices=options, default=options[0])
+        else:
+            service = self.parameters.service
+        if service not in options:
+            raise ValueError(f"Invalid service: {service}")
         logger.info(f"User chose {service}")
         service_data = AVAILABLE_SERVICES[service]
 
         # Set the resolution
         if self.resolution is None:
-            self.resolution = Prompt.ask("[bold red]Required:[/bold red] Please select your desired resolution", choices=list(helpers.get_config("AVAILABLE_SIZES").keys()), default="1280x720")
+            if not self.parameters.no_input:
+                self.resolution = Prompt.ask("[bold red]Required:[/bold red] Please select your desired resolution", choices=list(helpers.get_config("AVAILABLE_SIZES").keys()), default="1280x720")
+            else:
+                self.resolution = self.parameters.resolution
+            if self.resolution not in helpers.get_config("AVAILABLE_SIZES"):
+                raise ValueError(f"Invalid resolution: {self.resolution}")
             logger.info(f"User chose {self.resolution}")
             self.width, self.height, self.widescreen = helpers.get_config("AVAILABLE_SIZES")[self.resolution]
 
@@ -39,13 +51,19 @@ class Controller:
 
         # Asks if the user wants automated editing
         if self.auto_edit is None:
-            self.auto_edit = Confirm.ask("Would you like to enable automated editing? (Auto editing may not be perfect and may introduce issues)", default=False)
+            if not self.parameters.no_input:
+                self.auto_edit = Confirm.ask("Would you like to enable automated editing? (Auto editing is in beta and may not be perfect!)", default=True)
+            else:
+                self.auto_edit = self.parameters.auto_edit or True
             logger.info(f"User chose to enable auto editing: {self.auto_edit}")
 
         # Required: Owner Id
         if 'movieOwnerId' in self.svr_required:
             while True:
-                self.ownerid = IntPrompt.ask("[bold red]Required:[/bold red] Please enter the owner ID")
+                if not self.parameters.no_input:
+                    self.ownerid = IntPrompt.ask("[bold red]Required:[/bold red] Please enter the owner ID")
+                else:
+                    self.ownerid = self.parameters.owner_id
                 logger.info(f"User entered owner ID: {self.ownerid}")
                 if self.ownerid:
                     break
@@ -56,7 +74,10 @@ class Controller:
         # Required: Movie Id
         if 'movieId' in self.svr_required:
             while True:
-                self.movieid = Prompt.ask("[bold red]Required:[/bold red] Please enter the movie ID")
+                if not self.parameters.no_input:
+                    self.movieid = Prompt.ask("[bold red]Required:[/bold red] Please enter the movie ID")
+                else:
+                    self.movieid = self.parameters.movie_id
                 logger.info(f"User entered movie ID: {self.movieid}")
                 if self.movieid:
                     break
