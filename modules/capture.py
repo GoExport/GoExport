@@ -48,6 +48,9 @@ class Capture:
         else:
             logger.error("Unsupported OS")
             return False
+        
+        # Post the command to the console (convert the list to a string)
+        logger.info("FFMPEG command: " + " ".join(command))
 
         self.process = subprocess.Popen(
             command,
