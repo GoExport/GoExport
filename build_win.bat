@@ -9,4 +9,6 @@ pyinstaller --onefile --name "GoExport" --icon ./assets/icon.png ^
  .\main.py
 copy readme.md dist\
 copy LICENSE dist\
+copy uninstall.bat dist\
 xcopy assets dist\assets /E /I /Q /Y
+xcopy libs dist\libs /E /I /Q /Y
