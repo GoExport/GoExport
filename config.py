@@ -2,12 +2,11 @@
 APP_NAME = "GoExport"
 APP_VERSION = "0.4.2"
 DEFAULT_DEPENDENCIES_FILENAME = "dependencies"
+DEFAULT_LIBS_FILENAME = "libs"
 DEFAULT_OUTPUT_FILENAME = "data"
 DEFAULT_ASSETS_FILENAME = "assets"
 DEFAULT_OUTROS_FILENAME = "outro"
 DEFAULT_OUTPUT_EXTENSION = ".mp4"
-DEFAULT_VIDEO_CAPTURE = "screen-capture-recorder"
-DEFAULT_AUDIO_CAPTURE = "virtual-audio-capturer"
 
 AVAILABLE_SIZES = {
     # 4:3
@@ -67,7 +66,10 @@ PATH_FFPROBE = [DEFAULT_DEPENDENCIES_FILENAME, "ffmpeg", "bin", "ffprobe.exe"]
 PATH_FFPLAY = [DEFAULT_DEPENDENCIES_FILENAME, "ffmpeg", "bin", "ffplay.exe"]
 PATH_CHROMIUM = [DEFAULT_DEPENDENCIES_FILENAME, "ungoogled-chromium", "chrome.exe"]
 PATH_CHROMEDRIVER = [DEFAULT_DEPENDENCIES_FILENAME, "chromedriver", "chromedriver.exe"]
-PATH_SCREEN_RECORDER = ["Program Files (x86)", "Screen Capturer Recorder", "unins000.exe"]
+PATH_LIBS_RECORD_64 = [DEFAULT_LIBS_FILENAME, "screen-capture-recorder-x64.dll"]
+PATH_LIBS_RECORD_32 = [DEFAULT_LIBS_FILENAME, "screen-capture-recorder.dll"]
+PATH_LIBS_AUDIO_64 = [DEFAULT_LIBS_FILENAME, "audio_sniffer-x64.dll"]
+PATH_LIBS_AUDIO_32 = [DEFAULT_LIBS_FILENAME, "audio_sniffer.dll"]
 PATH_FLASH = ["Program Files (x86)", "Flash Player", "FlashUtil_Uninstall.exe"]
 
 # Development Settings
