@@ -41,8 +41,10 @@ class Capture:
                 "video=screen-capture-recorder:audio=virtual-audio-capturer",
                 "-r",
                 "24",
+                "-vsync",
+                "vfr",
                 "-vf",
-                f"crop={width}:{height}:0:0,format=yuv444p",
+                f"crop={width}:{height}:0:0,format=yuv420p",
                 output,
             ]
         else:
