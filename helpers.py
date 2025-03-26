@@ -39,6 +39,12 @@ def os_is_mac():
 def is_frozen():
     return getattr(sys, 'frozen', False)
 
+def is_admin():
+    try:
+        return ctypes.windll.shell32.IsUserAnAdmin()
+    except AttributeError:
+        return False
+
 def get_arch():
     return platform.machine()
 
@@ -190,6 +196,15 @@ def move_file(src, dst):
             logger.error(f"Failed to move {src} to {dst}: {e}")
             return False
 
+def create_file(path):
+    try:
+        with open(path, "w"):
+            pass
+        return True
+    except Exception as e:
+        logger.error(f"Failed to create file {path}: {e}")
+        return False
+
 def get_url(*parts):
     # Flatten lists/tuples in parts
     flattened_parts = []
@@ -284,3 +299,11 @@ def post_request(url: str, data: dict):
 # Convert string to filename safe string
 def to_filename_safe(string):
     return "".join([c for c in string if c.isalpha() or c.isdigit() or c in [" ", "-", "_", "."]]).rstrip()
+
+# Check if a DLL is loadable
+def is_dll_loadable(dll_path):
+    try:
+        ctypes.WinDLL(dll_path)
+        return True  # DLL loaded successfully
+    except OSError:
+        return False  # DLL not found or not registered

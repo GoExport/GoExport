@@ -7,6 +7,33 @@ class Compatibility:
         pass
 
     def test(self) -> bool:
+        if helpers.is_frozen():
+            # Check existence of "first_run" file
+            if not helpers.try_path(helpers.get_path(helpers.get_app_folder(), "first_run")):
+                # Check if running as admin
+                if not helpers.is_admin():
+                    logger.error("First time setup detected - please run as administrator!")
+                    return False
+                else:
+                    # Register dll
+                    if not helpers.try_command("regsvr32", "/s", helpers.get_path(helpers.get_app_folder(), helpers.get_config('PATH_LIBS_RECORD_64'))):
+                        logger.error("Could not install required dependencies!")
+                        return False
+                    if not helpers.try_command("regsvr32", "/s", helpers.get_path(helpers.get_app_folder(), helpers.get_config('PATH_LIBS_RECORD_32'))):
+                        logger.error("Could not install required dependencies!")
+                        return False
+                    if not helpers.try_command("regsvr32", "/s", helpers.get_path(helpers.get_app_folder(), helpers.get_config('PATH_LIBS_AUDIO_64'))):
+                        logger.error("Could not install required dependencies!")
+                        return False
+                    if not helpers.try_command("regsvr32", "/s", helpers.get_path(helpers.get_app_folder(), helpers.get_config('PATH_LIBS_AUDIO_32'))):
+                        logger.error("Could not install required dependencies!")
+                        return False
+
+                    # Create "first_run" file
+                    helpers.create_file(helpers.get_path(helpers.get_app_folder(), "first_run"))
+
+                    logger.info("First time setup complete!")
+
         # Skip compatibility test
         if helpers.get_config("SKIP_COMPAT"):
             return True
@@ -104,27 +131,6 @@ class Compatibility:
         # Verify validity of Chromedriver
         if not helpers.try_command(chromedriver, '-v'):
             logger.error(f"Failed to validate {chromedriver}")
-            return False
-
-        if helpers.os_is_windows():
-            # Gather direct drivers
-            recorder = helpers.get_path("C:\\", helpers.get_config("PATH_SCREEN_RECORDER"))
-
-            # Check for direct drivers
-            if not helpers.try_path(recorder):
-                logger.error(f"Failed to locate {recorder}")
-                return False
-
-            # Verify validity of direct drivers
-            if not helpers.find_directshow_device(helpers.get_config("DEFAULT_VIDEO_CAPTURE"), False):
-                logger.error(f"Failed to validate {recorder} (cannot find video capture device)")
-                return False
-            
-            if not helpers.find_directshow_device(helpers.get_config("DEFAULT_AUDIO_CAPTURE"), True):
-                logger.error(f"Failed to validate {recorder} (cannot find audio capture device)")
-                return False
-        else:
-            logger.error("Unsupported OS")
             return False
 
         return True

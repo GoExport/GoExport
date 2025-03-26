@@ -1,6 +1,5 @@
 import helpers
 import subprocess
-import threading
 import atexit
 import signal
 from modules.logger import logger
@@ -41,8 +40,6 @@ class Capture:
                 "video=screen-capture-recorder:audio=virtual-audio-capturer",
                 "-r",
                 "24",
-                "-vsync",
-                "vfr",
                 "-vf",
                 f"crop={width}:{height}:0:0,format=yuv420p",
                 output,
@@ -50,9 +47,6 @@ class Capture:
         else:
             logger.error("Unsupported OS")
             return False
-        
-        # Post the command to the console (convert the list to a string)
-        logger.info("FFMPEG command: " + " ".join(command))
 
         self.process = subprocess.Popen(
             command,
@@ -65,27 +59,14 @@ class Capture:
             universal_newlines=True,
         )
 
-        def monitor_ffmpeg():
-            for line in self.process.stdout:
-                print(line, end="")  # Print FFmpeg output to console
-                if "Error" in line or "Invalid" in line or "failed" in line.lower():
-                    logger.critical(f"FFmpeg encountered an issue: {line.strip()}")
-
-            # If the process unexpectedly stops
-            self.process.wait()
-            if self.process.returncode not in (0, None):
-                logger.critical(f"FFmpeg stopped unexpectedly with code {self.process.returncode}")
-
-        # Start monitoring in a separate thread
-        threading.Thread(target=monitor_ffmpeg, daemon=True).start()
-
         # Wait for FFmpeg to start
         for line in self.process.stdout:
+            # Check if FFmpeg has started
             if "Output #0" in line:
                 self.start_time = helpers.get_timestamp("FFmpeg started")
                 break
             offset = helpers.get_timestamp("FFmpeg starting")
-
+        
         self.startup_delay = self.start_time - offset
 
         return True
