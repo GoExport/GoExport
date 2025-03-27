@@ -6,6 +6,10 @@ from modules.logger import logger
 
 class Capture:
     def __init__(self):
+        self.start_time = None
+        self.end_time = None
+        self.startup_delay = None
+        self.ended_delay = None
         self.process = None
         atexit.register(self.cleanup)
         for sig in (signal.SIGINT, signal.SIGTERM, signal.SIGABRT):
@@ -67,6 +71,11 @@ class Capture:
                 break
             offset = helpers.get_timestamp("FFmpeg starting")
         
+        if not self.start_time:
+            logger.error("Failed to start FFmpeg")
+            helpers.show_popup(helpers.get_config("APP_NAME"), f"Unable to start screen recording - YOU MAY NOT BE COMPATIBLE.", 16)
+            return False
+
         self.startup_delay = self.start_time - offset
 
         return True
