@@ -108,22 +108,7 @@ class Compatibility:
         
         # FFMPEG recording test
         if helpers.os_is_windows():
-            command = [
-                helpers.get_path(None, helpers.get_config("PATH_FFMPEG")),
-                "-y",
-                "-f",
-                "dshow",
-                "-i",
-                "video=screen-capture-recorder:audio=virtual-audio-capturer",
-                "-r",
-                "24",
-                "-t",
-                "3",
-                "-f",
-                "null",
-                "-"
-            ]
-            if not helpers.try_command(helpers.flatten_list(command)):
+            if not helpers.try_command(ffmpeg, "-f", "dshow", "-i", "video=screen-capture-recorder:audio=virtual-audio-capturer", "-r", "24", "-t", "3", "-f", "null", "-"):
                 logger.error("FFMPEG test failed - compatibility enabled")
                 helpers.remember("FFMPEG_COMPATIBILITY", True)
         
