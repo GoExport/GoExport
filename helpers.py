@@ -258,24 +258,9 @@ def try_command(*input):
         logger.error("An unexpected error occurred: %s", e)
         return False
 
-def list_directshow_devices():
-    graph = FilterGraph()
-    devices = graph.get_input_devices()
-    audio_devices = graph.get_audio_devices()
-    return devices, audio_devices
-
-def find_directshow_device(device_name: str, is_audio: bool = False):
-    graph = FilterGraph()
-    if is_audio:
-        devices = graph.get_audio_devices()
-    else:
-        devices = graph.get_input_devices()
-
-    for idx, device in enumerate(devices):
-        if device_name.lower() in device.lower():  # Case-insensitive search
-            return idx, device
-
-    return False
+# Flatten a list to string
+def flatten_list(input):
+    return " ".join(input)
 
 def show_popup(title: str, message: str, type: int = 0):
     if os_is_windows():
