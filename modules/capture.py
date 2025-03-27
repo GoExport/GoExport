@@ -35,19 +35,40 @@ class Capture:
 
     def start(self, output: str, width: int, height: int):
         if helpers.os_is_windows():
-            command = [
-                helpers.get_path(None, helpers.get_config("PATH_FFMPEG")),
-                "-y",
-                "-f",
-                "dshow",
-                "-i",
-                "video=screen-capture-recorder:audio=virtual-audio-capturer",
-                "-r",
-                "24",
-                "-vf",
-                f"crop={width}:{height}:0:0,format=yuv420p",
-                output,
-            ]
+            if not helpers.recall("FFMPEG_COMPATIBILITY"):
+                command = [
+                    helpers.get_path(None, helpers.get_config("PATH_FFMPEG")),
+                    "-y",
+                    "-f",
+                    "dshow",
+                    "-i",
+                    "video=screen-capture-recorder:audio=virtual-audio-capturer",
+                    "-r",
+                    "24",
+                    "-vf",
+                    f"crop={width}:{height}:0:0,format=yuv420p",
+                    output,
+                ]
+            else:
+                command = [
+                    helpers.get_path(None, helpers.get_config("PATH_FFMPEG")),
+                    "-y",
+                    "-f",
+                    "gdigrab",
+                    "-framerate",
+                    "24",
+                    "-offset_x",
+                    "0",
+                    "-offset_y",
+                    "0",
+                    "-video_size",
+                    f"{width}x{height}",
+                    "-i",
+                    "desktop",
+                    "-vf",
+                    "format=yuv420p",
+                    output,
+                ]
         else:
             logger.error("Unsupported OS")
             return False
@@ -69,6 +90,7 @@ class Capture:
             if "Output #0" in line:
                 self.start_time = helpers.get_timestamp("FFmpeg started")
                 break
+            logger.debug(line)
             offset = helpers.get_timestamp("FFmpeg starting")
         
         if not self.start_time:
