@@ -277,6 +277,14 @@ def find_directshow_device(device_name: str, is_audio: bool = False):
 
     return False
 
+def show_popup(title: str, message: str, type: int = 0):
+    if os_is_windows():
+        ctypes.windll.user32.MessageBoxW(None, message, title, type)
+    elif os_is_linux():
+        subprocess.run(["zenity", "--info", "--title", title, "--text", message])
+    else:
+        logger.error("Unsupported OS")
+
 # (Super precise) Timestamp generator in milliseconds unix time
 def get_timestamp(msg: str = None):
     timestamp = time.time_ns() // 1_000_000
