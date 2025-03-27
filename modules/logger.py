@@ -1,3 +1,4 @@
+import helpers
 import logging
 import config
 import os
@@ -32,6 +33,7 @@ def log_exception(exc_type, exc_value, exc_tb):
     
     # Log the exception and traceback to both terminal and file
     logger.error(f"Exception occurred:\n{tb_str}")
+    helpers.show_popup("Exception occurred", tb_str, 16)
 
 # Set the custom exception hook to log uncaught exceptions
 sys.excepthook = log_exception
