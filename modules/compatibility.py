@@ -13,6 +13,7 @@ class Compatibility:
                 # Check if running as admin
                 if not helpers.is_admin():
                     logger.error("First time setup detected - please run as administrator!")
+                    helpers.show_popup(helpers.get_config("APP_NAME"), "Installation failed - please run as administrator!", 16)
                     return False
                 else:
                     # Register dll
@@ -104,6 +105,27 @@ class Compatibility:
         if not helpers.try_command(ffplay, '-h'):
             logger.error(f"Failed to validate {ffplay}")
             return False
+        
+        # FFMPEG recording test
+        if helpers.os_is_windows():
+            command = [
+                helpers.get_path(None, helpers.get_config("PATH_FFMPEG")),
+                "-y",
+                "-f",
+                "dshow",
+                "-i",
+                "video=screen-capture-recorder:audio=virtual-audio-capturer",
+                "-r",
+                "24",
+                "-t",
+                "3",
+                "-f",
+                "null",
+                "-"
+            ]
+            if not helpers.try_command(helpers.flatten_list(command)):
+                logger.error("FFMPEG test failed - compatibility enabled")
+                helpers.remember("FFMPEG_COMPATIBILITY", True)
         
         # Gather Chromium
         chromium = helpers.get_path(None, helpers.get_config("PATH_CHROMIUM"))
