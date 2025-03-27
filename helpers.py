@@ -258,9 +258,9 @@ def try_command(*input):
         logger.error("An unexpected error occurred: %s", e)
         return False
 
-# Flatten a list to string
+# Convert a list to a tuple
 def flatten_list(input):
-    return " ".join(input)
+    return tuple([str(i) for i in input])
 
 def show_popup(title: str, message: str, type: int = 0):
     if os_is_windows():
