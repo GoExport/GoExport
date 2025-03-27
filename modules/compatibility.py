@@ -16,23 +16,16 @@ class Compatibility:
                     return False
                 else:
                     # Register dll
-                    if not helpers.try_command("regsvr32", "/s", helpers.get_path(helpers.get_app_folder(), helpers.get_config('PATH_LIBS_RECORD_64'))):
-                        logger.error("Could not install required dependencies!")
-                        return False
-                    if not helpers.try_command("regsvr32", "/s", helpers.get_path(helpers.get_app_folder(), helpers.get_config('PATH_LIBS_RECORD_32'))):
-                        logger.error("Could not install required dependencies!")
-                        return False
-                    if not helpers.try_command("regsvr32", "/s", helpers.get_path(helpers.get_app_folder(), helpers.get_config('PATH_LIBS_AUDIO_64'))):
-                        logger.error("Could not install required dependencies!")
-                        return False
-                    if not helpers.try_command("regsvr32", "/s", helpers.get_path(helpers.get_app_folder(), helpers.get_config('PATH_LIBS_AUDIO_32'))):
-                        logger.error("Could not install required dependencies!")
-                        return False
+                    helpers.try_command("regsvr32", "/s", helpers.get_path(helpers.get_app_folder(), helpers.get_config('PATH_LIBS_RECORD_64')))
+                    helpers.try_command("regsvr32", "/s", helpers.get_path(helpers.get_app_folder(), helpers.get_config('PATH_LIBS_RECORD_32')))
+                    helpers.try_command("regsvr32", "/s", helpers.get_path(helpers.get_app_folder(), helpers.get_config('PATH_LIBS_AUDIO_64')))
+                    helpers.try_command("regsvr32", "/s", helpers.get_path(helpers.get_app_folder(), helpers.get_config('PATH_LIBS_AUDIO_32')))
 
                     # Create "first_run" file
-                    helpers.create_file(helpers.get_path(helpers.get_app_folder(), "first_run"))
+                    if not helpers.try_path(helpers.get_path(helpers.get_app_folder(), "first_run")):
+                        helpers.create_file(helpers.get_path(helpers.get_app_folder(), "first_run"))
 
-                    logger.info("First time setup complete!")
+                    logger.info("Setup complete!")
 
         # Skip compatibility test
         if helpers.get_config("SKIP_COMPAT"):
