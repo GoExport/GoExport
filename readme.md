@@ -28,9 +28,9 @@ The project may require that you have installed some dependencies to get started
 - [virtual-audio-capture-grabber-device](https://github.com/rdp/virtual-audio-capture-grabber-device): This will capture the audio. (**DLLs included**)
 - [Microsoft Visual C++ Redistributable (x86)](https://aka.ms/vs/17/release/vc_redist.x86.exe): Dependency for the audio capture. (**Not Included**)
 - [Microsoft Visual C++ Redistributable (x64)](https://aka.ms/vs/17/release/vc_redist.x64.exe): Dependency for the audio capture. (**Not Included**)
-- [FFMPEG (GPLv3)](https://github.com/BtbN/FFmpeg-Builds): To record the screen (Included)
+- [FFMPEG (GPLv3)](https://github.com/BtbN/FFmpeg-Builds): To record the screen (**Included**)
 > This project uses FFmpeg, which can be licensed under the LGPLv2.1, LGPLv3, or GPL. Make sure to check the license before using it. The FFmpeg binaries are included in the project and are licensed under the GPLv3.
-- [ungoogled chromium (v87)](https://ungoogled-software.github.io/ungoogled-chromium-binaries/releases/windows/64bit/87.0.4280.141-1): To play the content (Included)
+- [ungoogled chromium (v87)](https://ungoogled-software.github.io/ungoogled-chromium-binaries/releases/windows/64bit/87.0.4280.141-1): To play the content (**Included**)
 > This project uses ungoogled-chromium, which is licensed under the BSD, MIT, and LGPL licenses. The source code for ungoogled-chromium is available at [ungoogled-chromium GitHub repository](https://github.com/ungoogled-software/ungoogled-chromium).
 - [Chromedriver (Apache License 2.0)](https://chromedriver.chromium.org/downloads): To interface with ungoogled-chromium (**Included**).  
 > This project uses Chromedriver, which is licensed under the Apache License 2.0.
