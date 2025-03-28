@@ -26,8 +26,8 @@ The project may require that you have installed some dependencies to get started
 - [cleanflash](https://web.archive.org/web/20241221081401/https://cdn.cleanflash.org/CleanFlash_34.0.0.308_Installer.exe): CleanFlash 34 on the internet archive. (**Not Included**)
 - [screen-capture-recorder-to-video-windows-free](https://github.com/rdp/screen-capture-recorder-to-video-windows-free/releases/latest): This will capture the display. (**DLLs included**)
 - [virtual-audio-capture-grabber-device](https://github.com/rdp/virtual-audio-capture-grabber-device): This will capture the audio. (**DLLs included**)
-- [Microsoft Visual C++ Redistributable (x86)](https://aka.ms/vs/17/release/vc_redist.x86.exe): Dependency for the audio capture. (**Not Included**)
-- [Microsoft Visual C++ Redistributable (x64)](https://aka.ms/vs/17/release/vc_redist.x64.exe): Dependency for the audio capture. (**Not Included**)
+- [Microsoft Visual C++ Redistributable (x86)](https://aka.ms/vs/17/release/vc_redist.x86.exe): Required for audio capture. (**Not Included**) (Only needed for x86 (32-bit) Windows systems).
+- [Microsoft Visual C++ Redistributable (x64)](https://aka.ms/vs/17/release/vc_redist.x64.exe): Required for audio capture. (**Not Included**) (Only needed for x64 Windows systems).
 - [FFMPEG (GPLv3)](https://github.com/BtbN/FFmpeg-Builds): To record the screen (**Included**)
 > This project uses FFmpeg, which can be licensed under the LGPLv2.1, LGPLv3, or GPL. Make sure to check the license before using it. The FFmpeg binaries are included in the project and are licensed under the GPLv3.
 - [ungoogled chromium (v87)](https://ungoogled-software.github.io/ungoogled-chromium-binaries/releases/windows/64bit/87.0.4280.141-1): To play the content (**Included**)
