@@ -160,16 +160,12 @@ class Controller:
             
             # Calculate the starting and ending times for the clip
             started = self.prestart_delay + video_started + video_start_offset - self.prestart
-            ended = self.editor.get_clip_length(clip_id) - video_end_offset
 
             # Combine the calculated times
             starting = started
-            ending = ended
-
-            print(f"{starting} : {ending}")
 
             self.start_from = helpers.ms_to_s(starting)
-            self.end_at = helpers.ms_to_s(ending)
+            self.end_at = self.editor.get_clip_length(clip_id)
 
             print(f"{self.start_from} : {self.end_at}")
 
@@ -192,10 +188,14 @@ class Controller:
 
     def final(self, outro=True):
         # Add the outro
-        if self.widescreen and outro:
-            self.editor.add_clip(helpers.get_path(helpers.get_app_folder(), helpers.get_config("OUTRO_WIDE")), len(self.editor.clips))
-        elif not self.widescreen and outro:
-            self.editor.add_clip(helpers.get_path(helpers.get_app_folder(), helpers.get_config("OUTRO_STANDARD")), len(self.editor.clips))
+        # if self.widescreen and outro:
+        #     self.editor.add_clip(helpers.get_path(helpers.get_app_folder(), helpers.get_config("OUTRO_WIDE")), len(self.editor.clips))
+        # elif not self.widescreen and outro:
+        #     self.editor.add_clip(helpers.get_path(helpers.get_app_folder(), helpers.get_config("OUTRO_STANDARD")), len(self.editor.clips))
+
+        # Tell the user about the outro
+        if outro:
+            print(f"[bold yellow]WARNING:[/bold yellow] The outro will not be added to your video as it will break the output. You can either add it manually later, or completely disregard it, we apologize for the inconvenience.")
 
         # Render the video
         self.editor.render(self.RECORDING_EDITED)
