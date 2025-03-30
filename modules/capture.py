@@ -44,9 +44,23 @@ class Capture:
                     "-i",
                     "video=screen-capture-recorder:audio=virtual-audio-capturer",
                     "-r",
-                    "24",
+                    "30",  # Increase frame rate for smoother video
                     "-vf",
                     f"crop={width}:{height}:0:0,format=yuv420p",
+                    "-c:v",
+                    "libx264",  # Use H.264 codec for video
+                    "-preset",
+                    "veryslow",  # Use veryslow preset for better compression
+                    "-crf",
+                    "23",  # Constant Rate Factor for good quality (lower is better, 23 is default)
+                    "-pix_fmt",
+                    "yuv420p",  # Ensure compatibility with most players
+                    "-c:a",
+                    "aac",  # Use AAC codec for audio
+                    "-b:a",
+                    "128k",  # Set audio bitrate to ensure good quality
+                    "-ar",
+                    "44100",  # Set audio sample rate to avoid bass boosting or distortion
                     output,
                 ]
             else:
