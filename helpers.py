@@ -18,12 +18,15 @@ from datetime import timedelta
 from pygrabber.dshow_graph import FilterGraph
 
 def remember(key: str, value):
+    logger.debug(f"Remembering {key} as {value}")
     setattr(remember, key, value)
 
 def recall(key: str):
+    logger.debug(f"Recalling {key}")
     return getattr(remember, key, None)
 
 def forget(key: str):
+    logger.debug(f"Forgetting {key}")
     if hasattr(remember, key):
         delattr(remember, key)
 
