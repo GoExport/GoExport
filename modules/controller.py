@@ -43,6 +43,8 @@ class Controller:
                 raise ValueError(f"Invalid resolution: {self.resolution}")
             logger.info(f"User chose {self.resolution}")
             self.width, self.height, self.widescreen = helpers.get_config("AVAILABLE_SIZES")[self.resolution]
+            if self.width > 1280 and self.height > 720:
+                print("[bold yellow]Warning: The resolution you have selected is higher than 720p. This may cause issues with the recording. Please ensure your system can handle this resolution.")
 
         self.svr_name = service_data["name"]
         self.svr_domain = service_data.get("domain", [])
