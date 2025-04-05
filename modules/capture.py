@@ -43,14 +43,12 @@ class Capture:
                     "dshow",
                     "-i",
                     "video=screen-capture-recorder:audio=virtual-audio-capturer",
-                    "-r",
-                    "30",  # Increase frame rate for smoother video
                     "-vf",
                     f"crop={width}:{height}:0:0,format=yuv420p",
                     "-c:v",
                     "libx264",  # Use H.264 codec for video
                     "-preset",
-                    "veryslow",  # Use veryslow preset for better compression
+                    "ultrafast",  # Use ultrafast preset for faster encoding (lower CPU usage)
                     "-crf",
                     "23",  # Constant Rate Factor for good quality (lower is better, 23 is default)
                     "-pix_fmt",
