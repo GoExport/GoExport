@@ -13,6 +13,7 @@ class Controller:
         self.editor = Editor()
         self.capture = Capture()
         self.parameters = Parameters()
+        self.aspect_ratio = None
         self.resolution = None
         self.auto_edit = None
         self.PROJECT_FOLDER = None  
@@ -33,16 +34,28 @@ class Controller:
         logger.info(f"User chose {service}")
         service_data = AVAILABLE_SERVICES[service]
 
+        # Set the aspect ratio
+        if self.aspect_ratio is None:
+            if not self.parameters.no_input:
+                helpers.print_list(helpers.get_config("AVAILABLE_ASPECT_RATIOS"))
+                self.aspect_ratio = Prompt.ask("[bold red]Required:[/bold red] Please select your desired aspect ratio", choices=helpers.get_config("AVAILABLE_ASPECT_RATIOS"), default=helpers.get_config("AVAILABLE_ASPECT_RATIOS")[-1], show_choices=False)
+            else:
+                self.aspect_ratio = self.parameters.aspect_ratio
+            if self.aspect_ratio not in helpers.get_config("AVAILABLE_ASPECT_RATIOS"):
+                raise ValueError(f"Invalid aspect ratio: {self.aspect_ratio}")
+            logger.info(f"User chose {self.aspect_ratio}")
+
         # Set the resolution
         if self.resolution is None:
             if not self.parameters.no_input:
-                self.resolution = Prompt.ask("[bold red]Required:[/bold red] Please select your desired resolution", choices=list(helpers.get_config("AVAILABLE_SIZES").keys()), default="1280x720")
+                helpers.print_list(list(helpers.get_config("AVAILABLE_SIZES")[self.aspect_ratio].keys()))
+                self.resolution = Prompt.ask("[bold red]Required:[/bold red] Please select your desired resolution", choices=list(helpers.get_config("AVAILABLE_SIZES")[self.aspect_ratio].keys()), default=list(helpers.get_config("AVAILABLE_SIZES")[self.aspect_ratio].keys())[0], show_choices=False)
             else:
                 self.resolution = self.parameters.resolution
-            if self.resolution not in helpers.get_config("AVAILABLE_SIZES"):
+            if self.resolution not in helpers.get_config("AVAILABLE_SIZES")[self.aspect_ratio]:
                 raise ValueError(f"Invalid resolution: {self.resolution}")
             logger.info(f"User chose {self.resolution}")
-            self.width, self.height, self.widescreen = helpers.get_config("AVAILABLE_SIZES")[self.resolution]
+            self.width, self.height, self.widescreen = helpers.get_config("AVAILABLE_SIZES")[self.aspect_ratio][self.resolution]
             if self.width > 1280 and self.height > 720:
                 print("[bold yellow]Warning: The resolution you have selected is higher than 720p. This may cause issues with the recording. Please ensure your system can handle this resolution.")
 
@@ -51,6 +64,10 @@ class Controller:
         self.svr_player = service_data.get("player", [])
         self.svr_required = service_data.get("requires", [])
 
+        if helpers.exceeds_monitor_resolution(self.width, self.height):
+            helpers.show_popup(helpers.get_config("APP_NAME"), f"Your resolution is not large enough to contain this resolution or aspect ratio. Please downscale your video or change your screen orientation or resolution.", 16)
+            return False
+        
         # Asks if the user wants automated editing
         if self.auto_edit is None:
             if not self.parameters.no_input:
