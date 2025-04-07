@@ -12,6 +12,7 @@ import pyautogui
 import subprocess
 import time
 import requests
+from rich import print
 from modules.logger import logger
 from datetime import datetime
 from datetime import timedelta
@@ -159,10 +160,6 @@ def get_resolution(index: int = 0):
     monitor = get_monitors()[index]
     return (monitor.width, monitor.height)
 
-def compare_monitor_resolution(width, height):
-    monitor_width, monitor_height = get_resolution()
-    return width <= monitor_width and height <= monitor_height
-
 def copy_file(src, dst):
     if os.path.isdir(dst):
         dst = os.path.join(dst, os.path.basename(src))
@@ -266,12 +263,15 @@ def flatten_list(input):
     return tuple([str(i) for i in input])
 
 def show_popup(title: str, message: str, type: int = 0):
-    if os_is_windows():
-        ctypes.windll.user32.MessageBoxW(None, message, title, type)
-    elif os_is_linux():
-        subprocess.run(["zenity", "--info", "--title", title, "--text", message])
-    else:
-        logger.error("Unsupported OS")
+    # Suppress the popup if no input is enabled
+    import modules.parameters as parameters
+    if not parameters.Parameters().no_input:
+        if os_is_windows():
+            ctypes.windll.user32.MessageBoxW(None, message, title, type)
+        elif os_is_linux():
+            subprocess.run(["zenity", "--info", "--title", title, "--text", message])
+        else:
+            logger.error("Unsupported OS")
 
 # (Super precise) Timestamp generator in milliseconds unix time
 def get_timestamp(msg: str = None):
@@ -292,6 +292,13 @@ def post_request(url: str, data: dict):
     response = requests.post(url, data=data)
     return response
 
+# Check if a resolution exceeds the monitor resolution
+def exceeds_monitor_resolution(width, height):
+    monitor_width, monitor_height = get_resolution()
+    if width > monitor_width or height > monitor_height:
+        return True
+    return False
+
 # Convert string to filename safe string
 def to_filename_safe(string):
     return "".join([c for c in string if c.isalpha() or c.isdigit() or c in [" ", "-", "_", "."]]).rstrip()
@@ -303,3 +310,10 @@ def is_dll_loadable(dll_path):
         return True  # DLL loaded successfully
     except OSError:
         return False  # DLL not found or not registered
+
+# Output a list of items to the console
+def print_list(items, message: str = "to select"):
+    if not isinstance(items, list):
+        raise ValueError("Input must be a list.")
+    for index, item in enumerate(items, start=1):
+        print(f"[bold blue]Option #{index}:[/bold blue] type \"{item}\"" + (f" ({message})" if message else ""))
