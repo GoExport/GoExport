@@ -206,16 +206,16 @@ class Controller:
             return True
 
     def final(self, outro=True):
-        # Add the outro
-        # if self.widescreen and outro:
-        #     self.editor.add_clip(helpers.get_path(helpers.get_app_folder(), helpers.get_config("OUTRO_WIDE")), len(self.editor.clips))
-        # elif not self.widescreen and outro:
-        #     self.editor.add_clip(helpers.get_path(helpers.get_app_folder(), helpers.get_config("OUTRO_STANDARD")), len(self.editor.clips))
-
-        # Tell the user about the outro
-        if outro:
-            print(f"[bold yellow]WARNING:[/bold yellow] The outro will not be added to your video as it will break the output. You can either add it manually later, or completely disregard it, we apologize for the inconvenience.")
-
+        try:
+            if self.aspect_ratio == "16:9" and outro:
+                self.editor.add_clip(helpers.get_path(helpers.get_app_folder(), helpers.get_config("OUTRO_WIDE")), len(self.editor.clips), self.width, self.height)
+            elif self.aspect_ratio == "4:3" and outro:
+                self.editor.add_clip(helpers.get_path(helpers.get_app_folder(), helpers.get_config("OUTRO_STANDARD")), len(self.editor.clips), self.width, self.height)
+            elif self.aspect_ratio == "9:16" and outro:
+                self.editor.add_clip(helpers.get_path(helpers.get_app_folder(), helpers.get_config("OUTRO_TALL")), len(self.editor.clips), self.width, self.height)
+        except Exception as e:
+            print(f"[bold yellow]Warning:[/bold yellow] Failed to add the outro: {e}")
+        
         # Render the video
         self.editor.render(self.RECORDING_EDITED)
         return True
