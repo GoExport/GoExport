@@ -67,14 +67,6 @@ class Compatibility:
         logger.info(f"Executable: {helpers.is_frozen()}")
 
         # -- Required dependencies
-        # Gather Flash
-        flash = helpers.get_path("C:\\", helpers.get_config("PATH_FLASH"))
-
-        # Check for Flash
-        if not helpers.try_path(flash):
-            logger.error(f"Failed to locate {flash}")
-            return False
-        
         # Gather FFMPEG, FFPROBE, and FFPLAY
         ffmpeg = helpers.get_path(None, helpers.get_config("PATH_FFMPEG"))
         ffprobe = helpers.get_path(None, helpers.get_config("PATH_FFPROBE"))

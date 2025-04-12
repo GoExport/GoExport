@@ -92,7 +92,6 @@ PATH_LIBS_RECORD_64 = [DEFAULT_LIBS_FILENAME, "screen-capture-recorder-x64.dll"]
 PATH_LIBS_RECORD_32 = [DEFAULT_LIBS_FILENAME, "screen-capture-recorder.dll"]
 PATH_LIBS_AUDIO_64 = [DEFAULT_LIBS_FILENAME, "audio_sniffer-x64.dll"]
 PATH_LIBS_AUDIO_32 = [DEFAULT_LIBS_FILENAME, "audio_sniffer.dll"]
-PATH_FLASH = ["Program Files (x86)", "Flash Player", "FlashUtil_Uninstall.exe"]
 
 # Development Settings
 DEBUG_MODE = False
