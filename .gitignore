@@ -15,6 +15,9 @@ env/
 .venv/
 .env/
 
+# Ignore NPM and Yarn files
+node_modules/
+
 # IDE/editor-specific files
 .vscode/
 .idea/
