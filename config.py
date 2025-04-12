@@ -1,6 +1,6 @@
 # Configuration
 APP_NAME = "GoExport"
-APP_VERSION = "0.5.1"
+APP_VERSION = "0.6.0"
 DEFAULT_DEPENDENCIES_FILENAME = "dependencies"
 DEFAULT_LIBS_FILENAME = "libs"
 DEFAULT_OUTPUT_FILENAME = "data"
