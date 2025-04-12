@@ -1,0 +1,6 @@
+@import "tailwindcss";
+
+@theme {
+    --color-gradient-1: #f47821;
+    --color-gradient-2: #FFBC8D;
+}
