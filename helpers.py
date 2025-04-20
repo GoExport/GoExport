@@ -7,7 +7,7 @@ import logging
 import GPUtil
 import psutil
 import ctypes
-import urllib3, urllib
+import urllib
 import pyautogui
 import subprocess
 import time
@@ -15,8 +15,6 @@ import requests
 from rich import print
 from modules.logger import logger
 from datetime import datetime
-from datetime import timedelta
-from pygrabber.dshow_graph import FilterGraph
 
 def remember(key: str, value):
     logger.debug(f"Remembering {key} as {value}")
