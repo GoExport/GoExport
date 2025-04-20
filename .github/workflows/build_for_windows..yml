@@ -26,7 +26,7 @@ jobs:
               run: |
                 curl -L -o ungoogled-chromium.zip https://github.com/tangalbert919/ungoogled-chromium-binaries/releases/download/87.0.4280.67-1/ungoogled-chromium_87.0.4280.67-1.1_windows-x64.zip
                 tar -xf ungoogled-chromium.zip -C dependencies\ungoogled-chromium
-                move dependencies\ungoogled-chromium_87.0.4280.67-1.1_windows-x64 dependencies\ungoogled-chromium
+                move dependencies\ungoogled-chromium_87.0.4280.67-1.1_windows dependencies\ungoogled-chromium
                 rm ungoogled-chromium.zip
             
             - name: Download chromedriver
