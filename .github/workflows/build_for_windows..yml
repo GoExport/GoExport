@@ -18,7 +18,6 @@ jobs:
             - name: Download FFMPEG
               run: |
                 curl -L -o ffmpeg.zip https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip
-                mkdir -p dependencies
                 tar -xf ffmpeg.zip -C dependencies
                 move dependencies\ffmpeg-master-latest-win64-gpl dependencies\ffmpeg
             
