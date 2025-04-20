@@ -10,11 +10,25 @@ Welcome to GoExport, with this tool, you can export your videos for Wrapper Offl
 ![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/GoExport/GoExport/total?cacheBuster=true)
 ![GitHub License](https://img.shields.io/github/license/GoExport/GoExport?cacheBuster=true)
 ![GitHub Release](https://img.shields.io/github/v/release/GoExport/GoExport?include_prereleases&cacheBuster=true)
+[![Discord](https://img.shields.io/badge/Discord-%235865F2.svg?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/ejwJYtQDrS)
 
 # ✅ Supported
 The following is a list of **known supported LVMs**:
 - Wrapper: Offline
 - FlashThemes
+
+# 📜 License
+This project is licensed under the **GNU General Public License v3.0**. For more details, refer to the [LICENSE](LICENSE) file.
+
+# 👤 Credits
+
+- Project created and maintained by [**Lexian-droid**](https://github.com/Lexian-droid).
+- Outro created by [**AidenAnimate2K25**](https://www.youtube.com/@AidenAnimate2K25) (visit his discord server [here](https://discord.gg/C8pJr5fCkM)).
+
+# ❓ Support and FAQ
+If you have any questions or need support, feel free to reach out to us on our [Discord server](https://discord.gg/ejwJYtQDrS).
+
+"My video is still laggy!" - Assuming you have a decent computer, this is simply an issue with flash and is normal and not related to GoExport, the original GoAnimate exporter also was laggy.
 
 # 📂 Installation
 In order to **install GoExport** you'll need to go to the [latest release](https://github.com/GoExport/GoExport/releases/latest) and download the one that relates to your computer.

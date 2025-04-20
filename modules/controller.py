@@ -208,11 +208,13 @@ class Controller:
     def final(self, outro=True):
         try:
             if self.aspect_ratio == "16:9" and outro:
-                self.editor.add_clip(helpers.get_path(helpers.get_app_folder(), helpers.get_config("OUTRO_WIDE")), len(self.editor.clips), self.width, self.height)
-            elif self.aspect_ratio == "4:3" and outro:
-                self.editor.add_clip(helpers.get_path(helpers.get_app_folder(), helpers.get_config("OUTRO_STANDARD")), len(self.editor.clips), self.width, self.height)
+                self.editor.add_clip(helpers.get_path(helpers.get_app_folder(), helpers.get_config(f"OUTRO_WIDE_{self.width}x{self.height}")), len(self.editor.clips))
             elif self.aspect_ratio == "9:16" and outro:
-                self.editor.add_clip(helpers.get_path(helpers.get_app_folder(), helpers.get_config("OUTRO_TALL")), len(self.editor.clips), self.width, self.height)
+                self.editor.add_clip(helpers.get_path(helpers.get_app_folder(), helpers.get_config(f"OUTRO_STANDARD_{self.width}x{self.height}")), len(self.editor.clips))
+            elif self.aspect_ratio == "4:3" and outro:
+                self.editor.add_clip(helpers.get_path(helpers.get_app_folder(), helpers.get_config(f"OUTRO_CLASSIC_{self.width}x{self.height}")), len(self.editor.clips))
+            elif self.aspect_ratio == "14:9" and outro:
+                self.editor.add_clip(helpers.get_path(helpers.get_app_folder(), helpers.get_config(f"OUTRO_TALL_{self.width}x{self.height}")), len(self.editor.clips))
         except Exception as e:
             print(f"[bold yellow]Warning:[/bold yellow] Failed to add the outro: {e}")
         

@@ -11,6 +11,8 @@ def welcome():
     Art = art.text2art(helpers.get_config("APP_NAME"), font="tarty1")
     print(Art)
     print(f"[green]{helpers.get_config('APP_NAME')} [bold]v{helpers.get_config('APP_VERSION')}")
+    print(f"[yellow]Created by [link=https://lexian.dev][blue]LexianDEV[/blue][/link] and the outro was created by [link=https://www.youtube.com/@AidenAnimate2K25][blue]AidenAnimate2K25[/blue][/link] ([blue][link=https://discord.gg/C8pJr5fCkM]their discord[/link][/blue])")
+    print(f"[blue][link=https://discord.gg/ejwJYtQDrS]Join the Official GoExport Discord server[/link][/blue]")
 
 def disclaimer():
     print("[orange]Warning: [bold]This application will create and store logs on your system, they will never leave your system unless you choose to share them, in which case the logs may contain personally identifiable information such as system information, file paths, and other data. It is recommended that you exercise caution when sharing these logs.")
