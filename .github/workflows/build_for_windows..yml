@@ -1,11 +1,8 @@
-name: Package Application with PyInstaller
+name: Package Application with PyInstaller for Windows
 on:
     push:
         branches:
             - main
-    release:
-        types:
-            - created
 
 jobs:
     build:
@@ -60,13 +57,5 @@ jobs:
             - name: Upload artifact
               uses: actions/upload-artifact@v4
               with:
-                  name: Windows-exe
+                  name: goexport_win64
                   path: dist/
-
-            - name: Create release and upload artifact
-              if: github.event_name == 'release'
-              uses: ncipollo/release-action@v1
-              with:
-                  artifacts: dist/*
-                  token: ${{ secrets.GITHUB_TOKEN }}
-                  tag: ${{ github.ref_name }}

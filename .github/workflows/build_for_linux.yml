@@ -1,0 +1,56 @@
+name: Package Application with PyInstaller for Linux
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.13'
+      
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg unzip wget
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: Download ungoogled-chromium
+        run: |
+          wget -O ungoogled-chromium.zip https://github.com/tangalbert919/ungoogled-chromium-binaries/releases/download/87.0.4280.67-1/ungoogled-chromium_87.0.4280.67-1.1_linux-x64.zip
+          unzip ungoogled-chromium.zip -d dependencies
+          mv dependencies/ungoogled-chromium_87.0.4280.67-1.1_linux dependencies/ungoogled-chromium
+          rm ungoogled-chromium.zip
+      
+      - name: Download chromedriver
+        run: |
+          mkdir -p dependencies/chromedriver
+          wget -O chromedriver.zip https://chromedriver.storage.googleapis.com/87.0.4280.20/chromedriver_linux64.zip
+          unzip chromedriver.zip -d dependencies/chromedriver
+          rm chromedriver.zip
+
+      - name: Package Application with PyInstaller
+        run: |
+          pyinstaller GoExport.spec
+
+      - name: Copy files to dist folder
+        run: |
+          cp readme.md dist/
+          cp LICENSE dist/
+          cp uninstall.sh dist/
+          cp -r assets dist/assets
+          cp -r libs dist/libs
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: goexport_linux64
+          path: dist/
