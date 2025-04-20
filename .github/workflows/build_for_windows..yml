@@ -1,0 +1,40 @@
+name: Build GoExport for Windows
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        pip install -r requirements.txt
+
+    - name: Download additional dependencies
+      run: |
+        curl -L -o vc_redist.x86.exe https://aka.ms/vs/17/release/vc_redist.x86.exe
+        curl -L -o vc_redist.x64.exe https://aka.ms/vs/17/release/vc_redist.x64.exe
+
+    - name: Build with PyInstaller
+      run: build_win.bat
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: GoExport-Windows
+        path: dist/
