@@ -3,6 +3,10 @@ on:
     push:
         branches:
             - main
+    release:
+        types:
+            - created
+
 jobs:
     build:
         runs-on: windows-latest
@@ -58,3 +62,11 @@ jobs:
               with:
                   name: Windows-exe
                   path: dist/
+
+            - name: Create release and upload artifact
+              if: github.event_name == 'release'
+              uses: ncipollo/release-action@v1
+              with:
+                  artifacts: dist/*
+                  token: ${{ secrets.GITHUB_TOKEN }}
+                  tag: ${{ github.ref_name }}
