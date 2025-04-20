@@ -32,8 +32,7 @@ jobs:
             - name: Download chromedriver
               run: |
                 curl -L -o chromedriver.zip https://chromedriver.storage.googleapis.com/87.0.4280.20/chromedriver_win32.zip
-                tar -xf chromedriver.zip -C dependencies
-                move dependencies\chromedriver.exe dependencies\chromedriver\chromedriver.exe
+                tar -xf chromedriver.zip -C dependencies\chromedriver
                 rm chromedriver.zip
 
             - name: Install dependencies
