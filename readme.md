@@ -28,7 +28,7 @@ This project is licensed under the **GNU General Public License v3.0**. For more
 # ❓ Support and FAQ
 If you have any questions or need support, feel free to reach out to us on our [Discord server](https://discord.gg/ejwJYtQDrS).
 
-"My video is still laggy!" - Assuming you have a decent computer, this is simply an issue with flash and is normal and not related to GoExport, the original GoAnimate exporter also was laggy.
+"My video is still laggy!" - Assuming you have a decent computer, this is simply an issue with flash and is normal and not related to GoExport, the original GoAnimate exporter was also laggy.
 
 # 📂 Installation
 In order to **install GoExport** you'll need to go to the [latest release](https://github.com/GoExport/GoExport/releases/latest) and download the one that relates to your computer.
