@@ -138,9 +138,9 @@ def get_path(cwd: str | None = None, *parts):
 
 def get_user_folder(folder: str):
     if os_is_windows():
-        onedrive_path = os.path.join(os.environ.get("ONEDRIVE", ""), folder)
-        if os.path.exists(onedrive_path):
-            return onedrive_path
+        if recall("USER_PATH_INVALID"):
+            make_dir(os.path.join(get_cwd(), folder))
+            return os.path.join(get_cwd(), folder)
         return os.path.join(os.environ["USERPROFILE"], folder)
     elif os_is_linux():
         return os.path.join(os.path.expanduser("~"), folder)

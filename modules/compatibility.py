@@ -66,6 +66,11 @@ class Compatibility:
         # Check if standalone
         logger.info(f"Executable: {helpers.is_frozen()}")
 
+        # Check if default user path isn't available
+        if not helpers.try_path(helpers.get_user_folder("Videos")):
+            helpers.remember("USER_PATH_INVALID", True)
+            logger.warning("Default user path is invalid - Overriding to current directory")
+
         # -- Required dependencies
         # Gather FFMPEG, FFPROBE, and FFPLAY
         ffmpeg = helpers.get_path(None, helpers.get_config("PATH_FFMPEG"))
