@@ -108,9 +108,9 @@ class Controller:
         self.filename = f"{self.readable_filename}{helpers.get_config('DEFAULT_OUTPUT_EXTENSION')}"
 
         self.RECORDING = helpers.get_path(None, helpers.get_config("DEFAULT_OUTPUT_FILENAME"), self.filename)
-        self.RECORDING_EDITED = helpers.get_path(helpers.get_user_folder("Videos"), self.filename)
+        self.RECORDING_EDITED = helpers.get_path(helpers.get_path(helpers.get_app_folder(), helpers.get_config("DEFAULT_FOLDER_OUTPUT_FILENAME")), self.filename)
         if self.PROJECT_FOLDER is None:
-            self.PROJECT_FOLDER = helpers.get_path(helpers.get_user_folder("Videos"), self.readable_filename)
+            self.PROJECT_FOLDER = helpers.get_path(helpers.get_config("DEFAULT_FOLDER_OUTPUT_FILENAME"), self.readable_filename)
 
         # Begin generating the URL
         if not self.generate():
@@ -194,7 +194,7 @@ class Controller:
             return True
         else: # false
             # Create the project folder
-            if not helpers.make_dir(self.PROJECT_FOLDER):
+            if not helpers.make_dir(self.PROJECT_FOLDER, reattempt=True):
                 logger.error("Could not create the project folder")
                 return False
             
