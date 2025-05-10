@@ -23,7 +23,7 @@ This project is licensed under the **GNU General Public License v3.0**. For more
 # 👤 Credits
 
 - Project created and maintained by [**Lexian-droid**](https://github.com/Lexian-droid).
-- Outro created by [**AidenAnimate2K25**](https://www.youtube.com/@AidenAnimate2K25) (visit his discord server [here](https://discord.gg/C8pJr5fCkM)).
+- Outro created by [**YoiAnimate**](https://www.youtube.com/@YoiAnimate) (visit his discord server [here](https://discord.gg/C8pJr5fCkM)).
 
 # ❓ Support and FAQ
 If you have any questions or need support, feel free to reach out to us on our [Discord server](https://discord.gg/ejwJYtQDrS).
