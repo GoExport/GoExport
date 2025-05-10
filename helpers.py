@@ -85,7 +85,7 @@ def move_mouse_offscreen():
 def generate_path():
     return f"{datetime.now().strftime('%Y-%m-%d %H-%M-%S')}"
 
-def make_dir(path):
+def make_dir(path, reattempt: bool = False):
     original_path = path
     counter = 1
     while True:
@@ -94,6 +94,8 @@ def make_dir(path):
             return True
         except FileExistsError:
             logger.warning(f"Directory {path} already exists.")
+            if not reattempt:
+                return False
             path = f"{original_path}_{counter}"
             counter += 1
         except Exception as e:
@@ -138,9 +140,6 @@ def get_path(cwd: str | None = None, *parts):
 
 def get_user_folder(folder: str):
     if os_is_windows():
-        if recall("USER_PATH_INVALID"):
-            make_dir(os.path.join(get_cwd(), folder))
-            return os.path.join(get_cwd(), folder)
         return os.path.join(os.environ["USERPROFILE"], folder)
     elif os_is_linux():
         return os.path.join(os.path.expanduser("~"), folder)
