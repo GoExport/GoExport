@@ -25,12 +25,15 @@ class Compatibility:
                     # Create "first_run" file
                     if not helpers.try_path(helpers.get_path(helpers.get_app_folder(), "first_run")):
                         helpers.create_file(helpers.get_path(helpers.get_app_folder(), "first_run"))
-
+                    
                     logger.info("Setup complete!")
 
         # Skip compatibility test
         if helpers.get_config("SKIP_COMPAT"):
             return True
+        
+        # Create "output" folder
+        helpers.make_dir(helpers.get_path(helpers.get_app_folder(), helpers.get_config("DEFAULT_FOLDER_OUTPUT_FILENAME")))
         
         # Check app
         logger.info(f"{helpers.get_config("APP_NAME")} v{helpers.get_config('APP_VERSION')}")
@@ -65,11 +68,6 @@ class Compatibility:
         
         # Check if standalone
         logger.info(f"Executable: {helpers.is_frozen()}")
-
-        # Check if default user path isn't available
-        if not helpers.try_path(helpers.get_user_folder("Videos")):
-            helpers.remember("USER_PATH_INVALID", True)
-            logger.warning("Default user path is invalid - Overriding to current directory")
 
         # -- Required dependencies
         # Gather FFMPEG, FFPROBE, and FFPLAY
