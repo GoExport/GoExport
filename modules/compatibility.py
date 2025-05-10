@@ -25,7 +25,7 @@ class Compatibility:
                     # Create "first_run" file
                     if not helpers.try_path(helpers.get_path(helpers.get_app_folder(), "first_run")):
                         helpers.create_file(helpers.get_path(helpers.get_app_folder(), "first_run"))
-                    
+
                     logger.info("Setup complete!")
 
         # Skip compatibility test
