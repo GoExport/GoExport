@@ -76,14 +76,9 @@ def main():
         logger.info(f"User chose to include the outro: {confirm_outro}")
 
         # Copy the outro to the project folder
-        if confirm_outro and controller.widescreen:
-            if not helpers.copy_file(helpers.get_path(None, helpers.get_config("OUTRO_WIDE")), helpers.get_path(controller.PROJECT_FOLDER)):
+        if confirm_outro:
+            if not helpers.copy_file(helpers.get_path(None, helpers.get_config(f"OUTRO_WIDE_{controller.width}x{controller.height}")), helpers.get_path(controller.PROJECT_FOLDER)):
                 logger.fatal("Failed to copy the outro to the project folder")
-                return False
-        if confirm_outro and not controller.widescreen:
-            if not helpers.copy_file(helpers.get_path(None, helpers.get_config("OUTRO_STANDARD")), helpers.get_path(controller.PROJECT_FOLDER)):
-                logger.fatal("Failed to copy the 4:3 outro to the project folder")
-                return False
 
     if not controller.auto_edit:
         # Ask if user wants to open the folder
