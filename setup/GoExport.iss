@@ -23,7 +23,7 @@ DefaultDirName={userpf}\{#MyAppName}
 DisableDirPage=yes
 DefaultGroupName={#MyAppName}
 AllowNoIcons=yes
-LicenseFile=D:\Documents\Python Projects\GoExport\LICENSE
+LicenseFile=..\LICENSE
 OutputBaseFilename=setup
 Compression=lzma
 SolidCompression=yes
@@ -37,12 +37,12 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "D:\Documents\Python Projects\GoExport\dist\GoExport.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "D:\Documents\Python Projects\GoExport\dist\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "..\Python Projects\GoExport\libs\audio_sniffer.dll"; DestDir: "{sys}"; Flags: onlyifdoesntexist regserver 32bit
-Source: "..\Python Projects\GoExport\libs\screen-capture-recorder.dll"; DestDir: "{sys}"; Flags: onlyifdoesntexist regserver 32bit
-Source: "..\Python Projects\GoExport\libs\audio_sniffer-x64.dll"; DestDir: "{sys}"; Flags: onlyifdoesntexist 64bit regserver
-Source: "..\Python Projects\GoExport\libs\screen-capture-recorder-x64.dll"; DestDir: "{sys}"; Flags: onlyifdoesntexist 64bit regserver
+Source: "..\dist\GoExport.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\dist\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\libs\audio_sniffer.dll"; DestDir: "{sys}"; Flags: onlyifdoesntexist regserver 32bit
+Source: "..\libs\screen-capture-recorder.dll"; DestDir: "{sys}"; Flags: onlyifdoesntexist regserver 32bit
+Source: "..\libs\audio_sniffer-x64.dll"; DestDir: "{sys}"; Flags: onlyifdoesntexist 64bit regserver
+Source: "..\libs\screen-capture-recorder-x64.dll"; DestDir: "{sys}"; Flags: onlyifdoesntexist 64bit regserver
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]
