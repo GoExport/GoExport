@@ -85,11 +85,20 @@ def main():
         if not parameters.no_input:
             open_folder = Confirm.ask("Would you like to open the folder containing the video?", default=True)
         else:
-            open_folder = True
+            open_folder = False
         logger.info(f"User chose to open the folder: {open_folder}")
         if open_folder:
             helpers.open_folder(controller.PROJECT_FOLDER)
-
+    else:
+        # Ask if user wants to open the location of the video
+        if not parameters.no_input:
+            open_folder = Confirm.ask("Would you like to open the folder containing the video?", default=True)
+        else:
+            open_folder = False
+        logger.info(f"User chose to open the folder: {open_folder}")
+        if open_folder:
+            helpers.open_folder(controller.RECORDING_EDITED_PATH)
+    
     # Suggest a video editor
     if not controller.auto_edit:
         print("[blue]If you need a video editor, consider OpenShot Video Editor. It's a free and open-source option available for download [link=https://www.openshot.org/download/]here[/link]. Alternatively, you can use any video editor of your choice. [italic](Not sponsored by OpenShot)[/italic]")
