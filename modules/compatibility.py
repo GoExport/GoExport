@@ -7,27 +7,6 @@ class Compatibility:
         pass
 
     def test(self) -> bool:
-        if helpers.is_frozen():
-            # Check existence of "first_run" file
-            if not helpers.try_path(helpers.get_path(helpers.get_app_folder(), "first_run")):
-                # Check if running as admin
-                if not helpers.is_admin():
-                    logger.error("First time setup detected - please run as administrator!")
-                    helpers.show_popup(helpers.get_config("APP_NAME"), "Installation failed - please run as administrator!", 16)
-                    return False
-                else:
-                    # Register dll
-                    helpers.try_command("regsvr32", "/s", helpers.get_path(helpers.get_app_folder(), helpers.get_config('PATH_LIBS_RECORD_64')))
-                    helpers.try_command("regsvr32", "/s", helpers.get_path(helpers.get_app_folder(), helpers.get_config('PATH_LIBS_RECORD_32')))
-                    helpers.try_command("regsvr32", "/s", helpers.get_path(helpers.get_app_folder(), helpers.get_config('PATH_LIBS_AUDIO_64')))
-                    helpers.try_command("regsvr32", "/s", helpers.get_path(helpers.get_app_folder(), helpers.get_config('PATH_LIBS_AUDIO_32')))
-
-                    # Create "first_run" file
-                    if not helpers.try_path(helpers.get_path(helpers.get_app_folder(), "first_run")):
-                        helpers.create_file(helpers.get_path(helpers.get_app_folder(), "first_run"))
-
-                    logger.info("Setup complete!")
-
         # Skip compatibility test
         if helpers.get_config("SKIP_COMPAT"):
             return True
