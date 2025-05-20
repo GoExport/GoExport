@@ -24,11 +24,12 @@ DisableDirPage=yes
 DefaultGroupName={#MyAppName}
 AllowNoIcons=yes
 LicenseFile=..\LICENSE
-OutputBaseFilename=setup
+OutputBaseFilename=goexport_universal_setup
 Compression=lzma
 SolidCompression=yes
 AllowUNCPath=False
 UsePreviousAppDir=False
+OutputDir=..\dist
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"

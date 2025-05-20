@@ -52,8 +52,14 @@ jobs:
                 copy LICENSE dist\
                 xcopy assets dist\assets /E /I /Q /Y
 
+            - name: Build installer
+              uses: Minionguyjpro/Inno-Setup-Action@v1.2.2
+              with:
+                path: setup\GoExport.iss
+                options: /O+
+
             - name: Upload artifact
               uses: actions/upload-artifact@v4
               with:
-                  name: goexport_win64
-                  path: dist/
+                name: goexport_win64
+                path: dist/goexport_universal_setup.exe
