@@ -10,3 +10,6 @@ pyinstaller --onefile --name "GoExport" --icon ./assets/icon.png ^
 copy readme.md dist\
 copy LICENSE dist\
 xcopy assets dist\assets /E /I /Q /Y
+
+REM Create the installer
+cmd.exe /c ""C:\Program Files (x86)\Inno Setup 6\ISCC.exe" setup\GoExport.iss"
