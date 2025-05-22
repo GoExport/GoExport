@@ -29,9 +29,16 @@ class Interface:
     def start(self):
         """Initializes and starts the Selenium WebDriver."""
         self.driver = webdriver.Chrome(options=self.options, service=self.service)
-        helpers.wait(5)
+        helpers.wait(2)
         return True
     
+    def warning(self, width=1280, height=720):
+        """Displays a warning on the browser for 5 seconds."""
+        self.driver.get(helpers.convert_to_file_url(helpers.get_path(helpers.get_app_folder(), helpers.get_config("DEFAULT_ASSETS_FILENAME"), "warning.html")) + f"?w={width}&h={height}")
+        print(self.driver.current_url)
+        helpers.wait(3)
+        return True
+
     def close(self):
         """Stops the Selenium WebDriver."""
         self.driver.quit()
