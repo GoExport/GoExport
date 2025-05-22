@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Warning Area</title>
+    <meta name="viewport" content="width=1280, initial-scale=1.0">
+    <style>
+        body {
+            background: #181818;
+            margin: 0;
+            height: 100vh;
+        }
+        .warning-box {
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        .warning-text {
+            color: #fff;
+            font-family: 'Segoe UI', 'Arial', sans-serif;
+            font-size: clamp(1.5rem, 4vw, 3rem);
+            font-weight: 600;
+            letter-spacing: 0.03em;
+            text-align: center;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.4);
+            user-select: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="warning-box">
+        <span class="warning-text">Danger Zone<br>Keep cursor out!</span>
+    </div>
+    <script>
+        function getParam(name, defaultValue) {
+            const params = new URLSearchParams(window.location.search);
+            return params.has(name) ? params.get(name) : defaultValue;
+        }
+        const w = getParam('w', 1280);
+        const h = getParam('h', 720);
+        const box = document.querySelector('.warning-box');
+        box.style.width = w + 'px';
+        box.style.height = h + 'px';
+    </script>
+</body>
+</html>
