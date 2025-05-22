@@ -30,6 +30,7 @@ SolidCompression=yes
 AllowUNCPath=False
 UsePreviousAppDir=False
 OutputDir=..\dist
+ArchitecturesAllowed=x64compatible
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
