@@ -131,6 +131,10 @@ class Controller:
         if not self.browser.start():
             logger.error("Could not start webdriver")
             return False
+        
+        if not self.browser.warning(self.width, self.height):
+            logger.error("Could not show warning")
+            return False
 
         if not self.capture.start(self.RECORDING, self.width, self.height):
             logger.error("Could not start recording")
