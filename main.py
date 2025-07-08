@@ -11,7 +11,7 @@ def welcome():
     Art = art.text2art(helpers.get_config("APP_NAME"), font="tarty1")
     print(Art)
     print(f"[green]{helpers.get_config('APP_NAME')} [bold]v{helpers.get_config('APP_VERSION')}")
-    print(f"[yellow]Created by [link=https://lexian.dev][blue]LexianDEV[/blue][/link] and the outro was created by [link=https://www.youtube.com/@YoiAnimate][blue]YoiAnimate[/blue][/link] ([blue][link=https://discord.gg/C8pJr5fCkM]their discord[/link][/blue])")
+    print(f"[yellow]Created by [link=https://lexian.dev][blue]LexianDEV[/blue][/link] and the outro was created by [link=https://www.youtube.com/@AlexDirector][blue]Alex Director[/blue][/link]")
     print(f"[blue][link=https://discord.gg/ejwJYtQDrS]Join the Official GoExport Discord server[/link][/blue]")
 
 def disclaimer():

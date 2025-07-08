@@ -42,10 +42,10 @@ class Capture:
                     "-f", "dshow",
                     "-i", "video=screen-capture-recorder:audio=virtual-audio-capturer",  # Screen & audio source
                     "-vf", f"crop={width}:{height}:0:0",  # Crop & format
-                    "-c:v", "libx264",  # H.264 for video
-                    "-preset", "fast",  # Good balance between speed and quality
-                    "-crf", "18",  # High-quality video (lower is better, 18 is visually lossless)
-                    "-c:a", "aac",  # AAC for audio
+                    "-c:v", "libx264",  # H.264 codec
+                    "-preset", "slow",  # Slow preset for better compression
+                    "-crf", "0",  # High-quality video (lower is better, 0 is lossless)
+                    "-c:a", "aac",  # AAC audio codec
                     "-b:a", "192k",  # Higher audio bitrate
                     "-ar", "44100",  # Standard audio sample rate
                     output,
