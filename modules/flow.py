@@ -114,8 +114,12 @@ class Controller:
             self.PROJECT_FOLDER = helpers.get_path(helpers.get_config("DEFAULT_FOLDER_OUTPUT_FILENAME"), self.readable_filename)
 
         # Begin generating the URL
-        if not self.generate():
-            logger.error("Could not generate playback URL")
+        try:
+            if not self.generate():
+                logger.error("Could not generate playback URL")
+                return False
+        except Exception as e:
+            logger.error(f"Error generating playback URL: {e}")
             return False
 
         return True
@@ -128,87 +132,98 @@ class Controller:
         return True
 
     def export(self):
-        if not self.browser.start():
-            logger.error("Could not start webdriver")
-            return False
-        
-        if not self.browser.warning(self.width, self.height):
-            logger.error("Could not show warning")
-            return False
-
-        if not self.capture.start(self.RECORDING, self.width, self.height):
-            logger.error("Could not start recording")
-            return False
-        self.prestart = self.capture.start_time  # Timestamp for when FFmpeg started (ms)
-        self.prestart_delay = self.capture.startup_delay  # Ensure delay is accounted for (ms)
-
-        print(f"Prestart: {self.prestart} | Delay: {self.prestart_delay}")
-        helpers.move_mouse_offscreen()
-
         try:
-            self.browser.driver.get(self.svr_url)
+            if not self.browser.start():
+                logger.error("Could not start webdriver")
+                return False
+
+            if not self.browser.warning(self.width, self.height):
+                logger.error("Could not show warning")
+                return False
+
+            if not self.capture.start(self.RECORDING, self.width, self.height):
+                logger.error("Could not start recording")
+                return False
+            self.prestart = self.capture.start_time  # Timestamp for when FFmpeg started (ms)
+            self.prestart_delay = self.capture.startup_delay  # Ensure delay is accounted for (ms)
+
+            print(f"Prestart: {self.prestart} | Delay: {self.prestart_delay}")
+            helpers.move_mouse_offscreen()
+
+            try:
+                self.browser.driver.get(self.svr_url)
+            except Exception as e:
+                raise RuntimeError(f"Failed to load {self.svr_url}: {e}")
+
+            if not self.browser.enable_flash():
+                logger.error("Could not enable flash")
+                return False
+
+            if not self.browser.await_started():
+                logger.error("Could not wait for start")
+                return False
+
+            if not self.browser.await_completed():
+                logger.error("Could not wait for completion")
+                return False
+
+            if not self.capture.stop():
+                logger.error("Could not stop the recording")
+                return False
+            self.postend = self.capture.end_time  # Timestamp for when FFmpeg ended (ms)
+            self.postend_delay = self.capture.ended_delay  # Ensure delay is accounted for (ms)
+
+            # Get timestamps from the browser for when the video started and ended
+            timestamps = self.browser.get_timestamps()
+            video_started, video_ended, video_length, video_start_offset, video_end_offset = timestamps
+
+            if not self.browser.close():
+                logger.error("Couldn't stop the browser")
+                return False
+
+            # Auto editing
+            if self.auto_edit: # true
+                # Get last clip ID and add 1 to it from editor
+                clip_id = len(self.editor.clips)
+                self.editor.add_clip(self.RECORDING, clip_id, self.width, self.height)
+                
+                # Calculate the starting and ending times for the clip
+                started = self.prestart_delay + video_started + video_start_offset - self.prestart
+
+                # Combine the calculated times
+                starting = started
+
+                self.start_from = helpers.ms_to_s(starting)
+                self.end_at = self.editor.get_clip_length(clip_id)
+
+                print(f"{self.start_from} : {self.end_at}")
+
+                # Trim the video first
+                self.editor.trim(clip_id, self.start_from, self.end_at)
+
+                return True
+            else: # false
+                # Create the project folder
+                try:
+                    if not helpers.make_dir(self.PROJECT_FOLDER, reattempt=True):
+                        logger.error("Could not create the project folder")
+                        return False
+                except Exception as e:
+                    logger.error(f"Error creating project folder: {e}")
+                    return False
+                
+                # Copy the recording to the project folder
+                try:
+                    if not helpers.copy_file(self.RECORDING, self.PROJECT_FOLDER):
+                        logger.error("Could not copy the recording")
+                        return False
+                except Exception as e:
+                    logger.error(f"Error copying recording: {e}")
+                    return False
+                return True
         except Exception as e:
-            raise RuntimeError(f"Failed to load {self.svr_url}: {e}")
-
-        if not self.browser.enable_flash():
-            logger.error("Could not enable flash")
+            logger.error(f"Error in export process: {e}")
             return False
-
-        if not self.browser.await_started():
-            logger.error("Could not wait for start")
-            return False
-
-        if not self.browser.await_completed():
-            logger.error("Could not wait for completion")
-            return False
-
-        if not self.capture.stop():
-            logger.error("Could not stop the recording")
-            return False
-        self.postend = self.capture.end_time  # Timestamp for when FFmpeg ended (ms)
-        self.postend_delay = self.capture.ended_delay  # Ensure delay is accounted for (ms)
-
-        # Get timestamps from the browser for when the video started and ended
-        timestamps = self.browser.get_timestamps()
-        video_started, video_ended, video_length, video_start_offset, video_end_offset = timestamps
-
-        if not self.browser.close():
-            logger.error("Couldn't stop the browser")
-            return False
-
-        # Auto editing
-        if self.auto_edit: # true
-            # Get last clip ID and add 1 to it from editor
-            clip_id = len(self.editor.clips)
-            self.editor.add_clip(self.RECORDING, clip_id, self.width, self.height)
-            
-            # Calculate the starting and ending times for the clip
-            started = self.prestart_delay + video_started + video_start_offset - self.prestart
-
-            # Combine the calculated times
-            starting = started
-
-            self.start_from = helpers.ms_to_s(starting)
-            self.end_at = self.editor.get_clip_length(clip_id)
-
-            print(f"{self.start_from} : {self.end_at}")
-
-            # Trim the video first
-            self.editor.trim(clip_id, self.start_from, self.end_at)
-
-            return True
-        else: # false
-            # Create the project folder
-            if not helpers.make_dir(self.PROJECT_FOLDER, reattempt=True):
-                logger.error("Could not create the project folder")
-                return False
-            
-            # Copy the recording to the project folder
-            if not helpers.copy_file(self.RECORDING, self.PROJECT_FOLDER):
-                logger.error("Could not copy the recording")
-                return False
-            
-            return True
 
     def final(self, outro=True):
         try:
