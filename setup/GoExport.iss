@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "GoExport"
-#define MyAppVersion "0.9.0"
+#define MyAppVersion "0.10.0"
 #define MyAppPublisher "LexianDEV"
 #define MyAppURL "https://goexport.lexian.dev/"
 #define MyAppExeName "GoExport.exe"
@@ -39,12 +39,12 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
+;Main files
 Source: "..\dist\GoExport.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\dist\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "..\libs\audio_sniffer.dll"; DestDir: "{sys}"; Flags: onlyifdoesntexist regserver 32bit
-Source: "..\libs\screen-capture-recorder.dll"; DestDir: "{sys}"; Flags: onlyifdoesntexist regserver 32bit
-Source: "..\libs\audio_sniffer-x64.dll"; DestDir: "{sys}"; Flags: onlyifdoesntexist 64bit regserver
-Source: "..\libs\screen-capture-recorder-x64.dll"; DestDir: "{sys}"; Flags: onlyifdoesntexist 64bit regserver
+;Install required dlls
+Source: "..\libs\audio_sniffer.dll"; DestDir: "{sys}"; Flags: onlyifdoesntexist 64bit regserver
+Source: "..\libs\screen-capture-recorder.dll"; DestDir: "{sys}"; Flags: onlyifdoesntexist 64bit regserver
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]
