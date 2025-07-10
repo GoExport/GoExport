@@ -1,4 +1,3 @@
-import shutil
 import helpers
 from modules.logger import logger
 
@@ -50,64 +49,60 @@ class Compatibility:
 
         # -- Required dependencies
         # Gather FFMPEG, FFPROBE, and FFPLAY
-        ffmpeg = helpers.get_path(None, helpers.get_config("PATH_FFMPEG"))
-        ffprobe = helpers.get_path(None, helpers.get_config("PATH_FFPROBE"))
-        ffplay = helpers.get_path(None, helpers.get_config("PATH_FFPLAY"))
+        ffmpeg = helpers.get_path(None, helpers.get_config("PATH_FFMPEG_WINDOWS"))
+        ffprobe = helpers.get_path(None, helpers.get_config("PATH_FFPROBE_WINDOWS"))
+        ffplay = helpers.get_path(None, helpers.get_config("PATH_FFPLAY_WINDOWS"))
         
-        # Check for FFMPEG, FFPROBE, and FFPLAY
-        if not helpers.try_path(ffmpeg):
-            logger.error(f"Failed to locate {ffmpeg}")
-            return False
-        
-        if not helpers.try_path(ffprobe):
-            logger.error(f"Failed to locate {ffprobe}")
-            return False
-        
-        if not helpers.try_path(ffplay):
-            logger.error(f"Failed to locate {ffplay}")
-            return False
-        
-        # Verify validity of FFMPEG, FFPROBE, and FFPLAY
-        if not helpers.try_command(ffmpeg, '-h'):
-            logger.error(f"Failed to validate {ffmpeg}")
-            return False
-        
-        if not helpers.try_command(ffprobe, '-h'):
-            logger.error(f"Failed to validate {ffprobe}")
-            return False
-        
-        if not helpers.try_command(ffplay, '-h'):
-            logger.error(f"Failed to validate {ffplay}")
-            return False
-        
-        # FFMPEG recording test
-        if helpers.os_is_windows():
-            logger.info("Testing FFMPEG compatibility")
-            if not helpers.try_command(ffmpeg, "-f", "dshow", "-i", "video=screen-capture-recorder:audio=virtual-audio-capturer", "-r", "24", "-t", "3", "-f", "null", "-"):
-                logger.error("FFMPEG test failed - compatibility enabled")
-                helpers.show_popup(helpers.get_config("APP_NAME"), "Screen and audio recording failed and the fallback compatibility mode was enabled. Did you install the dependencies?", 48)
-                helpers.remember("FFMPEG_COMPATIBILITY", True)
-        
-        # Gather Chromium
-        chromium = helpers.get_path(None, helpers.get_config("PATH_CHROMIUM"))
+        try:
+            # Check for FFMPEG, FFPROBE, and FFPLAY
+            if not helpers.try_path(ffmpeg):
+                logger.error(f"Failed to locate {ffmpeg}")
+                return False
+            if not helpers.try_path(ffprobe):
+                logger.error(f"Failed to locate {ffprobe}")
+                return False
+            if not helpers.try_path(ffplay):
+                logger.error(f"Failed to locate {ffplay}")
+                return False
 
-        # Check for Chromium
-        if not helpers.try_path(chromium):
-            logger.error(f"Failed to locate {chromium}")
-            return False
-        
-        # Gather Chromedriver
-        chromedriver = helpers.get_path(None, helpers.get_config("PATH_CHROMEDRIVER"))
+            # Verify validity of FFMPEG, FFPROBE, and FFPLAY
+            if not helpers.try_command(ffmpeg, '-h'):
+                logger.error(f"Failed to validate {ffmpeg}")
+                return False
+            if not helpers.try_command(ffprobe, '-h'):
+                logger.error(f"Failed to validate {ffprobe}")
+                return False
+            if not helpers.try_command(ffplay, '-h'):
+                logger.error(f"Failed to validate {ffplay}")
+                return False
 
-        # Check for Chromedriver
-        if not helpers.try_path(chromedriver):
-            logger.error(f"Failed to locate {chromedriver}")
-            return False
-        
-        # Verify validity of Chromedriver
-        if not helpers.try_command(chromedriver, '-v'):
-            logger.error(f"Failed to validate {chromedriver}")
+            # FFMPEG recording test
+            if helpers.os_is_windows():
+                logger.info("Testing FFMPEG compatibility")
+                if not helpers.try_command(ffmpeg, "-f", "dshow", "-i", "video=screen-capture-recorder:audio=virtual-audio-capturer", "-r", "24", "-t", "3", "-f", "null", "-"):
+                    logger.error("FFMPEG test failed - compatibility enabled")
+                    helpers.show_popup(helpers.get_config("APP_NAME"), "Screen and audio recording failed and the fallback compatibility mode was enabled. Did you install the dependencies?", 48)
+                    helpers.remember("FFMPEG_COMPATIBILITY", True)
+
+            # Gather Chromium
+            chromium = helpers.get_path(None, helpers.get_config("PATH_CHROMIUM_WINDOWS"))
+            # Check for Chromium
+            if not helpers.try_path(chromium):
+                logger.error(f"Failed to locate {chromium}")
+                return False
+
+            # Gather Chromedriver
+            chromedriver = helpers.get_path(None, helpers.get_config("PATH_CHROMEDRIVER_WINDOWS"))
+            # Check for Chromedriver
+            if not helpers.try_path(chromedriver):
+                logger.error(f"Failed to locate {chromedriver}")
+                return False
+            # Verify validity of Chromedriver
+            if not helpers.try_command(chromedriver, '-v'):
+                logger.error(f"Failed to validate {chromedriver}")
+                return False
+        except Exception as e:
+            logger.error(f"Dependency check failed: {e}")
             return False
 
         return True
-    

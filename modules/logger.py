@@ -1,6 +1,6 @@
 import helpers
-import logging
 import config
+import logging
 import os
 import sys
 import time

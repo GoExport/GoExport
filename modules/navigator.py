@@ -10,8 +10,8 @@ import urllib
 
 class Interface:
     def __init__(self):
-        chromium = helpers.get_path(None, helpers.get_config("PATH_CHROMIUM"))
-        chromedriver = helpers.get_path(None, helpers.get_config("PATH_CHROMEDRIVER"))
+        chromium = helpers.get_path(None, helpers.get_config("PATH_CHROMIUM_WINDOWS"))
+        chromedriver = helpers.get_path(None, helpers.get_config("PATH_CHROMEDRIVER_WINDOWS"))
 
         self.options = Options()
         self.options.add_argument("--disable-infobars")

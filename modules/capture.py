@@ -35,41 +35,56 @@ class Capture:
 
     def start(self, output: str, width: int, height: int):
         if helpers.os_is_windows():
-            if not helpers.recall("FFMPEG_COMPATIBILITY"):
-                command = [
-                    helpers.get_path(None, helpers.get_config("PATH_FFMPEG")),
-                    "-y",
-                    "-f", "dshow",
-                    "-i", "video=screen-capture-recorder:audio=virtual-audio-capturer",  # Screen & audio source
-                    "-vf", f"crop={width}:{height}:0:0",  # Crop & format
-                    "-c:v", "libx264",  # H.264 codec
-                    "-preset", "slow",  # Slow preset for better compression
-                    "-crf", "0",  # High-quality video (lower is better, 0 is lossless)
-                    "-c:a", "aac",  # AAC audio codec
-                    "-b:a", "192k",  # Higher audio bitrate
-                    "-ar", "44100",  # Standard audio sample rate
-                    output,
-                ]
-            else:
-                command = [
-                    helpers.get_path(None, helpers.get_config("PATH_FFMPEG")),
-                    "-y",
-                    "-f",
-                    "gdigrab",
-                    "-framerate",
-                    "24",
-                    "-offset_x",
-                    "0",
-                    "-offset_y",
-                    "0",
-                    "-video_size",
-                    f"{width}x{height}",
-                    "-i",
-                    "desktop",
-                    "-vf",
-                    "format=yuv420p",
-                    output,
-                ]
+            try:
+                if not helpers.recall("FFMPEG_COMPATIBILITY"):
+                    command = [
+                        helpers.get_path(None, helpers.get_config("PATH_FFMPEG_WINDOWS")),
+                        "-y",
+                        "-f",
+                        "dshow",
+                        "-i",
+                        "video=screen-capture-recorder:audio=virtual-audio-capturer",
+                        "-vf",
+                        f"crop={width}:{height}:0:0,format=yuv420p",
+                        "-c:v",
+                        "libx264",  # Use H.264 codec for video
+                        "-preset",
+                        "ultrafast",  # Use ultrafast preset for faster encoding (lower CPU usage)
+                        "-crf",
+                        "23",  # Constant Rate Factor for good quality (lower is better, 23 is default)
+                        "-pix_fmt",
+                        "yuv420p",  # Ensure compatibility with most players
+                        "-c:a",
+                        "aac",  # Use AAC codec for audio
+                        "-b:a",
+                        "128k",  # Set audio bitrate to ensure good quality
+                        "-ar",
+                        "44100",  # Set audio sample rate to avoid bass boosting or distortion
+                        output,
+                    ]
+                else:
+                    command = [
+                        helpers.get_path(None, helpers.get_config("PATH_FFMPEG_WINDOWS")),
+                        "-y",
+                        "-f",
+                        "gdigrab",
+                        "-framerate",
+                        "24",
+                        "-offset_x",
+                        "0",
+                        "-offset_y",
+                        "0",
+                        "-video_size",
+                        f"{width}x{height}",
+                        "-i",
+                        "desktop",
+                        "-vf",
+                        "format=yuv420p",
+                        output,
+                    ]
+            except Exception as e:
+                logger.error(f"Error in FFMPEG compatibility check: {e}")
+                return False
         else:
             logger.error("Unsupported OS")
             return False
