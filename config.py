@@ -1,6 +1,8 @@
+import helpers
+
 # Configuration
 APP_NAME = "GoExport"
-APP_VERSION = "0.9.0"
+APP_VERSION = "0.10.0"
 DEFAULT_DEPENDENCIES_FILENAME = "dependencies"
 DEFAULT_LIBS_FILENAME = "libs"
 DEFAULT_OUTPUT_FILENAME = "data"
@@ -103,16 +105,19 @@ OUTRO_TALL_720x1280 = [DEFAULT_ASSETS_FILENAME, DEFAULT_OUTROS_FILENAME, DEFAULT
 OUTRO_TALL_480x854 = [DEFAULT_ASSETS_FILENAME, DEFAULT_OUTROS_FILENAME, DEFAULT_TALL_OUTROS_FILENAME, "480x854.mp4"]
 OUTRO_TALL_360x640 = [DEFAULT_ASSETS_FILENAME, DEFAULT_OUTROS_FILENAME, DEFAULT_TALL_OUTROS_FILENAME, "360x640.mp4"]
 
-# Dependencies
-PATH_FFMPEG = [DEFAULT_DEPENDENCIES_FILENAME, "ffmpeg", "bin", "ffmpeg.exe"]
-PATH_FFPROBE = [DEFAULT_DEPENDENCIES_FILENAME, "ffmpeg", "bin", "ffprobe.exe"]
-PATH_FFPLAY = [DEFAULT_DEPENDENCIES_FILENAME, "ffmpeg", "bin", "ffplay.exe"]
-PATH_CHROMIUM = [DEFAULT_DEPENDENCIES_FILENAME, "ungoogled-chromium", "chrome.exe"]
-PATH_CHROMEDRIVER = [DEFAULT_DEPENDENCIES_FILENAME, "chromedriver", "chromedriver.exe"]
-PATH_LIBS_RECORD_64 = [DEFAULT_LIBS_FILENAME, "screen-capture-recorder-x64.dll"]
-PATH_LIBS_RECORD_32 = [DEFAULT_LIBS_FILENAME, "screen-capture-recorder.dll"]
-PATH_LIBS_AUDIO_64 = [DEFAULT_LIBS_FILENAME, "audio_sniffer-x64.dll"]
-PATH_LIBS_AUDIO_32 = [DEFAULT_LIBS_FILENAME, "audio_sniffer.dll"]
+# Dependencies for Windows
+PATH_FFMPEG_WINDOWS = [DEFAULT_DEPENDENCIES_FILENAME, "ffmpeg", "bin", "ffmpeg.exe"]
+PATH_FFPROBE_WINDOWS = [DEFAULT_DEPENDENCIES_FILENAME, "ffmpeg", "bin", "ffprobe.exe"]
+PATH_FFPLAY_WINDOWS = [DEFAULT_DEPENDENCIES_FILENAME, "ffmpeg", "bin", "ffplay.exe"]
+PATH_CHROMIUM_WINDOWS = [DEFAULT_DEPENDENCIES_FILENAME, "ungoogled-chromium", "chrome.exe"]
+PATH_CHROMEDRIVER_WINDOWS = [DEFAULT_DEPENDENCIES_FILENAME, "chromedriver", "chromedriver.exe"]
+
+# Dependencies for Linux
+PATH_FFMPEG_LINUX = helpers.find("ffmpeg")
+PATH_FFPROBE_LINUX = helpers.find("ffprobe")
+PATH_FFPLAY_LINUX = helpers.find("ffplay")
+# PATH_CHROMIUM_LINUX = helpers.find("chromium-browser") or helpers.find("chromium")
+# PATH_CHROMEDRIVER_LINUX = helpers.find("chromedriver")
 
 # Development Settings
 DEBUG_MODE = False
