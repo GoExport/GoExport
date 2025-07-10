@@ -4,7 +4,6 @@ import os
 import sys
 import platform
 import logging
-import GPUtil
 import psutil
 import ctypes
 import urllib
@@ -60,22 +59,8 @@ def get_computer_specs():
         "threads": psutil.cpu_count(logical=True),
         "ram": round(psutil.virtual_memory().total / (1024 ** 3), 2),
         "disk": round(psutil.disk_usage("/").total / (1024 ** 3), 2),
-        "gpu": get_gpu_info(),
     }
     return specs
-
-def get_gpu_info():
-    gpus = GPUtil.getGPUs()
-    gpu_info = []
-    for gpu in gpus:
-        gpu_info.append({
-            "name": gpu.name,
-            "vram_total": round(gpu.memoryTotal / 1024, 2),  # Convert MB to GB
-            "vram_used": round(gpu.memoryUsed / 1024, 2),    # Convert MB to GB
-            "vram_free": round(gpu.memoryFree / 1024, 2),    # Convert MB to GB
-            "vram_util": round(gpu.memoryUtil * 100),        # Convert to percentage and round up
-        })
-    return gpu_info
 
 def move_mouse_offscreen():
     pyautogui.FAILSAFE = False # All we're doing is moving the mouse offscreen
