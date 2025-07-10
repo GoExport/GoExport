@@ -30,9 +30,38 @@ This project is licensed under the **GNU General Public License v3.0**. For more
 
 # ❓ Support and FAQ
 
-If you have any questions or need support, feel free to reach out to us on our [Discord server](https://discord.gg/ejwJYtQDrS).
+<details>
+  <summary><strong>What LVM is supported?</strong></summary>
 
-"My video is still laggy!" - Assuming you have a decent computer, this is simply an issue with flash and is normal and not related to GoExport, the original GoAnimate exporter was also laggy.
+The following is a list of **known supported LVMs**:
+
+- Wrapper: Offline (aka "Local")
+- FlashThemes (aka "FT")
+
+</details>
+
+<details>
+  <summary><strong>My video is laggy!</strong></summary>
+
+Assuming you have a decent computer, this is simply an issue with Flash and is normal and not related to GoExport. The original GoAnimate exporter was also laggy.
+
+</details>
+
+<details>
+  <summary><strong>How do I use GoExport?</strong></summary>
+
+Simply watch the [**official video tutorial**](https://youtu.be/Cen69Mp5T4E) on how to use GoExport. It will guide you through the process of exporting your videos.
+
+</details>
+
+<details>
+  <summary><strong>How do I get my Video ID or User ID?</strong></summary>
+
+Simply watch the [**guide video**](https://youtu.be/YpbHqPGz4co) on how to get your Video ID or User ID. It will guide you through the process of finding your IDs or user ids.
+
+</details>
+
+If you have any questions or still need support, feel free to reach out to us on our [Discord server](https://discord.gg/ejwJYtQDrS).
 
 # 📂 Installation
 
