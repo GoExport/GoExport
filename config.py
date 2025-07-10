@@ -1,5 +1,3 @@
-import helpers
-
 # Configuration
 APP_NAME = "GoExport"
 APP_VERSION = "0.10.0"
@@ -113,11 +111,11 @@ PATH_CHROMIUM_WINDOWS = [DEFAULT_DEPENDENCIES_FILENAME, "ungoogled-chromium", "c
 PATH_CHROMEDRIVER_WINDOWS = [DEFAULT_DEPENDENCIES_FILENAME, "chromedriver", "chromedriver.exe"]
 
 # Dependencies for Linux
-PATH_FFMPEG_LINUX = helpers.find("ffmpeg")
-PATH_FFPROBE_LINUX = helpers.find("ffprobe")
-PATH_FFPLAY_LINUX = helpers.find("ffplay")
-# PATH_CHROMIUM_LINUX = helpers.find("chromium-browser") or helpers.find("chromium")
-# PATH_CHROMEDRIVER_LINUX = helpers.find("chromedriver")
+# PATH_FFMPEG_LINUX  = helpers.search_path("ffmpeg")
+# PATH_FFPROBE_LINUX = helpers.search_path("ffprobe")
+# PATH_FFPLAY_LINUX  = helpers.search_path("ffplay")
+# PATH_CHROMIUM_LINUX = helpers.search_path("chromium-browser") or helpers.search_path("chromium")
+# PATH_CHROMEDRIVER_LINUX = helpers.search_path("chromedriver")
 
 # Development Settings
 DEBUG_MODE = False
