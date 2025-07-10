@@ -185,7 +185,7 @@ class Controller:
             if self.auto_edit: # true
                 # Get last clip ID and add 1 to it from editor
                 clip_id = len(self.editor.clips)
-                self.editor.add_clip(self.RECORDING, clip_id, self.width, self.height)
+                self.editor.add_clip(self.RECORDING, clip_id)
                 
                 # Calculate the starting and ending times for the clip
                 started = self.prestart_delay + video_started + video_start_offset - self.prestart
@@ -234,7 +234,7 @@ class Controller:
             elif self.aspect_ratio == "4:3" and outro:
                 self.editor.add_clip(helpers.get_path(helpers.get_app_folder(), helpers.get_config(f"OUTRO_STANDARD_{self.width}x{self.height}")), len(self.editor.clips))
             elif self.aspect_ratio == "14:9" and outro:
-                self.editor.add_clip(helpers.get_path(helpers.get_app_folder(), helpers.get_config(f"OUTRO_CLASSIC_{self.width}x{self.height}")), len(self.editor.clips))
+                self.editor.add_clip(helpers.get_path(helpers.get_app_folder(), helpers.get_config(f"OUTRO_WIDE_{self.width}x{self.height}")), len(self.editor.clips))
         except Exception as e:
             print(f"[bold yellow]Warning:[/bold yellow] Failed to add the outro: {e}")
         
