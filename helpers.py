@@ -1,5 +1,5 @@
-import shutil
 import config
+import shutil
 import os
 import sys
 import platform
@@ -160,6 +160,14 @@ def get_resolution(index: int = 0):
     monitor = get_monitors()[index]
     return (monitor.width, monitor.height)
 
+def search_path(name: str):
+    """
+    Wrapper for shutil.which to find the path of an executable by name in the system PATH.
+    :param name: Name of the executable to find.
+    :return: Full path to the executable if found, None otherwise.
+    """
+    return shutil.which(name)
+
 def copy_file(src, dst):
     if os.path.isdir(dst):
         dst = os.path.join(dst, os.path.basename(src))
@@ -245,11 +253,20 @@ def convert_to_file_url(local_path):
     # Prepend 'file://' to indicate it's a local file
     return f"file:///{encoded_path}"
 
-def try_command(*input):
+def try_command(*input, return_output: bool = False):
+    """
+    Try to run a command in the shell and return the output or success status.
+    If return_output is True, returns the command output as a string.
+    :param input: Command and arguments to run.
+    :param return_output: If True, returns the command output as a string.
+    :return: True if command succeeded, False if it failed, or the output string if return_output is True.
+    :raises subprocess.CalledProcessError: If the command fails and check=True is set.
+    :raises Exception: For any other unexpected errors.
+    """
     try:
         result = subprocess.run(args=input, shell=True, capture_output=True, text=True, check=True)
         logger.debug("Command succeeded: %s", result.stdout)
-        return True
+        return result.stdout.strip() if return_output else True
     except subprocess.CalledProcessError as e:
         logger.error("Error occurred: %s", e)
         logger.error("stderr: %s", e.stderr)  # Optional: Log stderr if needed
