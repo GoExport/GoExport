@@ -42,6 +42,7 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 ;Main files
 Source: "..\dist\GoExport.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\dist\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\server\*"; DestDir: "{app}\server"; Flags: ignoreversion recursesubdirs createallsubdirs
 ;Install required dlls
 Source: "..\libs\audio_sniffer.dll"; DestDir: "{sys}"; Flags: onlyifdoesntexist 64bit regserver
 Source: "..\libs\screen-capture-recorder.dll"; DestDir: "{sys}"; Flags: onlyifdoesntexist 64bit regserver
