@@ -75,7 +75,6 @@ jobs:
         with:
           files: dist/setup.exe
           prerelease: ${{ startsWith(github.ref_name, 'b') }}
-          # `make_latest` only applies if prerelease is false
-          make_latest: ${{ startsWith(github.ref_name, 'v') }}
+          generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
