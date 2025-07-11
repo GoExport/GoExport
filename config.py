@@ -1,7 +1,7 @@
 # Configuration
 APP_NAME = "GoExport"
 APP_VERSION = "0.10.0"
-APP_BETA = True
+APP_BETA = False
 DEFAULT_DEPENDENCIES_FILENAME = "dependencies"
 DEFAULT_LIBS_FILENAME = "libs"
 DEFAULT_SERVER_FILENAME = "server"
@@ -67,10 +67,20 @@ AVAILABLE_SERVICES = {
         "requires": {
             "movieId",
         },
-        "domain": ["http://127.0.0.1:4343"],
+        "domain": [
+            "http://127.0.0.1:4343",
+        ],
         "player": [
             f"{SERVER_PROTOCOL}://{SERVER_HOST}:{SERVER_PORT}",
-            "index.html?environment=local&movieId={movie_id}&playerWidth={width}&playerHeight={height}&isWide={wide}&isVideoRecord=1",
+            (
+                "index.html?"
+                "environment=local"
+                "&movieId={movie_id}"
+                "&playerWidth={width}"
+                "&playerHeight={height}"
+                "&isWide={wide}"
+                "&isVideoRecord=1"
+            ),
         ],
     },
     "ft": {
@@ -78,11 +88,38 @@ AVAILABLE_SERVICES = {
         "requires": {
             "movieId",
             "movieOwnerId",
+            "authorization",
         },
-        "domain": ["https://flashthemes.net"],
+        "domain": [
+            "https://flashthemes.net",
+        ],
         "player": [
             f"{SERVER_PROTOCOL}://{SERVER_HOST}:{SERVER_PORT}",
-            "index.html?environment=ft&swf=https://lightspeed.flashthemes.net/static/animation/aisd82ij/player.swf?v=2&movieId={movie_id}&ownerId={owner_id}&playerWidth={width}&playerHeight={height}&isWide={wide}&isVideoRecord=1&ut=-1&apiserver=https://flashthemes.net/&autostart=1&storePath=https://flashthemes.net/static/store/<store>?v={owner_id}&clientThemePath=https://lightspeed.flashthemes.net/static/ct/ad44370a650793d9/<client_theme>&isEmbed=1&chain_mids=&ad=0&endStyle=1&isWide={wide}&pwm=1&isSpeedy=1&allowFullScreen=true&allowScriptAccess=always",
+            (
+                "index.html?"
+                "environment=ft"
+                "&swf=https://lightspeed.flashthemes.net/static/animation/aisd82ij/player.swf?v=2"
+                "&movieId={movie_id}"
+                "&ownerId={owner_id}"
+                "&playerWidth={width}"
+                "&playerHeight={height}"
+                "&isWide={wide}"
+                "&isVideoRecord=1"
+                "&ut=-1"
+                "&apiserver=https://flashthemes.net/"
+                "&autostart=1"
+                "&storePath=https://flashthemes.net/static/store/<store>?v={owner_id}"
+                "&clientThemePath=https://lightspeed.flashthemes.net/static/ct/ad44370a650793d9/<client_theme>"
+                "&isEmbed=1"
+                "&chain_mids="
+                "&ad=0"
+                "&endStyle=1"
+                "&isWide={wide}"
+                "&pwm=1"
+                "&isSpeedy=1"
+                "&allowFullScreen=true"
+                "&allowScriptAccess=always"
+            ),
         ],
     },
 }
