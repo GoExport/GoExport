@@ -80,7 +80,7 @@ class Controller:
         # Asks if the user wants automated editing
         if self.auto_edit is None:
             if not self.parameters.no_input:
-                self.auto_edit = Confirm.ask("Would you like to enable automated editing? (Auto editing is in beta and may not be perfect!)", default=True)
+                self.auto_edit = Confirm.ask("Would you like to enable automated editing? (Auto editing is experimental but if you can test it and report back we'd appreciate it!)", default=True)
             else:
                 self.auto_edit = self.parameters.auto_edit or True
             logger.info(f"User chose to enable auto editing: {self.auto_edit}")
