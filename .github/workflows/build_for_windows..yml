@@ -2,7 +2,10 @@ name: Package Application with PyInstaller for Windows
 on:
   push:
     branches:
-      - main
+      - "main"
+    tags:
+      - "v*"
+      - "b*"
 
 jobs:
   build:
@@ -58,8 +61,19 @@ jobs:
           path: setup\GoExport.iss
           options: /O+
 
-      - name: Upload artifact
+      - name: Upload debug build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: goexport_win64
-          path: dist/setup.exe
+          name: dev-build
+          path: dist
+
+      - name: Upload Release Asset
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: dist/setup.exe
+          prerelease: ${{ startsWith(github.ref_name, 'b') }}
+          # `make_latest` only applies if prerelease is false
+          make_latest: ${{ startsWith(github.ref_name, 'v') }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
