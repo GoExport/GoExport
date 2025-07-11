@@ -3,6 +3,7 @@ from modules.editor import Editor
 from modules.navigator import Interface
 from modules.capture import Capture
 from modules.parameters import Parameters
+from modules.server import Server
 from rich.prompt import Prompt, IntPrompt, FloatPrompt, Confirm
 from rich import print
 from modules.logger import logger
@@ -58,6 +59,14 @@ class Controller:
             self.width, self.height, self.widescreen = helpers.get_config("AVAILABLE_SIZES")[self.aspect_ratio][self.resolution]
             if self.width > 1280 and self.height > 720:
                 print("[bold yellow]Warning: The resolution you have selected is higher than 720p. This may cause issues with the recording. Please ensure your system can handle this resolution.")
+            
+        # Start the server
+        self.server = Server()
+        try:
+            self.server.start()
+        except Exception as e:
+            logger.error(f"Error starting server: {e}")
+            return False
 
         self.svr_name = service_data["name"]
         self.svr_domain = service_data.get("domain", [])
@@ -172,6 +181,13 @@ class Controller:
                 return False
             self.postend = self.capture.end_time  # Timestamp for when FFmpeg ended (ms)
             self.postend_delay = self.capture.ended_delay  # Ensure delay is accounted for (ms)
+
+            # Stop the server
+            try:
+                self.server.stop()
+            except Exception as e:
+                logger.error(f"Error stopping server: {e}")
+                return False
 
             # Get timestamps from the browser for when the video started and ended
             timestamps = self.browser.get_timestamps()

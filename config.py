@@ -4,6 +4,7 @@ APP_VERSION = "0.10.0"
 APP_BETA = True
 DEFAULT_DEPENDENCIES_FILENAME = "dependencies"
 DEFAULT_LIBS_FILENAME = "libs"
+DEFAULT_SERVER_FILENAME = "server"
 DEFAULT_OUTPUT_FILENAME = "data"
 DEFAULT_ASSETS_FILENAME = "assets"
 DEFAULT_OUTROS_FILENAME = "outro"
@@ -13,6 +14,11 @@ DEFAULT_WIDE_OUTROS_FILENAME = "wide"
 DEFAULT_CLASSIC_OUTROS_FILENAME = "classic"
 DEFAULT_TALL_OUTROS_FILENAME = "tall"
 DEFAULT_OUTPUT_EXTENSION = ".mp4"
+
+# Server
+SERVER_HOST = "127.0.0.1"
+SERVER_PORT = 26519
+SERVER_PROTOCOL = "http"
 
 AVAILABLE_ASPECT_RATIOS = [
     "4:3",
@@ -63,8 +69,7 @@ AVAILABLE_SERVICES = {
         },
         "domain": ["http://127.0.0.1:4343"],
         "player": [
-            "https://goexport.github.io",
-            "Universal-Wrapper-Player",
+            f"{SERVER_PROTOCOL}://{SERVER_HOST}:{SERVER_PORT}",
             "index.html?environment=local&movieId={movie_id}&playerWidth={width}&playerHeight={height}&isWide={wide}&isVideoRecord=1",
         ],
     },
@@ -76,8 +81,7 @@ AVAILABLE_SERVICES = {
         },
         "domain": ["https://flashthemes.net"],
         "player": [
-            "https://goexport.github.io",
-            "Universal-Wrapper-Player",
+            f"{SERVER_PROTOCOL}://{SERVER_HOST}:{SERVER_PORT}",
             "index.html?environment=ft&swf=https://lightspeed.flashthemes.net/static/animation/aisd82ij/player.swf?v=2&movieId={movie_id}&ownerId={owner_id}&playerWidth={width}&playerHeight={height}&isWide={wide}&isVideoRecord=1&ut=-1&apiserver=https://flashthemes.net/&autostart=1&storePath=https://flashthemes.net/static/store/<store>?v={owner_id}&clientThemePath=https://lightspeed.flashthemes.net/static/ct/ad44370a650793d9/<client_theme>&isEmbed=1&chain_mids=&ad=0&endStyle=1&isWide={wide}&pwm=1&isSpeedy=1&allowFullScreen=true&allowScriptAccess=always",
         ],
     },
