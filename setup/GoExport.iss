@@ -8,13 +8,9 @@
 #define MyAppExeName "GoExport.exe"
 
 [Setup]
-; NOTE: The value of AppId uniquely identifies this application.
-; Do not use the same AppId value in installers for other applications.
-; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
 AppId={{8AE56AFA-B6B3-4455-BCAD-7D82E2051EA0}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
-;AppVerName={#MyAppName} {#MyAppVersion}
 AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
 AppSupportURL={#MyAppURL}
@@ -39,16 +35,15 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-;VCRedist
+; VCRedist
 Source: "..\redist\VC_redist.x64.exe"; DestDir: {tmp}; Flags: dontcopy
-;Main files
+; Main files
 Source: "..\dist\GoExport.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\dist\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "..\server\*"; DestDir: "{app}\server"; Flags: ignoreversion recursesubdirs createallsubdirs
-;Install required dlls
+; DLLs (installed manually in post-install)
 Source: "..\libs\audio_sniffer-x64.dll"; DestDir: "{sys}"; Flags: onlyifdoesntexist 64bit
 Source: "..\libs\screen-capture-recorder-x64.dll"; DestDir: "{sys}"; Flags: onlyifdoesntexist 64bit
-; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
@@ -62,8 +57,7 @@ Filename: "{tmp}\VC_redist.x64.exe"; \
   Parameters: "/install /quiet /norestart"; \
   Check: VCRedistRequired; \
   Flags: waituntilterminated runhidden
-Filename: "regsvr32.exe"; Parameters: "/s ""{sys}\audio_sniffer-x64.dll"""; Flags: runhidden waituntilterminated
-Filename: "regsvr32.exe"; Parameters: "/s ""{sys}\screen-capture-recorder-x64.dll"""; Flags: runhidden waituntilterminated
+
 Filename: "{app}\{#MyAppExeName}"; Flags: nowait postinstall skipifsilent; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"
 
 [Code]
@@ -71,22 +65,46 @@ function VCRedistRequired: Boolean;
 var
   Version: string;
 begin
-  // Try to read the installed VC++ 2017 runtime version from the registry
   if RegQueryStringValue(HKLM, 'SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64', 'Version', Version) then
   begin
     Log('Found VC++ 2017 x64 version: ' + Version);
-    // Check if the version is older than 14.14.26429.03 (your minimum version)
     Result := CompareStr(Version, '14.14.26429.03') < 0;
   end
   else
   begin
     Log('VC++ 2017 x64 not found. Will install.');
-    Result := True; // Not installed at all
+    Result := True;
   end;
 
-  // If it needs installation, extract the file so it's available for [Run]
   if Result then
   begin
     ExtractTemporaryFile('VC_redist.x64.exe');
+  end;
+end;
+
+procedure CurStepChanged(CurStep: TSetupStep);
+var
+  ResultCode: Integer;
+  Success: Boolean;
+begin
+  if CurStep = ssPostInstall then
+  begin
+    Log('Registering audio_sniffer-x64.dll...');
+    Success := Exec('regsvr32.exe', '/s "' + ExpandConstant('{sys}\audio_sniffer-x64.dll') + '"',
+                    '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+    if not Success or (ResultCode <> 0) then
+    begin
+      MsgBox('Failed to register audio_sniffer-x64.dll (error code ' + IntToStr(ResultCode) + '). Installation cannot continue.', mbCriticalError, MB_OK);
+      Abort;
+    end;
+
+    Log('Registering screen-capture-recorder-x64.dll...');
+    Success := Exec('regsvr32.exe', '/s "' + ExpandConstant('{sys}\screen-capture-recorder-x64.dll') + '"',
+                    '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+    if not Success or (ResultCode <> 0) then
+    begin
+      MsgBox('Failed to register screen-capture-recorder-x64.dll (error code ' + IntToStr(ResultCode) + '). Installation cannot continue.', mbCriticalError, MB_OK);
+      Abort;
+    end;
   end;
 end;
