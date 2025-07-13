@@ -24,13 +24,13 @@ DisableDirPage=yes
 DefaultGroupName={#MyAppName}
 AllowNoIcons=yes
 LicenseFile=..\LICENSE
-OutputBaseFilename=setup
+OutputBaseFilename=goexport_setup
 Compression=lzma
 SolidCompression=yes
 AllowUNCPath=False
 UsePreviousAppDir=False
 OutputDir=..\dist
-ArchitecturesAllowed=x64
+ArchitecturesAllowed=x64compatible
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -39,14 +39,15 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
+;VCRedist
 Source: "..\redist\VC_redist.x64.exe"; DestDir: {tmp}; Flags: dontcopy
 ;Main files
 Source: "..\dist\GoExport.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\dist\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "..\server\*"; DestDir: "{app}\server"; Flags: ignoreversion recursesubdirs createallsubdirs
 ;Install required dlls
-Source: "..\libs\audio_sniffer-x64.dll"; DestDir: "{sys}"; Flags: onlyifdoesntexist 64bit regserver
-Source: "..\libs\screen-capture-recorder-x64.dll"; DestDir: "{sys}"; Flags: onlyifdoesntexist 64bit regserver
+Source: "..\libs\audio_sniffer-x64.dll"; DestDir: "{sys}"; Flags: onlyifdoesntexist 64bit
+Source: "..\libs\screen-capture-recorder-x64.dll"; DestDir: "{sys}"; Flags: onlyifdoesntexist 64bit
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]
@@ -61,6 +62,8 @@ Filename: "{tmp}\VC_redist.x64.exe"; \
   Parameters: "/install /quiet /norestart"; \
   Check: VCRedistRequired; \
   Flags: waituntilterminated runhidden
+Filename: "regsvr32.exe"; Parameters: "/s ""{sys}\audio_sniffer-x64.dll"""; Flags: runhidden waituntilterminated
+Filename: "regsvr32.exe"; Parameters: "/s ""{sys}\screen-capture-recorder-x64.dll"""; Flags: runhidden waituntilterminated
 Filename: "{app}\{#MyAppExeName}"; Flags: nowait postinstall skipifsilent; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"
 
 [Code]
