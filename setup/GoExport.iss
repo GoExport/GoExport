@@ -39,6 +39,9 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
+; VC++ redistributable runtime. Extracted by VC2017RedistNeedsInstall(), if needed.
+Source: ".\redist\VC_redist.x64.exe"; DestDir: {tmp}; Flags: dontcopy
+Source: ".\redist\VC_redist.x86.exe"; DestDir: {tmp}; Flags: dontcopy
 ;Main files
 Source: "..\dist\GoExport.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\dist\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
@@ -60,38 +63,3 @@ Name: "{commondesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: 
 Filename: "{tmp}\VC_redist.x64.exe"; Parameters: "/install /quiet /norestart"; StatusMsg: "Installing VC++ 2017 x64 Redistributable..."; Flags: waituntilterminated runhidden 64bit
 Filename: "{tmp}\VC_redist.x86.exe"; Parameters: "/install /quiet /norestart"; StatusMsg: "Installing VC++ 2017 x86 Redistributable..."; Flags: waituntilterminated runhidden 32bit
 Filename: "{app}\{#MyAppExeName}"; Flags: nowait postinstall skipifsilent; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"
-
-[Code]
-function InstallVCRedist(): Boolean;
-var
-    URL, TempFile: string;
-    ResultCode: Integer;
-begin
-    if Is64BitInstallMode then
-        URL := 'https://aka.ms/vs/17/release/vc_redist.x64.exe'
-    else
-        URL := 'https://aka.ms/vs/17/release/vc_redist.x86.exe';
-
-    TempFile := DownloadTemporaryFile(URL);
-    if TempFile = '' then
-    begin
-        MsgBox('Failed to download VC++ Redistributable.', mbError, MB_OK);
-        Result := False;
-        exit;
-    end;
-
-    if not ShellExec('', TempFile, '/install /quiet /norestart', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
-    begin
-        MsgBox('Failed to install VC++ Redistributable.', mbError, MB_OK);
-        Result := False;
-        exit;
-    end;
-
-    Result := True;
-end;
-
-procedure CurStepChanged(CurStep: TSetupStep);
-begin
-    if CurStep = ssInstall then
-        InstallVCRedist();
-end;
