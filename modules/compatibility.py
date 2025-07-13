@@ -1,3 +1,4 @@
+from time import time
 import helpers
 from modules.logger import logger
 
@@ -14,7 +15,18 @@ class Compatibility:
         helpers.make_dir(helpers.get_path(helpers.get_app_folder(), helpers.get_config("DEFAULT_FOLDER_OUTPUT_FILENAME")))
         
         # Check app
-        logger.info(f"{helpers.get_config("APP_NAME")} v{helpers.get_config('APP_VERSION')}")
+        logger.info(f"{helpers.get_config('APP_NAME')} v{helpers.get_config('APP_VERSION')}")
+
+        # Check for updates
+        try:
+            if helpers.load("last_update_check") is None or (time() - helpers.load("last_update_check")) > helpers.get_config("UPDATE_CHECK_INTERVAL"):
+                helpers.has_update()
+                helpers.save("last_update_check", helpers.get_timestamp())
+            else:
+                logger.info("Skipping update check, last check was recent.")
+        except Exception as e:
+            logger.error(f"Failed to check for updates: {e}")
+            return False
 
         # Check OS
         if helpers.os_is_windows():

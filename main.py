@@ -22,7 +22,7 @@ def main():
     compatibility = Compatibility()
     controller = Controller()
     parameters = Parameters()
-
+    
     try:
         # Run inital compatibility check
         logger.info("Please wait while we verify dependencies")
