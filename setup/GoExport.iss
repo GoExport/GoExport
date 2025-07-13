@@ -40,8 +40,8 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 
 [Files]
 ; VC++ redistributable runtime. Extracted by VC2017RedistNeedsInstall(), if needed.
-Source: ".\redist\VC_redist.x64.exe"; DestDir: {tmp}; Flags: dontcopy
-Source: ".\redist\VC_redist.x86.exe"; DestDir: {tmp}; Flags: dontcopy
+Source: "..\redist\VC_redist.x64.exe"; DestDir: {tmp}; Flags: dontcopy
+Source: "..\redist\VC_redist.x86.exe"; DestDir: {tmp}; Flags: dontcopy
 ;Main files
 Source: "..\dist\GoExport.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\dist\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
