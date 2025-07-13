@@ -20,6 +20,11 @@ SERVER_HOST = "127.0.0.1"
 SERVER_PORT = 26519
 SERVER_PROTOCOL = "http"
 
+# Wrapper Server
+WRAPPER_SERVER_HOST = "127.0.0.1"
+WRAPPER_SERVER_PORT = 4343
+WRAPPER_SERVER_PROTOCOL = "http"
+
 AVAILABLE_ASPECT_RATIOS = [
     "4:3",
     "14:9",
@@ -68,7 +73,7 @@ AVAILABLE_SERVICES = {
             "movieId",
         },
         "domain": [
-            "http://127.0.0.1:4343",
+            f"{WRAPPER_SERVER_PROTOCOL}://{WRAPPER_SERVER_HOST}:{WRAPPER_SERVER_PORT}",
         ],
         "player": [
             f"{SERVER_PROTOCOL}://{SERVER_HOST}:{SERVER_PORT}",
@@ -164,5 +169,5 @@ UPDATE_CHECK_INTERVAL = 60 * 1000  # 1 minute in milliseconds
 PATH_DATA_FILE = ["data.json"]
 
 # Development Settings
-DEBUG_MODE = True
+DEBUG_MODE = False
 SKIP_COMPAT = False

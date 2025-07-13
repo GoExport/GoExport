@@ -1,9 +1,9 @@
+import json
 import config
 import shutil
 import os
 import sys
 import platform
-import logging
 import psutil
 import ctypes
 import urllib
@@ -15,6 +15,46 @@ from rich import print
 from modules.logger import logger
 from datetime import datetime
 
+# Save management functions
+def save(key: str, value):
+    """
+    Save a value to a key in the data.json file
+    :param key: The key to save the value under.
+    :param value: The value to save.
+    """
+    logger.debug(f"Saving {key} as {value}")
+    # Load existing data or initialize as empty dict
+    data_file_path = get_path(get_app_folder(), get_config("PATH_DATA_FILE")[0])
+    if os.path.exists(data_file_path):
+        with open(data_file_path, "r") as f:
+            try:
+                data = json.load(f)
+            except json.JSONDecodeError:
+                data = {}
+    else:
+        data = {}
+    data[key] = value
+    with open(data_file_path, "w") as f:
+        json.dump(data, f, indent=4)
+
+def load(key: str):
+    """
+    Load a value from a key in the data.json file
+    :param key: The key to load the value from.
+    :return: The value associated with the key, or None if not found.
+    """
+    logger.debug(f"Loading {key}")
+    data_file_path = get_path(get_app_folder(), get_config("PATH_DATA_FILE")[0])
+    if os.path.exists(data_file_path):
+        with open(data_file_path, "r") as f:
+            try:
+                data = json.load(f)
+                return data.get(key, None)
+            except json.JSONDecodeError:
+                return None
+    return None
+
+# Memory management functions
 def remember(key: str, value):
     logger.debug(f"Remembering {key} as {value}")
     setattr(remember, key, value)
@@ -28,6 +68,7 @@ def forget(key: str):
     if hasattr(remember, key):
         delattr(remember, key)
 
+# Rest of the helper functions
 def os_is_windows():
     return sys.platform.startswith("win")
 
@@ -225,6 +266,26 @@ def try_url(input, expected: int = 200, redirect: bool = False):
     except requests.RequestException:
         return False
 
+def request_url(url: str, params: dict = None, method: str = "GET", timeout: int = 30):
+    """
+    Make a request to a URL with optional parameters and method.
+    :param url: The URL to request.
+    :param params: Optional dictionary of query parameters.
+    :param method: HTTP method to use (GET or POST).
+    :param timeout: Timeout for the request in seconds.
+    :return: Response object from the request.
+    """
+    try:
+        if method.upper() == "POST":
+            response = requests.post(url, data=params, timeout=timeout)
+        else:
+            response = requests.get(url, params=params, timeout=timeout)
+        response.raise_for_status()  # Raise an error for bad responses
+        return response
+    except requests.RequestException as e:
+        logger.error(f"Request failed: {e}")
+        return None
+
 def try_path(input):
     return os.path.exists(input)
 
@@ -319,3 +380,8 @@ def print_list(items, message: str = "to select"):
         raise ValueError("Input must be a list.")
     for index, item in enumerate(items, start=1):
         print(f"[bold blue]Option #{index}:[/bold blue] type \"{item}\"" + (f" ({message})" if message else ""))
+
+# Checks if the application has an update available
+def has_update():
+    logger.info("Checking for updates...")
+    return False

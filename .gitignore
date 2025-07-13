@@ -35,3 +35,6 @@ Thumbs.db
 *.swp
 *.bak
 *.tmp
+
+# Data files
+data.json
