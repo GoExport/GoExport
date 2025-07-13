@@ -159,6 +159,10 @@ PATH_CHROMEDRIVER_WINDOWS = [DEFAULT_DEPENDENCIES_FILENAME, "chromedriver", "chr
 # PATH_CHROMIUM_LINUX = helpers.search_path("chromium-browser") or helpers.search_path("chromium")
 # PATH_CHROMEDRIVER_LINUX = helpers.search_path("chromedriver")
 
+# Data
+UPDATE_CHECK_INTERVAL = 60 * 1000  # 1 minute in milliseconds
+PATH_DATA_FILE = ["data.json"]
+
 # Development Settings
-DEBUG_MODE = False
+DEBUG_MODE = True
 SKIP_COMPAT = False
