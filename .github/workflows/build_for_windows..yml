@@ -73,7 +73,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v1
         with:
-          files: dist/setup.exe
+          files: dist/goexport_setup.exe
           prerelease: ${{ startsWith(github.ref_name, 'b') }}
           generate_release_notes: true
         env:
