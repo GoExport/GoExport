@@ -44,8 +44,10 @@ Source: "..\dist\GoExport.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\dist\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "..\server\*"; DestDir: "{app}\server"; Flags: ignoreversion recursesubdirs createallsubdirs
 ;Install required dlls
-Source: "..\libs\audio_sniffer.dll"; DestDir: "{sys}"; Flags: onlyifdoesntexist 64bit regserver
-Source: "..\libs\screen-capture-recorder.dll"; DestDir: "{sys}"; Flags: onlyifdoesntexist 64bit regserver
+Source: "..\libs\audio_sniffer.dll"; DestDir: "{sys}"; Flags: onlyifdoesntexist regserver 32bit
+Source: "..\libs\screen-capture-recorder.dll"; DestDir: "{sys}"; Flags: onlyifdoesntexist regserver 32bit
+Source: "..\libs\audio_sniffer-x64.dll"; DestDir: "{sys}"; Flags: onlyifdoesntexist 64bit regserver
+Source: "..\libs\screen-capture-recorder-x64.dll"; DestDir: "{sys}"; Flags: onlyifdoesntexist 64bit regserver
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]
