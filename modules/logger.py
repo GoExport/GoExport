@@ -5,6 +5,7 @@ import os
 import sys
 import time
 import traceback
+from modules import parameters
 from rich.logging import RichHandler
 
 # Ensure the logs folder exists
@@ -15,7 +16,7 @@ log_file = f"logs/{time.strftime('%Y-%m-%d')}/{time.strftime('%H-%M-%S')}-{int(t
 
 # Set up logging to the terminal (RichHandler) and log file
 logging.basicConfig(
-    level=logging.DEBUG if config.DEBUG_MODE else logging.INFO,
+    level=logging.DEBUG if parameters.Parameters().verbose or config.DEBUG_MODE else logging.INFO,
     format="%(message)s",  # Rich handles formatting itself
     datefmt="[%X]",
     handlers=[
