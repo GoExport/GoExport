@@ -12,17 +12,6 @@ class Parameters:
         parser.add_argument("-mi", "--movie-id", help="Set the movie ID", dest="movie_id")
         parser.add_argument("-ae", "--auto-edit", help="Enable auto editing", action="store_true", dest="auto_edit")
 
-        # Quality parameters
-        parser.add_argument("-f", "--framerate", help="Set the framerate of the output", dest="framerate", type=int, default=24)
-        parser.add_argument("-b", "--bitrate", help="Set the bitrate of the output", dest="bitrate", type=int, default=5000)
-        parser.add_argument("-c", "--codec", help="Set the codec to use for video encoding", dest="codec", default="libx264")
-        parser.add_argument("-a", "--audio_bitrate", help="Set the audio bitrate", dest="audio_bitrate", type=int, default=128)
-        parser.add_argument("-p", "--preset", help="Set the encoding preset", dest="preset", default="ultrafast")
-        parser.add_argument("-crf", "--constant_rate_factor", help="Set the CRF value for video quality", dest="crf", type=int, default=23)
-        parser.add_argument("-pix_fmt", "--pixel_format", help="Set the pixel format for video encoding", dest="pix_fmt", default="yuv420p")
-        parser.add_argument("-ac", "--audio_codec", help="Set the audio codec to use", dest="audio_codec", default="aac")
-        parser.add_argument("-ar", "--audio_sample_rate", help="Set the audio sample rate", dest="audio_sample_rate", type=int, default=44100)
-
         args = parser.parse_args()
         for key, value in vars(args).items():
             setattr(self, key, value)

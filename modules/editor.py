@@ -1,5 +1,4 @@
 import helpers
-from modules.parameters import Parameters
 
 class Editor:
     """
@@ -12,8 +11,7 @@ class Editor:
     def __init__(self):
         # List of video clip locations
         self.clips = []
-        self.parameters = Parameters()
-
+    
     def get_clip_length(self, clip_id: int):
         """
         Get the length of a video clip.
@@ -105,13 +103,13 @@ class Editor:
                 "-filter_complex", f"concat=n={len(self.clips)}:v=1:a=1[outv][outa]",
                 "-map", "[outv]",
                 "-map", "[outa]",
-                "-c:v", self.parameters.codec,
-                "-preset", self.parameters.preset,
-                "-crf", str(self.parameters.crf),
-                "-pix_fmt", self.parameters.pix_fmt,
-                "-c:a", self.parameters.audio_codec,
-                "-b:a", str(self.parameters.audio_bitrate),
-                "-ar", str(self.parameters.audio_sample_rate),
+                "-c:v", "libx264",
+                "-preset", "ultrafast",
+                "-crf", "23",
+                "-pix_fmt", "yuv420p",
+                "-c:a", "aac",
+                "-b:a", "128k",
+                "-ar", "44100",
                 output
             )
         except Exception as e:
