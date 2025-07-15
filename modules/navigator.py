@@ -67,16 +67,8 @@ class Interface:
         self.driver.back()
 
         return True
-    
-    def check_flash(self):
-        """Checks if the Flash Player is enabled."""
-        return self.driver.execute_script("return navigator.plugins['Shockwave Flash'] !== undefined")
 
     def await_started(self):
-        if not self.check_flash():
-            logger.error(f"Failed to enable Flash Player: {self.tried}")
-            return False
-        
         WebDriverWait(self.driver, float('inf')).until(
             lambda driver: driver.execute_script("return window.startRecord !== undefined")
         )

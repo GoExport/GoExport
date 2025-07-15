@@ -85,11 +85,10 @@ class Compatibility:
             # FFMPEG recording test
             if helpers.os_is_windows():
                 logger.info("Testing FFMPEG compatibility")
-                if not helpers.try_command(ffmpeg, "-f", "dshow", "-i", "video=screen-capture-recorder:audio=virtual-audio-capturer", "-r", "24", "-t", "3", "-f", "null", "-"):
-                    logger.error("FFMPEG test failed - compatibility enabled")
-                    helpers.show_popup(helpers.get_config("APP_NAME"), "Screen and audio recording failed and the fallback compatibility mode was enabled. Did you install the dependencies?", 48)
-                    helpers.remember("FFMPEG_COMPATIBILITY", True)
-
+                if not helpers.try_command(ffmpeg, "-f", "dshow", "-i", "video=screen-capture-recorder:audio=virtual-audio-capturer", "-t", "1", "-f", "null", "-"):
+                    logger.error("FFMPEG test failed - screen and audio recording failed. Did you install the dependencies?")
+                    helpers.show_popup(helpers.get_config("APP_NAME"), "Screen and audio recording failed. Please ensure all dependencies are installed.", 48)
+                    return False
             # Gather Chromium
             chromium = helpers.get_path(None, helpers.get_config("PATH_CHROMIUM_WINDOWS"))
             # Check for Chromium
