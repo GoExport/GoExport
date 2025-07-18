@@ -51,7 +51,7 @@ class Editor:
         print(f"Clip added at position {position}: {path}")
         print(f"Current clips: {self.clips}")
         
-    def trim(self, clip_id: int, start: int, end: int):
+    def trim(self, clip_id: int, start: float, end: float):
         """
         Trim a clip to the specified start and end times.
         :param clip_id: ID of the clip to trim.
