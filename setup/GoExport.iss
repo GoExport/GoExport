@@ -41,12 +41,14 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 [Files]
 ;VCRedist
 
-Source: "..\redist\vcredist_x64.exe"; DestDir: {app}\vendor
+Source: "..\redist\vcredist_x64.exe"; DestDir: "{app}\vendor"
 
 ;Main files
 Source: "..\dist\GoExport.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\dist\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "..\server\*"; DestDir: "{app}\server"; Flags: ignoreversion recursesubdirs createallsubdirs
+;Install required dlls
+Source: "..\ScreenCaptureRecorder.ini"; DestDir: "{userappdata}"; Flags: onlyifdoesntexist ignoreversion
 ;Install required dlls
 Source: "..\libs\audio_sniffer-x64.dll"; DestDir: "{app}\vendor"; Flags: onlyifdoesntexist 64bit
 Source: "..\libs\screen-capture-recorder-x64.dll"; DestDir: "{app}\vendor"; Flags: onlyifdoesntexist 64bit
