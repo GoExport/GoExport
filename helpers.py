@@ -1,8 +1,10 @@
 import json
+import string
 import config
 import shutil
 import os
 import sys
+import pyttsx3
 import platform
 import psutil
 import ctypes
@@ -420,8 +422,8 @@ def get_timestamp(msg: str = None):
     return timestamp
 
 # Wait for a certain amount of time
-def wait(seconds: float):
-    logger.debug(f"wait() sleeping for {seconds} seconds")
+def wait(seconds: float, reason: str = None):
+    logger.debug(f"wait() sleeping for {seconds} seconds" + (f" (reason: {reason})" if reason else ""))
     time.sleep(seconds)
 
 # Convert milliseconds to seconds
@@ -470,6 +472,14 @@ def print_list(items, message: str = "to select"):
     logger.debug(f"print_list() items={items}, message={message}")
     for index, item in enumerate(items, start=1):
         print(f"[bold blue]Option #{index}:[/bold blue] type \"{item}\"" + (f" ({message})" if message else ""))
+
+# Text to speech
+def say(text: str):
+    """Convert text to speech at normal speed."""
+    logger.debug(f"say() called with text={text}")
+    engine = pyttsx3.init()
+    engine.say(text)
+    engine.runAndWait()
 
 # Checks if the application has an update available
 def has_update():
