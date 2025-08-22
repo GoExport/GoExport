@@ -1,7 +1,7 @@
 import helpers
 from modules.editor import Editor
 from modules.navigator import Interface
-from modules.capture import Capture
+from modules.native_capture import Capture
 from modules.parameters import Parameters
 from modules.server import Server
 from rich.prompt import Prompt, IntPrompt, FloatPrompt, Confirm
