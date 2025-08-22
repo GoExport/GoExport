@@ -3,14 +3,21 @@ import subprocess
 import atexit
 import signal
 from modules.logger import logger
+from modules.obs_capture import OBSCapture
 
 class Capture:
-    def __init__(self):
+    def __init__(self, use_obs=True):
         self.start_time = None
         self.end_time = None
         self.startup_delay = None
         self.ended_delay = None
         self.process = None
+        self.use_obs = use_obs
+        self.obs_capture = None
+        
+        if self.use_obs:
+            self.obs_capture = OBSCapture()
+        
         atexit.register(self.cleanup)
         for sig in (signal.SIGINT, signal.SIGTERM, signal.SIGABRT):
             signal.signal(sig, self._signal_handler)
@@ -21,6 +28,12 @@ class Capture:
         signal.raise_signal(signum)
 
     def cleanup(self):
+        if self.use_obs and self.obs_capture:
+            try:
+                self.obs_capture.cleanup()
+            except Exception as e:
+                logger.error(f"Error cleaning up OBS capture: {e}")
+        
         if self.process and self.process.poll() is None:
             try:
                 logger.info("Terminating ffmpeg process due to application exit")
@@ -34,6 +47,20 @@ class Capture:
                     pass
 
     def start(self, output: str, width: int, height: int):
+        # Use OBS if enabled, otherwise fall back to ScreenCaptureRecorder
+        if self.use_obs and self.obs_capture:
+            logger.info("Starting OBS capture")
+            success = self.obs_capture.start(output, width, height)
+            if success:
+                self.start_time = self.obs_capture.start_time
+                self.startup_delay = self.obs_capture.startup_delay
+                return True
+            else:
+                logger.warning("OBS capture failed, falling back to ScreenCaptureRecorder")
+                # Fall back to ScreenCaptureRecorder if OBS fails
+                self.use_obs = False
+        
+        # Original ScreenCaptureRecorder implementation
         if helpers.os_is_windows():
             command = [
                 helpers.get_path(None, helpers.get_config("PATH_FFMPEG_WINDOWS")), "-y",
@@ -83,13 +110,29 @@ class Capture:
         return True
 
     def stop(self):
-        self.process.stdin.write("q")
-        offset = helpers.get_timestamp("FFmpeg stopping")
-        self.process.communicate()
-        self.process.wait()
-        self.end_time = helpers.get_timestamp("FFmpeg ended")
-        self.ended_delay = self.end_time - offset
-        return True
+        # Use OBS if it was used for capture
+        if self.use_obs and self.obs_capture:
+            logger.info("Stopping OBS capture")
+            success = self.obs_capture.stop()
+            if success:
+                self.end_time = self.obs_capture.end_time
+                self.ended_delay = self.obs_capture.ended_delay
+                return True
+            else:
+                logger.error("Failed to stop OBS capture")
+                return False
+        
+        # Original ScreenCaptureRecorder stop implementation
+        if self.process:
+            self.process.stdin.write("q")
+            offset = helpers.get_timestamp("FFmpeg stopping")
+            self.process.communicate()
+            self.process.wait()
+            self.end_time = helpers.get_timestamp("FFmpeg ended")
+            self.ended_delay = self.end_time - offset
+            return True
+        
+        return False
 
     def __enter__(self):
         return self

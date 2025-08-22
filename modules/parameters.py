@@ -11,6 +11,8 @@ class Parameters:
         parser.add_argument("-oi", "--owner-id", help="Set the owner ID", dest="owner_id")
         parser.add_argument("-mi", "--movie-id", help="Set the movie ID", dest="movie_id")
         parser.add_argument("-ae", "--auto-edit", help="Enable auto editing", action="store_true", dest="auto_edit")
+        parser.add_argument("--use-obs", help="Use OBS Studio for recording (default)", action="store_true", dest="use_obs")
+        parser.add_argument("--use-screen-capture", help="Use ScreenCaptureRecorder instead of OBS", action="store_true", dest="use_screen_capture")
 
         args = parser.parse_args()
         for key, value in vars(args).items():

@@ -12,8 +12,16 @@ class Controller:
     def __init__(self):
         self.browser = Interface()
         self.editor = Editor()
-        self.capture = Capture()
         self.parameters = Parameters()
+        
+        # Determine capture method based on parameters and config
+        use_obs = helpers.get_config("USE_OBS_CAPTURE", True)
+        if hasattr(self.parameters, 'use_screen_capture') and self.parameters.use_screen_capture:
+            use_obs = False
+        elif hasattr(self.parameters, 'use_obs') and self.parameters.use_obs:
+            use_obs = True
+            
+        self.capture = Capture(use_obs=use_obs)
         self.aspect_ratio = None
         self.resolution = None
         self.auto_edit = None

@@ -73,9 +73,25 @@ You may need to also install the dependencies, which can be found in the [Depend
 
 The project may require that you have installed some dependencies to get started, this is required for GoExport to function properly.
 
-- [cleanflash](https://web.archive.org/web/20241221081401/https://cdn.cleanflash.org/CleanFlash_34.0.0.308_Installer.exe): CleanFlash 34 on the internet archive. (**Not Included**)
+**Recording Options:**
+
+GoExport now supports two recording methods:
+
+1. **OBS Studio (Recommended)** - Modern, high-quality recording with window capture
+2. **ScreenCaptureRecorder (Legacy)** - Original recording method for compatibility
+
+### For OBS Studio Recording (Default):
+- [OBS Studio](https://obsproject.com/): Modern streaming and recording software (**Not Included**)
+  - Enable WebSocket server in OBS Studio (Tools > WebSocket Server Settings)
+  - Default port: 4455, no password required
+  - GoExport will automatically create a scene and window capture source for Chromium
+
+### For ScreenCaptureRecorder (Legacy):
 - [screen-capture-recorder-to-video-windows-free](https://github.com/rdp/screen-capture-recorder-to-video-windows-free/releases/latest): This will capture the display. (**Included**)
 - [virtual-audio-capture-grabber-device](https://github.com/rdp/virtual-audio-capture-grabber-device): This will capture the audio. (**Included**)
+
+### Common Dependencies:
+- [cleanflash](https://web.archive.org/web/20241221081401/https://cdn.cleanflash.org/CleanFlash_34.0.0.308_Installer.exe): CleanFlash 34 on the internet archive. (**Not Included**)
 - [Microsoft Visual C++ Redistributable (x64)](https://www.microsoft.com/en-us/download/details.aspx?id=26999): Required for audio capture. (**Included**).
   > This project uses the Microsoft Visual C++ Redistributable, which is licensed under the Microsoft Software License Terms. The redistributable is included in the project and is required for audio capture functionality.
 - [FFMPEG (GPLv3)](https://github.com/BtbN/FFmpeg-Builds): To record the screen (**Included**)
@@ -84,3 +100,14 @@ The project may require that you have installed some dependencies to get started
   > This project uses ungoogled-chromium, which is licensed under the BSD, MIT, and LGPL licenses. The source code for ungoogled-chromium is available at [ungoogled-chromium GitHub repository](https://github.com/ungoogled-software/ungoogled-chromium).
 - [Chromedriver (Apache License 2.0)](https://chromedriver.chromium.org/downloads): To interface with ungoogled-chromium (**Included**).
   > This project uses Chromedriver, which is licensed under the Apache License 2.0.
+
+### Recording Method Configuration:
+
+You can choose the recording method using command line arguments:
+- `--use-obs` (default): Use OBS Studio for recording
+- `--use-screen-capture`: Use ScreenCaptureRecorder for recording
+
+Or modify `config.py`:
+```python
+USE_OBS_CAPTURE = True  # True for OBS, False for ScreenCaptureRecorder
+```

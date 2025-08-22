@@ -2,6 +2,13 @@
 APP_NAME = "GoExport"
 APP_VERSION = "0.10.1"
 APP_BETA = False
+
+# Capture Settings
+USE_OBS_CAPTURE = True  # Use OBS Studio instead of ScreenCaptureRecorder
+OBS_WEBSOCKET_HOST = "localhost"
+OBS_WEBSOCKET_PORT = 4455
+OBS_WEBSOCKET_PASSWORD = None  # Set if OBS WebSocket has password protection
+
 DEFAULT_DEPENDENCIES_FILENAME = "dependencies"
 DEFAULT_LIBS_FILENAME = "libs"
 DEFAULT_SERVER_FILENAME = "server"
