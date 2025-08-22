@@ -69,12 +69,51 @@ jobs:
           name: dev-build
           path: dist
 
+      - name: Extract Changelog Section
+        if: startsWith(github.ref, 'refs/tags/')
+        id: changelog
+        shell: pwsh
+        run: |
+          # Extract the tag version from github.ref_name (remove 'v' or 'b' prefix if present)
+          $tagVersion = "${{ github.ref_name }}"
+          $version = $tagVersion -replace '^[vb]', ''
+          
+          # Read the changelog file
+          $changelogContent = Get-Content -Path "CHANGELOG.md" -Raw
+          
+          # Try to find the changelog section for this version
+          $pattern1 = "(?s)## \[$version\].*?(?=## \[|$)"
+          $pattern2 = "(?s)## \[$tagVersion\].*?(?=## \[|$)"
+          
+          $match = [regex]::Match($changelogContent, $pattern1)
+          if (-not $match.Success) {
+            $match = [regex]::Match($changelogContent, $pattern2)
+          }
+          
+          if ($match.Success) {
+            # Extract just the content after the version header
+            $sectionContent = $match.Value -replace "^## \[.*?\].*?\r?\n", "" -replace "\r?\n$", ""
+            $changelog = $sectionContent.Trim()
+          } else {
+            $changelog = "No specific changelog found for this version. See commit history below."
+          }
+          
+          # Save changelog content to output
+          "CHANGELOG_CONTENT<<EOF" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          $changelog | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "EOF" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
       - name: Upload Release Asset
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v1
         with:
           files: dist/goexport_setup.exe
           prerelease: ${{ startsWith(github.ref_name, 'b') }}
-          generate_release_notes: true
+          body: |
+            ${{ steps.changelog.outputs.CHANGELOG_CONTENT }}
+            
+            ---
+            **Full Changelog**: https://github.com/${{ github.repository }}/compare/${{ github.event.before }}...${{ github.ref_name }}
+          generate_release_notes: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
