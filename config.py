@@ -22,7 +22,7 @@ SERVER_PROTOCOL = "http"
 
 # OBS Server
 OBS_SERVER_HOST = "localhost"
-OBS_SERVER_PORT = 4444
+OBS_SERVER_PORT = 4455
 OBS_SERVER_PASSWORD = ""
 
 # Wrapper Server
