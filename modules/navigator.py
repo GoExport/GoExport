@@ -76,6 +76,16 @@ class Interface:
         self.startedDelay = helpers.get_timestamp("Recording started")
         return True
 
+    def play(self):
+        """Start the video player if supported"""
+        self.driver.execute_script('document.getElementById("flash").play()')
+        return True
+    
+    def pause(self):
+        """Pause the video player if supported"""
+        self.driver.execute_script('document.getElementById("flash").pause()')
+        return True
+
     def await_completed(self):
         WebDriverWait(self.driver, float('inf')).until(
             lambda driver: driver.execute_script("return window.stopRecord !== undefined")

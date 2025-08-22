@@ -1,3 +1,4 @@
+from modules.logger import logger
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 import helpers
 import threading
@@ -19,11 +20,16 @@ class Server:
     def start(self):
         handler = lambda *args, **kwargs: QuietHandler(*args, directory=self.path, **kwargs)
         self.httpd = HTTPServer((self.host, self.port), handler)
-        print(f"Starting server on {self.hostname()} serving {self.path}")
+        logger.debug(f"Starting server on {self.hostname()} serving {self.path}")
         self.server_thread = threading.Thread(target=self.httpd.serve_forever, daemon=True)
         self.server_thread.start()
 
-    def stop(self):
-        print(f"Stopping server on {self.hostname()}")
-        self.httpd.shutdown()
-        self.server_thread.join()
+    def stop(self, force: bool = False):
+        logger.debug(f"Stopping server on {self.hostname()}")
+        if force:
+            # Forcefully close the server socket
+            self.httpd.server_close()
+        else:
+            self.httpd.shutdown()
+            self.server_thread.join()
+        logger.debug("Server stopped")

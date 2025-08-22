@@ -17,6 +17,7 @@ class Controller:
         self.aspect_ratio = None
         self.resolution = None
         self.auto_edit = None
+        self.legacy = False
         self.PROJECT_FOLDER = None  
 
     # Set up
@@ -34,6 +35,11 @@ class Controller:
             raise ValueError(f"Invalid service: {service}")
         logger.info(f"User chose {service}")
         service_data = AVAILABLE_SERVICES[service]
+
+        # Set legacy mode
+        self.legacy = service_data.get("legacy", False)
+        if self.legacy:
+            logger.warning("Legacy mode is enabled: Stability is not guaranteed.")
 
         # Set the aspect ratio
         if self.aspect_ratio is None:
@@ -150,14 +156,11 @@ class Controller:
                 logger.error("Could not show warning")
                 return False
 
-            if not self.capture.start(self.RECORDING, self.width, self.height):
-                logger.error("Could not start recording")
-                return False
-            self.prestart = self.capture.start_time  # Timestamp for when FFmpeg started (ms)
-            self.prestart_delay = self.capture.startup_delay  # Ensure delay is accounted for (ms)
-
-            print(f"Prestart: {self.prestart} | Delay: {self.prestart_delay}")
-            helpers.move_mouse_offscreen()
+            if self.legacy:
+                if not self.capture.start(self.RECORDING, self.width, self.height):
+                    logger.error("Could not start recording")
+                    return False
+                helpers.move_mouse_offscreen()
 
             try:
                 self.browser.driver.get(self.svr_url)
@@ -171,6 +174,18 @@ class Controller:
             if not self.browser.await_started():
                 logger.error("Could not wait for start")
                 return False
+            
+            if not self.legacy:
+                if not self.capture.start(self.RECORDING, self.width, self.height):
+                    logger.error("Could not start recording")
+                    return False
+                else:
+                    helpers.move_mouse_offscreen()
+                    self.browser.play()
+            
+            self.prestart = self.capture.start_time  # Timestamp for when FFmpeg started (ms)
+            self.prestart_delay = self.capture.startup_delay  # Ensure delay is accounted for (ms)
+            logger.debug(f"Prestart: {self.prestart} | Delay: {self.prestart_delay}")
 
             if not self.browser.await_completed():
                 logger.error("Could not wait for completion")
@@ -184,7 +199,10 @@ class Controller:
 
             # Stop the server
             try:
-                self.server.stop()
+                if not self.legacy:
+                    self.server.stop()
+                else:
+                    self.server.stop(force=True)
             except Exception as e:
                 logger.error(f"Error stopping server: {e}")
                 return False
@@ -208,11 +226,9 @@ class Controller:
 
                 # Combine the calculated times
                 starting = started
-
                 self.start_from = helpers.ms_to_s(starting)
                 self.end_at = self.editor.get_clip_length(clip_id)
-
-                print(f"{self.start_from} : {self.end_at}")
+                logger.debug(f"{self.start_from} : {self.end_at}")
 
                 # Trim the video first
                 self.editor.trim(clip_id, self.start_from, self.end_at)
