@@ -7,8 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Comprehensive CHANGELOG.md file with structured release notes for all versions
+
 ### Changed
 - Fixed GitHub workflow to include proper changelog in releases instead of auto-generated commit lists
+- Modified workflow to extract relevant changelog sections for each tagged release
+- Enhanced release notes with detailed feature descriptions, bug fixes, and dependency information
+
+### Fixed
+- Issue where automated releases only showed basic commit history links instead of detailed release notes
 
 ## [0.11.0] - 2025-08-22
 
