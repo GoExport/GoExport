@@ -16,7 +16,7 @@ DEFAULT_TALL_OUTROS_FILENAME = "tall"
 DEFAULT_OUTPUT_EXTENSION = ".mp4"
 
 # Server
-SERVER_HOST = "127.0.0.1"
+SERVER_HOST = "localhost"
 SERVER_PORT = 26519
 SERVER_PROTOCOL = "http"
 
@@ -37,23 +37,20 @@ AVAILABLE_SIZES = {
     "4:3": {
         "240p": (320, 240, False),
         "360p": (480, 360, False),
-        "480p": (560, 420, False),
-        "720p": (640, 480, False),
-        "1080p": (848, 576, False),
+        "420p": (560, 420, False),
+        "480p": (640, 480, False),
     },
 
     # 14:9
     "14:9": {
-        "240p": (373, 240, False),
-        "360p": (560, 360, False),
-        "480p": (747, 480, False),
-        "720p": (1120, 720, False),
-        "1080p": (1680, 1080, False),
+        "432p": (640, 432, False),
+        "480p": (720, 480, False),
+        "576p": (768, 576, False),
+        "576p": (848, 576, False),
     },
 
     # 16:9
     "16:9": {
-        "240p": (426, 240, True),
         "360p": (640, 360, True),
         "480p": (854, 480, True),
         "720p": (1280, 720, True),
@@ -62,7 +59,6 @@ AVAILABLE_SIZES = {
 
     # 9:16
     "9:16": {
-        "240p": (240, 426, False),
         "360p": (360, 640, False),
         "480p": (480, 854, False),
         "720p": (720, 1280, False),
@@ -91,6 +87,7 @@ AVAILABLE_SERVICES = {
                 "&isVideoRecord=1"
             ),
         ],
+        "legacy": False
     },
     "ft": {
         "name": "FlashThemes",
@@ -130,6 +127,7 @@ AVAILABLE_SERVICES = {
                 "&allowScriptAccess=always"
             ),
         ],
+        "legacy": True
     },
 }
 
