@@ -64,6 +64,7 @@ def load(key: str):
 def remember(key: str, value):
     logger.debug(f"remember() called with key={key}, value={value}")
     setattr(remember, key, value)
+    return value
 
 def recall(key: str):
     logger.debug(f"recall() called with key={key}")
