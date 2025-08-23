@@ -10,6 +10,7 @@ class Capture:
         self.end_time = None
         self.startup_delay = None
         self.ended_delay = None
+        self.filename = None
         self.process = None
         atexit.register(self.cleanup)
         for sig in (signal.SIGINT, signal.SIGTERM, signal.SIGABRT):
@@ -79,6 +80,7 @@ class Capture:
             return False
 
         self.startup_delay = self.start_time - offset
+        self.filename = output
 
         return True
 
