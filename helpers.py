@@ -426,6 +426,26 @@ def wait(seconds: float, reason: str = None):
     logger.debug(f"wait() sleeping for {seconds} seconds" + (f" (reason: {reason})" if reason else ""))
     time.sleep(seconds)
 
+def wait_for(expected: any, input: any, func: callable, reason: str = None, loop_speed: float = 0, timeout: float|None = None):
+    """
+    Waits until the function 'func' returns a value equal to 'expected'.
+    Keeps calling 'func' and sleeping until the value matches.
+    :param expected: The value to wait for.
+    :param input: The initial value to compare.
+    :param func: The function to call to get the new value.
+    :param reason: Optional reason for waiting (for logging).
+    :param loop_speed: How fast to poll the function (in seconds).
+    :param timeout: Maximum time to wait in seconds (None for infinite).
+    """
+    start_time = time.time()
+    while input != expected:
+        if timeout is not None and (time.time() - start_time) >= timeout:
+            logger.warning(f"wait_for() timed out after {timeout} seconds" + (f" (reason: {reason})" if reason else ""))
+            return None
+        wait(loop_speed, reason)
+        input = func()
+    return input
+
 # Convert milliseconds to seconds
 def ms_to_s(ms):
     result = ms / 1000
