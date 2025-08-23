@@ -4,7 +4,7 @@ from modules.navigator import Interface
 from modules.capture import Capture
 from modules.parameters import Parameters
 from modules.server import Server
-from rich.prompt import Prompt, IntPrompt, FloatPrompt, Confirm
+from rich.prompt import Prompt, IntPrompt, Confirm
 from rich import print
 from modules.logger import logger
 
@@ -119,14 +119,7 @@ class Controller:
         else:
             self.movieid = None
 
-        self.readable_filename = helpers.generate_path()
-        self.filename = f"{self.readable_filename}{helpers.get_config('DEFAULT_OUTPUT_EXTENSION')}"
-
-        self.RECORDING = helpers.get_path(None, helpers.get_config("DEFAULT_OUTPUT_FILENAME"), self.filename)
-        self.RECORDING_EDITED = helpers.get_path(helpers.get_path(helpers.get_app_folder(), helpers.get_config("DEFAULT_FOLDER_OUTPUT_FILENAME")), self.filename)
-        self.RECORDING_EDITED_PATH = helpers.get_path(helpers.get_app_folder(), helpers.get_config("DEFAULT_FOLDER_OUTPUT_FILENAME"))
-        if self.PROJECT_FOLDER is None:
-            self.PROJECT_FOLDER = helpers.get_path(helpers.get_config("DEFAULT_FOLDER_OUTPUT_FILENAME"), self.readable_filename)
+        self.setpath()
 
         # Begin generating the URL
         try:
@@ -138,6 +131,20 @@ class Controller:
             return False
 
         return True
+
+    def setpath(self, path: str|None = None):
+        self.readable_filename = helpers.generate_path()
+        self.filename = f"{self.readable_filename}{helpers.get_config('DEFAULT_OUTPUT_EXTENSION')}"
+
+        if path is None:
+            self.RECORDING = helpers.get_path(None, helpers.get_config("DEFAULT_OUTPUT_FILENAME"), self.filename)
+        else:
+            self.RECORDING = path
+
+        self.RECORDING_EDITED = helpers.get_path(helpers.get_path(helpers.get_app_folder(), helpers.get_config("DEFAULT_FOLDER_OUTPUT_FILENAME")), self.filename)
+        self.RECORDING_EDITED_PATH = helpers.get_path(helpers.get_app_folder(), helpers.get_config("DEFAULT_FOLDER_OUTPUT_FILENAME"))
+        if self.PROJECT_FOLDER is None:
+            self.PROJECT_FOLDER = helpers.get_path(helpers.get_config("DEFAULT_FOLDER_OUTPUT_FILENAME"), self.readable_filename)
 
     def generate(self):
         """Generates the URL."""
@@ -197,6 +204,9 @@ class Controller:
             self.postend = self.capture.end_time  # Timestamp for when FFmpeg ended (ms)
             self.postend_delay = self.capture.ended_delay  # Ensure delay is accounted for (ms)
 
+            # Update paths
+            self.setpath(self.capture.filename)
+
             # Stop the server
             try:
                 if not self.legacy:
@@ -220,19 +230,24 @@ class Controller:
                 # Get last clip ID and add 1 to it from editor
                 clip_id = len(self.editor.clips)
                 self.editor.add_clip(self.RECORDING, clip_id)
-                
-                # Calculate the starting and ending times for the clip
-                started = self.prestart_delay + video_started + video_start_offset - self.prestart
 
-                # Combine the calculated times
-                starting = started
-                self.start_from = helpers.ms_to_s(starting)
-                self.end_at = self.editor.get_clip_length(clip_id)
-                logger.debug(f"{self.start_from} : {self.end_at}")
+                if self.legacy:
+                    # Calculate the starting and ending times for the clip
+                    if None in (self.prestart_delay, video_started, video_start_offset, self.prestart):
+                        logger.error("One or more timestamp values are None. Cannot calculate start time.")
+                        return False
+                    started = (self.prestart_delay + (video_started + video_start_offset) - self.prestart)
 
-                # Trim the video first
-                self.editor.trim(clip_id, self.start_from, self.end_at)
+                    # Combine the calculated times
+                    starting = started
+                    self.start_from = helpers.ms_to_s(starting)
+                    self.end_at = self.editor.get_clip_length(clip_id)
+                    logger.debug(f"{self.start_from} : {self.end_at}")
 
+                    # Trim the video first
+                    self.editor.trim(clip_id, self.start_from, self.end_at)
+
+                # Return success
                 return True
             else: # false
                 # Create the project folder
