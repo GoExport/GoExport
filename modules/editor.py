@@ -64,7 +64,9 @@ class Editor:
         
         if helpers.os_is_windows():
             try:
-                trimmed_path = self.clips[clip_id].replace(".mp4", f"_trimmed_{start}_{end}.mp4")
+                # Get the clip's file extension
+                ext = self.clips[clip_id].split(".")[-1]
+                trimmed_path = self.clips[clip_id].replace(f".{ext}", f"_trimmed_{start}_{end}.{ext}")
                 helpers.try_command(
                     helpers.get_path(None, helpers.get_config("PATH_FFMPEG_WINDOWS")),
                     "-ss", str(start),
@@ -100,6 +102,7 @@ class Editor:
             
             helpers.try_command(
                 *command,
+                "-y",
                 "-filter_complex", f"concat=n={len(self.clips)}:v=1:a=1[outv][outa]",
                 "-map", "[outv]",
                 "-map", "[outa]",
@@ -110,7 +113,8 @@ class Editor:
                 "-c:a", "aac",
                 "-b:a", "128k",
                 "-ar", "44100",
-                output
+                output,
+                return_output=True
             )
         except Exception as e:
             raise RuntimeError(f"Error rendering video: {e}")
