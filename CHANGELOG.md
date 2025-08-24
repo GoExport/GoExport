@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Support for OBS Studio integration
+- Support for OBS Studio integration (See OBS.md for details)
 - Comprehensive CHANGELOG.md file with structured release notes for all versions
 
 ### Changed
