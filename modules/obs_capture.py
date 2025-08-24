@@ -1,6 +1,7 @@
 import helpers
 import obsws_python as obs
 from modules.logger import logger
+from modules.parameters import Parameters
 import atexit
 import signal
 import sys
@@ -18,6 +19,9 @@ class Capture:
         self.cl = None
         self.prepared = False
 
+        # Initalize parameters
+        self.parameters = Parameters()
+
         # Register cleanup handlers
         atexit.register(self._cleanup)
         signal.signal(signal.SIGINT, self._signal_handler)
@@ -26,15 +30,15 @@ class Capture:
     def connect(self):
         try:
             self.ws = obs.ReqClient(
-                host=helpers.get_config("OBS_SERVER_HOST"),
-                port=helpers.get_config("OBS_SERVER_PORT"),
-                password=helpers.get_config("OBS_SERVER_PASSWORD"),
+                host=self.parameters.obs_websocket_address or helpers.get_config("OBS_SERVER_HOST"),
+                port=self.parameters.obs_websocket_port or helpers.get_config("OBS_SERVER_PORT"),
+                password=self.parameters.obs_websocket_password or helpers.get_config("OBS_SERVER_PASSWORD"),
                 timeout=3
             )
             self.cl = obs.EventClient(
-                host=helpers.get_config("OBS_SERVER_HOST"),
-                port=helpers.get_config("OBS_SERVER_PORT"),
-                password=helpers.get_config("OBS_SERVER_PASSWORD"),
+                host=self.parameters.obs_websocket_address or helpers.get_config("OBS_SERVER_HOST"),
+                port=self.parameters.obs_websocket_port or helpers.get_config("OBS_SERVER_PORT"),
+                password=self.parameters.obs_websocket_password or helpers.get_config("OBS_SERVER_PASSWORD"),
                 timeout=3
             )
             logger.info("Connected to OBS WebSocket server.")
@@ -86,6 +90,7 @@ class Capture:
             self.ws.remove_scene(name=f"{helpers.get_config('APP_NAME')} - Scene")
             self.ws.remove_profile(name=f"{helpers.get_config('APP_NAME')} - Profile")
             logger.info("OBS: Unprepared successfully.")
+            self.prepared = False
         except Exception as e:
             logger.error(f"Failed to unprepare OBS: {e}")
 
