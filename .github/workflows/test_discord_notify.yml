@@ -1,0 +1,15 @@
+name: Test Discord Notification
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test-discord:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Test Discord Notify
+        uses: teneplaysofficial/releasify-action@v1
+        with:
+          webhook: ${{ secrets.DISCORD_WEBHOOK }}
+          username: "GoExport-Test"
+          avatar_url: "https://cdn.discordapp.com/embed/avatars/1.png"
