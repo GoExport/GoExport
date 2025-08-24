@@ -24,12 +24,15 @@ class Server:
         self.server_thread = threading.Thread(target=self.httpd.serve_forever, daemon=True)
         self.server_thread.start()
 
-    def stop(self, force: bool = False):
+    def stop(self, force: bool = True):
         logger.debug(f"Stopping server on {self.hostname()}")
-        if force:
-            # Forcefully close the server socket
-            self.httpd.server_close()
-        else:
-            self.httpd.shutdown()
-            self.server_thread.join()
+        try:
+            if force:
+                # Forcefully close the server socket
+                self.httpd.server_close()
+            else:
+                self.httpd.shutdown()
+                self.server_thread.join()
+        except Exception as e:
+            logger.debug(f"Suppressed error during server stop: {e}")
         logger.debug("Server stopped")
