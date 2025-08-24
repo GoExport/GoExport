@@ -11,6 +11,10 @@ class Parameters:
         parser.add_argument("-oi", "--owner-id", help="Set the owner ID", dest="owner_id")
         parser.add_argument("-mi", "--movie-id", help="Set the movie ID", dest="movie_id")
         parser.add_argument("-ae", "--auto-edit", help="Enable auto editing", action="store_true", dest="auto_edit")
+        parser.add_argument("--obs-websocket-address", help="Set the OBS WebSocket address", dest="obs_websocket_address")
+        parser.add_argument("--obs-websocket-port", help="Set the OBS WebSocket port", dest="obs_websocket_port")
+        parser.add_argument("--obs-websocket-password", help="Set the OBS WebSocket password", dest="obs_websocket_password")
+        parser.add_argument("--obs-fps", help="Set the OBS FPS", dest="obs_fps")
 
         args = parser.parse_args()
         for key, value in vars(args).items():
