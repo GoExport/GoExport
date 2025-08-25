@@ -74,6 +74,7 @@ You may need to also install the dependencies, which can be found in the [Depend
 The project may require that you have installed some dependencies to get started, this is required for GoExport to function properly.
 
 - [cleanflash](https://web.archive.org/web/20241221081401/https://cdn.cleanflash.org/CleanFlash_34.0.0.308_Installer.exe): CleanFlash 34 on the internet archive. (**Not Included**)
+- [OBS](https://obsproject.com/): Open Broadcaster Software. (**Not Included, Optional but recommended**) (See [OBS.md](OBS.md))
 - [screen-capture-recorder-to-video-windows-free](https://github.com/rdp/screen-capture-recorder-to-video-windows-free/releases/latest): This will capture the display. (**Included**)
 - [virtual-audio-capture-grabber-device](https://github.com/rdp/virtual-audio-capture-grabber-device): This will capture the audio. (**Included**)
 - [Microsoft Visual C++ Redistributable (x64)](https://www.microsoft.com/en-us/download/details.aspx?id=26999): Required for audio capture. (**Included**).

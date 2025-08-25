@@ -9,7 +9,7 @@ GoExport does not allow direct modification of its configuration files. Instead,
 For example, to set the OBS WebSocket address, port, and password, run GoExport from the command line like this:
 
 ```bash
-goexport --obs_websocket_address=localhost --obs_websocket_port=4455 --obs_websocket_password=your_password --obs_fps=30
+goexport --obs-websocket-address=localhost --obs-websocket-port=4455 --obs-websocket-password=your_password --obs-fps=60
 ```
 
 Replace the values as needed for your OBS setup. All supported command line options are listed in the documentation or by running:
@@ -71,14 +71,17 @@ GoExport uses the OBS WebSocket API to automate recording. The integration is ha
 
 ## Example Configuration
 
-In your GoExport config or parameters:
+If you want a more permanent solution, type this in your data.json:
 
-```python
-OBS_SERVER_HOST=localhost
-OBS_SERVER_PORT=4455
-OBS_SERVER_PASSWORD=your_password
-OBS_FPS=30
+```json
+{
+  "obs_websocket_address": "localhost",
+  "obs_websocket_port": 4455,
+  "obs_websocket_password": "password"
+}
 ```
+
+Again replacing the values as needed for your OBS setup.
 
 ## More Information
 
