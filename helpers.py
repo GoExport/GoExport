@@ -16,6 +16,16 @@ import requests
 from rich import print
 from modules.logger import logger
 from datetime import datetime
+import modules.parameters as parameters
+
+# Global variables
+parameters = parameters.Parameters()
+
+# Function to grab the key and value of a parameter
+def get_param(key: str):
+    value = getattr(parameters, key, None)
+    logger.debug(f"get_param() key={key} -> {value}")
+    return value
 
 # Save management functions
 def save(key: str, value):
@@ -43,7 +53,7 @@ def save(key: str, value):
         json.dump(data, f, indent=4)
         logger.debug(f"Saved data.json: {data}")
 
-def load(key: str):
+def load(key: str, default=None):
     """
     Load a value from a key in the data.json file
     :param key: The key to load the value from.
@@ -60,7 +70,7 @@ def load(key: str):
             except json.JSONDecodeError:
                 logger.debug(f"JSON decode error in {data_file_path}, returning None.")
                 return None
-    return None
+    return default
 
 # Memory management functions
 def remember(key: str, value):
@@ -403,8 +413,7 @@ def flatten_list(input):
 
 def show_popup(title: str, message: str, type: int = 0):
     # Suppress the popup if no input is enabled
-    import modules.parameters as parameters
-    if not parameters.Parameters().no_input:
+    if not parameters.get_param("no_input"):
         if os_is_windows():
             logger.debug(f"show_popup() Windows: title={title}, message={message}, type={type}")
             ctypes.windll.user32.MessageBoxW(None, message, title, type)
