@@ -2,7 +2,6 @@ import helpers
 from modules.compatibility import Compatibility
 from modules.flow import Controller
 from modules.logger import logger
-from modules.parameters import Parameters
 from rich.prompt import Confirm
 from rich import print
 
@@ -21,7 +20,6 @@ def main():
     # Initalize classes
     compatibility = Compatibility()
     controller = Controller()
-    parameters = Parameters()
     
     try:
         # Run inital compatibility check
@@ -47,7 +45,7 @@ def main():
             print("[blue]Adding an additional video will allow you to merge multiple videos together. This is useful if you want to combine multiple videos into one or you've got a multipart series.")
             
             # If no input is enabled, skip this question and default to false
-            if not parameters.no_input:
+            if not helpers.get_param("no_input"):
                 continue_prompt = Confirm.ask("Would you like to add an additional video?", default=False)
             else:
                 continue_prompt = False
@@ -58,7 +56,7 @@ def main():
 
         # Ask if user wants to include the outro
         if controller.auto_edit:
-            if not parameters.no_input:
+            if not helpers.get_param("no_input"):
                 confirm_outro = Confirm.ask("Would you like to include the outro for GoExport?", default=True)
             else:
                 confirm_outro = True
@@ -70,7 +68,7 @@ def main():
             
             print(f"[green]Your video has been successfully exported! [blue bold]It is located at {controller.RECORDING_EDITED}")
         else:
-            if not parameters.no_input:
+            if not helpers.get_param("no_input"):
                 confirm_outro = Confirm.ask("Would you like to add the outro for GoExport to your project folder?", default=True)
             else:
                 confirm_outro = True
@@ -86,7 +84,7 @@ def main():
 
         if not controller.auto_edit:
             # Ask if user wants to open the folder
-            if not parameters.no_input:
+            if not helpers.get_param("no_input"):
                 open_folder = Confirm.ask("Would you like to open the folder containing the video?", default=True)
             else:
                 open_folder = False
@@ -95,7 +93,7 @@ def main():
                 helpers.open_folder(controller.PROJECT_FOLDER)
         else:
             # Ask if user wants to open the location of the video
-            if not parameters.no_input:
+            if not helpers.get_param("no_input"):
                 open_folder = Confirm.ask("Would you like to open the folder containing the video?", default=True)
             else:
                 open_folder = False
@@ -108,11 +106,11 @@ def main():
             print("[blue]If you need a video editor, consider OpenShot Video Editor. It's a free and open-source option available for download [link=https://www.openshot.org/download/]here[/link]. Alternatively, you can use any video editor of your choice. [italic](Not sponsored by OpenShot)[/italic]")
 
         # Disclaimer
-        if not parameters.no_input:
+        if not helpers.get_param("no_input"):
             disclaimer()
 
         # Sleep for a bit
-        if not parameters.no_input:
+        if not helpers.get_param("no_input"):
             helpers.wait(5)
 
         return True
