@@ -2,7 +2,6 @@ import helpers
 from modules.editor import Editor
 from modules.navigator import Interface
 from modules.capture import Capture
-from modules.parameters import Parameters
 from modules.server import Server
 from rich.prompt import Prompt, IntPrompt, Confirm
 from rich import print
@@ -10,10 +9,9 @@ from modules.logger import logger
 
 class Controller:
     def __init__(self):
-        self.browser = Interface()
         self.editor = Editor()
         self.capture = Capture()
-        self.parameters = Parameters()
+        self.browser = Interface(obs=self.capture.is_obs)
         self.aspect_ratio = None
         self.resolution = None
         self.auto_edit = None
@@ -27,10 +25,11 @@ class Controller:
         options = list(AVAILABLE_SERVICES.keys())
 
         # Set the LVM
-        if not self.parameters.no_input:
-            service = Prompt.ask("[bold red]Required:[/bold red] Please select your desired LVM", choices=options, default=options[0])
+        if not helpers.get_param("no_input"):
+            service = Prompt.ask("[bold red]Required:[/bold red] Please select your desired LVM", choices=options, default=helpers.load("service", options[0]))
+            helpers.save("service", service)
         else:
-            service = self.parameters.service
+            service = helpers.get_param("service")
         if service not in options:
             raise ValueError(f"Invalid service: {service}")
         logger.info(f"User chose {service}")
@@ -43,22 +42,24 @@ class Controller:
 
         # Set the aspect ratio
         if self.aspect_ratio is None:
-            if not self.parameters.no_input:
+            if not helpers.get_param("no_input"):
                 helpers.print_list(helpers.get_config("AVAILABLE_ASPECT_RATIOS"))
-                self.aspect_ratio = Prompt.ask("[bold red]Required:[/bold red] Please select your desired aspect ratio", choices=helpers.get_config("AVAILABLE_ASPECT_RATIOS"), default=helpers.get_config("AVAILABLE_ASPECT_RATIOS")[-1], show_choices=False)
+                self.aspect_ratio = Prompt.ask("[bold red]Required:[/bold red] Please select your desired aspect ratio", choices=helpers.get_config("AVAILABLE_ASPECT_RATIOS"), default=helpers.load("aspect_ratio", helpers.get_config("AVAILABLE_ASPECT_RATIOS")[-1]), show_choices=False)
+                helpers.save("aspect_ratio", self.aspect_ratio)
             else:
-                self.aspect_ratio = self.parameters.aspect_ratio
+                self.aspect_ratio = helpers.get_param("aspect_ratio")
             if self.aspect_ratio not in helpers.get_config("AVAILABLE_ASPECT_RATIOS"):
                 raise ValueError(f"Invalid aspect ratio: {self.aspect_ratio}")
             logger.info(f"User chose {self.aspect_ratio}")
 
         # Set the resolution
         if self.resolution is None:
-            if not self.parameters.no_input:
+            if not helpers.get_param("no_input"):
                 helpers.print_list(list(helpers.get_config("AVAILABLE_SIZES")[self.aspect_ratio].keys()))
-                self.resolution = Prompt.ask("[bold red]Required:[/bold red] Please select your desired resolution", choices=list(helpers.get_config("AVAILABLE_SIZES")[self.aspect_ratio].keys()), default=list(helpers.get_config("AVAILABLE_SIZES")[self.aspect_ratio].keys())[0], show_choices=False)
+                self.resolution = Prompt.ask("[bold red]Required:[/bold red] Please select your desired resolution", choices=list(helpers.get_config("AVAILABLE_SIZES")[self.aspect_ratio].keys()), default=helpers.load("resolution", list(helpers.get_config("AVAILABLE_SIZES")[self.aspect_ratio].keys())[0]), show_choices=False)
+                helpers.save("resolution", self.resolution)
             else:
-                self.resolution = self.parameters.resolution
+                self.resolution = helpers.get_param("resolution")
             if self.resolution not in helpers.get_config("AVAILABLE_SIZES")[self.aspect_ratio]:
                 raise ValueError(f"Invalid resolution: {self.resolution}")
             logger.info(f"User chose {self.resolution}")
@@ -85,19 +86,20 @@ class Controller:
         
         # Asks if the user wants automated editing
         if self.auto_edit is None:
-            if not self.parameters.no_input:
+            if not helpers.get_param("no_input"):
                 self.auto_edit = Confirm.ask("Would you like to enable automated editing? (Auto editing is experimental but if you can test it and report back we'd appreciate it!)", default=True)
             else:
-                self.auto_edit = self.parameters.auto_edit or True
+                self.auto_edit = helpers.get_param("auto_edit") or True
             logger.info(f"User chose to enable auto editing: {self.auto_edit}")
 
         # Required: Owner Id
         if 'movieOwnerId' in self.svr_required:
             while True:
-                if not self.parameters.no_input:
-                    self.ownerid = IntPrompt.ask("[bold red]Required:[/bold red] Please enter the owner ID")
+                if not helpers.get_param("no_input"):
+                    self.ownerid = IntPrompt.ask("[bold red]Required:[/bold red] Please enter the owner ID", default=helpers.load("owner_id"))
+                    helpers.save("owner_id", self.ownerid)
                 else:
-                    self.ownerid = self.parameters.owner_id
+                    self.ownerid = helpers.get_param("owner_id")
                 logger.info(f"User entered owner ID: {self.ownerid}")
                 if self.ownerid:
                     break
@@ -108,10 +110,11 @@ class Controller:
         # Required: Movie Id
         if 'movieId' in self.svr_required:
             while True:
-                if not self.parameters.no_input:
-                    self.movieid = Prompt.ask("[bold red]Required:[/bold red] Please enter the movie ID")
+                if not helpers.get_param("no_input"):
+                    self.movieid = Prompt.ask("[bold red]Required:[/bold red] Please enter the movie ID", default=helpers.load("movie_id"))
+                    helpers.save("movie_id", self.movieid)
                 else:
-                    self.movieid = self.parameters.movie_id
+                    self.movieid = helpers.get_param("movie_id")
                 logger.info(f"User entered movie ID: {self.movieid}")
                 if self.movieid:
                     break
@@ -159,9 +162,10 @@ class Controller:
                 logger.error("Could not start webdriver")
                 return False
 
-            if not self.browser.warning(self.width, self.height):
-                logger.error("Could not show warning")
-                return False
+            if not self.capture.is_obs:
+                if not self.browser.warning(self.width, self.height):
+                    logger.error("Could not show warning")
+                    return False
 
             if self.legacy:
                 if not self.capture.start(self.RECORDING, self.width, self.height):
