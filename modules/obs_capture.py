@@ -46,6 +46,21 @@ class Capture:
             logger.error(f"Failed to connect to OBS WebSocket server: {e}")
             raise e
 
+    def set(self, width: int, height: int):
+        # Try to set video settings (optional)
+        if not helpers.get_param("obs_no_overwrite"):
+            try:
+                self.ws.set_video_settings(
+                    base_width=width,
+                    base_height=height,
+                    out_width=width,
+                    out_height=height,
+                    denominator=1,
+                    numerator=helpers.get_param("OBS_FPS") or helpers.load("OBS_FPS") or helpers.get_config("OBS_FPS")
+                )
+            except Exception as e:
+                logger.warning(f"Could not set video settings: {e}")
+
     def prep(self, output: str, width: int, height: int):
         try:
             self.cl.callback.register(self.on_record_state_changed)
@@ -62,6 +77,9 @@ class Capture:
                 except Exception as e2:
                     logger.error(f"Could not switch to existing OBS profile: {e2}")
             
+            # Set resolution
+            self.set(width, height)
+
             # Try to create scene (optional)
             try:
                 # Try to create the scene
@@ -90,20 +108,6 @@ class Capture:
                 self.ws.set_current_program_scene(name=f"{helpers.get_config('APP_NAME')} - Scene")
             except Exception as e:
                 logger.warning(f"Could not set program scene: {e}")
-            
-            # Try to set video settings (optional)
-            if helpers.get_param("obs_no_overwrite"):
-                try:
-                    self.ws.set_video_settings(
-                        base_width=width,
-                        base_height=height,
-                        out_width=width,
-                        out_height=height,
-                        denominator=1,
-                        numerator=helpers.get_param("OBS_FPS") or helpers.load("OBS_FPS") or helpers.get_config("OBS_FPS")
-                    )
-                except Exception as e:
-                    logger.warning(f"Could not set video settings: {e}")
             
             # Try to create input/source (optional)
             if not helpers.get_param("obs_no_overwrite"):

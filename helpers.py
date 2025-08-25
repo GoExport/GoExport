@@ -136,13 +136,6 @@ def get_computer_specs():
     logger.debug(f"get_computer_specs() -> {specs}")
     return specs
 
-def move_mouse_offscreen():
-    logger.debug("move_mouse_offscreen() called")
-    pyautogui.FAILSAFE = False # All we're doing is moving the mouse offscreen
-    width, height = pyautogui.size()
-    logger.debug(f"Screen size: width={width}, height={height}")
-    pyautogui.moveTo(width, height)
-
 def generate_path():
     path = f"{datetime.now().strftime('%Y-%m-%d %H-%M-%S')}"
     logger.debug(f"generate_path() -> {path}")

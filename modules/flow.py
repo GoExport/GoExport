@@ -171,7 +171,6 @@ class Controller:
                 if not self.capture.start(self.RECORDING, self.width, self.height):
                     logger.error("Could not start recording")
                     return False
-                helpers.move_mouse_offscreen()
 
             try:
                 self.browser.driver.get(self.svr_url)
@@ -191,7 +190,6 @@ class Controller:
                     logger.error("Could not start recording")
                     return False
                 else:
-                    helpers.move_mouse_offscreen()
                     self.browser.play()
             
             self.prestart = self.capture.start_time  # Timestamp for when FFmpeg started (ms)
