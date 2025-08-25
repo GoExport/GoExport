@@ -9,7 +9,7 @@ from selenium.webdriver.support.wait import WebDriverWait
 import urllib
 
 class Interface:
-    def __init__(self):
+    def __init__(self, obs: bool = False):
         chromium = helpers.get_path(None, helpers.get_config("PATH_CHROMIUM_WINDOWS"))
         chromedriver = helpers.get_path(None, helpers.get_config("PATH_CHROMEDRIVER_WINDOWS"))
 
@@ -20,7 +20,7 @@ class Interface:
         self.options.add_argument("force-device-scale-factor=1")
         self.options.add_argument("--high-dpi-support=1")
         self.options.add_argument("--kiosk")
-        self.options.add_argument(f"--app={helpers.convert_to_file_url(helpers.get_path(helpers.get_app_folder(), helpers.get_config("DEFAULT_ASSETS_FILENAME"), "start.html"))}")
+        self.options.add_argument(f"--app={helpers.convert_to_file_url(helpers.get_path(helpers.get_app_folder(), helpers.get_config('DEFAULT_ASSETS_FILENAME'), 'start.html'))}?obs={str(obs).lower()}")
         self.options.add_experimental_option("excludeSwitches", ["enable-automation"])
         self.options.binary_location = chromium
         self.service = Service(executable_path=chromedriver)
