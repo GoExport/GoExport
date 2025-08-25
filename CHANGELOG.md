@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.12.2] - 2025-08-25
+
+### Fixed
+
+- Fixed OBS.md to contain correct flags
+
+### Added
+
+- Added memory (When you run GoExport, it will remember what you picked so that it can be quickly replicated.)
+- Your OBS settings will also be saved to disk when you use an OBS related command line flag.
+- Redid the splash screen to appear more modern and fancy.
+- Added OBS flag that will prevent OBS from making changes to your settings (This does not mean it won't create a profile and switch to it, this is also an advance feature, and should only be used if you know what you're doing. You'd want to use it if you want to customize GoExport in OBS, but this is not recommended.)
+
+### Changed
+
+- Changed the way command line arguments are parsed to improve efficiency.
+- Splash screen now tells you if GoExport is using OBS or not.
+
 ## [0.12.1] - 2025/08/24
 
 ### Fixed
