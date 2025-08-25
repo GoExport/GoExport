@@ -1,7 +1,6 @@
 import helpers
 import obsws_python as obs
 from modules.logger import logger
-from modules.parameters import Parameters
 import atexit
 import signal
 import sys
@@ -15,12 +14,10 @@ class Capture:
         self.process = None
         self.filename = None
         self.recording = False
+        self.random = helpers.get_timestamp()
         self.ws = None
         self.cl = None
         self.prepared = False
-
-        # Initalize parameters
-        self.parameters = Parameters()
 
         # Register cleanup handlers
         atexit.register(self._cleanup)
@@ -30,17 +27,20 @@ class Capture:
     def connect(self):
         try:
             self.ws = obs.ReqClient(
-                host=self.parameters.obs_websocket_address or helpers.get_config("OBS_SERVER_HOST"),
-                port=self.parameters.obs_websocket_port or helpers.get_config("OBS_SERVER_PORT"),
-                password=self.parameters.obs_websocket_password or helpers.get_config("OBS_SERVER_PASSWORD"),
+                host=helpers.get_param("obs_websocket_address") or helpers.load("obs_websocket_address") or helpers.get_config("OBS_SERVER_HOST"),
+                port=helpers.get_param("obs_websocket_port") or helpers.load("obs_websocket_port") or helpers.get_config("OBS_SERVER_PORT"),
+                password=helpers.get_param("obs_websocket_password") or helpers.load("obs_websocket_password") or helpers.get_config("OBS_SERVER_PASSWORD"),
                 timeout=3
             )
             self.cl = obs.EventClient(
-                host=self.parameters.obs_websocket_address or helpers.get_config("OBS_SERVER_HOST"),
-                port=self.parameters.obs_websocket_port or helpers.get_config("OBS_SERVER_PORT"),
-                password=self.parameters.obs_websocket_password or helpers.get_config("OBS_SERVER_PASSWORD"),
+                host=helpers.get_param("obs_websocket_address") or helpers.load("obs_websocket_address") or helpers.get_config("OBS_SERVER_HOST"),
+                port=helpers.get_param("obs_websocket_port") or helpers.load("obs_websocket_port") or helpers.get_config("OBS_SERVER_PORT"),
+                password=helpers.get_param("obs_websocket_password") or helpers.load("obs_websocket_password") or helpers.get_config("OBS_SERVER_PASSWORD"),
                 timeout=3
             )
+            helpers.save("obs_websocket_address", helpers.get_param("obs_websocket_address") or helpers.load("obs_websocket_address") or helpers.get_config("OBS_SERVER_HOST"))
+            helpers.save("obs_websocket_port", helpers.get_param("obs_websocket_port") or helpers.load("obs_websocket_port") or helpers.get_config("OBS_SERVER_PORT"))
+            helpers.save("obs_websocket_password", helpers.get_param("obs_websocket_password") or helpers.load("obs_websocket_password") or helpers.get_config("OBS_SERVER_PASSWORD"))
             logger.info("Connected to OBS WebSocket server.")
         except Exception as e:
             logger.error(f"Failed to connect to OBS WebSocket server: {e}")
@@ -49,34 +49,79 @@ class Capture:
     def prep(self, output: str, width: int, height: int):
         try:
             self.cl.callback.register(self.on_record_state_changed)
-            self.ws.create_profile(name=f"{helpers.get_config('APP_NAME')} - Profile")
-            self.ws.create_scene(name=f"{helpers.get_config('APP_NAME')} - Scene")
-            if self.ws.get_studio_mode_enabled().studio_mode_enabled:
-                self.ws.set_current_preview_scene(name=f"{helpers.get_config('APP_NAME')} - Scene")
-            self.ws.set_current_program_scene(name=f"{helpers.get_config('APP_NAME')} - Scene")
-            self.ws.set_video_settings(
-                base_width=width,
-                base_height=height,
-                out_width=width,
-                out_height=height,
-                denominator=1,
-                numerator=helpers.get_config("OBS_FPS")
-            )
-            self.ws.set_input_mute(name="Desktop Audio", muted=True)
-            self.ws.set_input_mute(name="Mic/Aux", muted=True)
-            self.ws.create_input(
-                sceneName=f"{helpers.get_config('APP_NAME')} - Scene",
-                inputName=f"{helpers.get_config('APP_NAME')} - Capture",
-                inputKind="window_capture",
-                inputSettings={
-                    "window": "GoExport Viewer:Chrome_WidgetWin_1:chrome.exe",
-                    "cursor": False,
-                    "capture_audio": True,
-                    "client_area": True
-                },
-                sceneItemEnabled=True
-            )
-            # self.ws.set_profile_parameter(category="AdvOutput", name="RecFormat2", value="mp4")
+            
+            # Try to create profile (optional)
+            try:
+                self.ws.create_profile(name=f"{helpers.get_config('APP_NAME')} - Profile")
+            except Exception as e:
+                logger.warning(f"Could not create OBS profile: {e}")
+                # If profile exists, try to switch to it
+                try:
+                    self.ws.set_current_profile(name=f"{helpers.get_config('APP_NAME')} - Profile")
+                    logger.info("Switched to existing OBS profile.")
+                except Exception as e2:
+                    logger.error(f"Could not switch to existing OBS profile: {e2}")
+            
+            # Try to create scene (optional)
+            try:
+                # Try to create the scene
+                self.ws.create_scene(name=f"{helpers.get_config('APP_NAME')} - Scene")
+            except Exception as e:
+                logger.warning(f"Could not create OBS scene: {e}")
+                # If scene exists, delete and recreate it
+                if not helpers.get_param("obs_no_overwrite"):
+                    try:
+                        self.ws.remove_scene(name=f"{helpers.get_config('APP_NAME')} - Scene")
+                        helpers.wait(2)
+                        self.ws.create_scene(name=f"{helpers.get_config('APP_NAME')} - Scene")
+                        logger.info("Deleted and recreated existing OBS scene.")
+                    except Exception as e2:
+                        logger.error(f"Could not delete and recreate OBS scene: {e2}")
+
+            # Try to set preview scene (optional)
+            try:
+                if self.ws.get_studio_mode_enabled().studio_mode_enabled:
+                    self.ws.set_current_preview_scene(name=f"{helpers.get_config('APP_NAME')} - Scene")
+            except Exception as e:
+                logger.warning(f"Could not set preview scene: {e}")
+            
+            # Try to set program scene (optional)
+            try:
+                self.ws.set_current_program_scene(name=f"{helpers.get_config('APP_NAME')} - Scene")
+            except Exception as e:
+                logger.warning(f"Could not set program scene: {e}")
+            
+            # Try to set video settings (optional)
+            if helpers.get_param("obs_no_overwrite"):
+                try:
+                    self.ws.set_video_settings(
+                        base_width=width,
+                        base_height=height,
+                        out_width=width,
+                        out_height=height,
+                        denominator=1,
+                        numerator=helpers.get_param("OBS_FPS") or helpers.load("OBS_FPS") or helpers.get_config("OBS_FPS")
+                    )
+                except Exception as e:
+                    logger.warning(f"Could not set video settings: {e}")
+            
+            # Try to create input/source (optional)
+            if not helpers.get_param("obs_no_overwrite"):
+                try:
+                    self.ws.create_input(
+                        sceneName=f"{helpers.get_config('APP_NAME')} - Scene",
+                        inputName=f"{helpers.get_config('APP_NAME')} - Capture",
+                        inputKind="window_capture",
+                        inputSettings={
+                            "window": "GoExport Viewer:Chrome_WidgetWin_1:chrome.exe",
+                            "cursor": False,
+                            "capture_audio": True,
+                            "client_area": True
+                        },
+                        sceneItemEnabled=True
+                    )
+                except Exception as e:
+                    logger.warning(f"Could not create input/source: {e}")
             helpers.wait(4, "Waiting for OBS to set up the scene and sources...")
             self.prepared = True
         except Exception as e:
@@ -85,10 +130,8 @@ class Capture:
 
     def unprep(self):
         try:
-            self.ws.set_input_mute(name="Desktop Audio", muted=False)
-            self.ws.set_input_mute(name="Mic/Aux", muted=False)
-            self.ws.remove_scene(name=f"{helpers.get_config('APP_NAME')} - Scene")
-            self.ws.remove_profile(name=f"{helpers.get_config('APP_NAME')} - Profile")
+            if not helpers.get_param("obs_no_overwrite"):
+                self.ws.remove_scene(name=f"{helpers.get_config('APP_NAME')} - Scene")
             logger.info("OBS: Unprepared successfully.")
             self.prepared = False
         except Exception as e:
@@ -127,8 +170,8 @@ class Capture:
 
             # Calculate ending delay
             self.ended_delay = self.end_time - offset
-
             logger.info("OBS: Stopped recording")
+            helpers.wait(2, "Waiting for OBS to finalize the recording...")
         except Exception as e:
             logger.error(f"Failed to stop recording: {e}")
             self._cleanup()
