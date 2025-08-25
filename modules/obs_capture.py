@@ -61,7 +61,7 @@ class Capture:
             except Exception as e:
                 logger.warning(f"Could not set video settings: {e}")
 
-    def prep(self, output: str, width: int, height: int):
+    def prep(self, width: int, height: int):
         try:
             self.cl.callback.register(self.on_record_state_changed)
             
@@ -79,6 +79,12 @@ class Capture:
             
             # Set resolution
             self.set(width, height)
+
+            # Change recording path
+            try:
+                self.ws.set_record_directory(recordDirectory=helpers.get_path(None, helpers.get_config("DEFAULT_OUTPUT_FILENAME")))
+            except Exception as e:
+                logger.warning(f"Could not change recording path: {e}")
 
             # Try to create scene (optional)
             try:
@@ -146,9 +152,9 @@ class Capture:
         self.recording = data.output_active
         self.state = data.output_state
 
-    def start(self, output: str, width: int, height: int):
+    def start(self, width: int, height: int):
         try:
-            self.prep(output, width, height)
+            self.prep(width, height)
             if not self.prepared:
                 return False
             self.ws.start_record()

@@ -38,7 +38,7 @@ class Capture:
 
     def start(self, output: str, width: int, height: int):
         if self.is_obs:
-            object = self.obs.start(output, width, height)
+            object = self.obs.start(width, height)
         else:
             object = self.native.start(output, width, height)
         self.retrieve()
