@@ -15,7 +15,9 @@ class Parameters:
         parser.add_argument("--obs-websocket-port", help="Set the OBS WebSocket port", dest="obs_websocket_port")
         parser.add_argument("--obs-websocket-password", help="Set the OBS WebSocket password", dest="obs_websocket_password")
         parser.add_argument("--obs-fps", help="Set the OBS FPS", dest="obs_fps")
+        parser.add_argument("--obs-no-overwrite", help="Controls whether GoExport will overwrite your scenes (ADVANCED, use if you want to configure your GoExport scene in OBS). Set to true to allow overwriting, false to prevent it.", action="store_true", dest="obs_no_overwrite")
 
         args = parser.parse_args()
         for key, value in vars(args).items():
+            print(f"Parameter {key} set to {value}")
             setattr(self, key, value)
