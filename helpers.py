@@ -53,7 +53,7 @@ def save(key: str, value):
         json.dump(data, f, indent=4)
         logger.debug(f"Saved data.json: {data}")
 
-def load(key: str, default=None):
+def load(key: str, default=False):
     """
     Load a value from a key in the data.json file
     :param key: The key to load the value from.
