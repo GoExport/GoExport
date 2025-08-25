@@ -1,41 +1,164 @@
 <!DOCTYPE html>
 <html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Screen Recorder Splash</title>
+    <meta name="robots" content="noindex,nofollow" />
+    <link rel="icon" type="image/png" href="icon.png" />
+    <!-- Add this inside the <body> tag, before the closing </body> -->
+    <script>
+      function getQueryParam(name) {
+        const params = new URLSearchParams(window.location.search);
+        return params.get(name);
+      }
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Start</title>
-    <style>
-        body {
-            margin: 0;
-            height: 100vh;
-            background: linear-gradient(to top right, #FFBC8D, #f47821); /* Placeholder gradient */
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: Arial, sans-serif;
+      document.addEventListener("DOMContentLoaded", function () {
+        const obsParam = getQueryParam("obs");
+        const noticeDiv = document.querySelector("#obs");
+        if (obsParam === "true") {
+          noticeDiv.innerHTML =
+            "GoExport indicated you <em>are</em> using OBS. You may interact with your mouse and keyboard as usual but do not close this window or OBS.";
+          noticeDiv.style.borderLeftColor = "#5cb85c"; // green
+          noticeDiv.style.background = "#1a201a";
+          noticeDiv.style.color = "#ddffdd";
+        } else if (obsParam === "false") {
+          noticeDiv.innerHTML =
+            "GoExport indicated you <em>are not</em> using OBS. Do <u>not</u> touch your mouse or keyboard. This browser is being remotely controlled for recording.";
+          noticeDiv.style.borderLeftColor = "#d9534f"; // red
+          noticeDiv.style.background = "#201a1a";
+          noticeDiv.style.color = "#ffdddd";
         }
+        // If obs param is missing, default notice remains
+      });
+    </script>
+    <style type="text/css">
+      /* Basic, widely supported CSS (avoids modern layout features) */
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        background: #0b0e11; /* dark, reduces glare during recording */
+        color: #e8e8e8;
+        font: 16px/1.5 Arial, Helvetica, sans-serif;
+        overflow: hidden; /* no scrolling */
+      }
 
-        .container {
-            background: linear-gradient(to top, #bd1d1d, #ff4949); /* Placeholder gradient */
-            color: white;
-            padding: 20px;
-            border-radius: 10px;
-            text-align: center;
-        }
+      /* Table layout for vertical centering (legacy-friendly) */
+      .wrapper {
+        display: table;
+        width: 100%;
+        height: 100%;
+      }
+      .center {
+        display: table-cell;
+        vertical-align: middle;
+        text-align: center;
+        padding: 20px;
+      }
 
-        h1 {
-            font-size: 1.5rem;
-            font-weight: bold;
-            margin: 0;
-        }
+      /* Content card */
+      .panel {
+        display: inline-block;
+        text-align: left;
+        background: #151a20;
+        border: 1px solid #2a2f36;
+        padding: 24px;
+        max-width: 720px;
+        width: 100%;
+      }
+
+      .logo {
+        display: block;
+        margin: 0 auto 16px auto;
+        max-width: 220px;
+        height: auto;
+      }
+
+      h1 {
+        font-size: 22px;
+        margin: 0 0 12px 0;
+        letter-spacing: 0.5px;
+      }
+
+      .notice {
+        background: #201a1a;
+        border-left: 4px solid #d9534f; /* bootstrap-ish red tone for legacy vibe */
+        padding: 12px;
+        margin: 12px 0 16px 0;
+        color: #ffdddd;
+      }
+
+      ul {
+        margin: 0 0 12px 20px;
+        padding: 0;
+      }
+
+      .status {
+        font-size: 13px;
+        color: #9aa4af;
+        border-top: 1px solid #2a2f36;
+        padding-top: 10px;
+        margin-top: 12px;
+        text-align: center;
+      }
+
+      .kbd {
+        display: inline-block;
+        padding: 2px 6px;
+        border: 1px solid #777;
+        border-bottom-width: 2px;
+        background: #222;
+        color: #eee;
+        font-family: Consolas, "Courier New", monospace;
+        font-size: 12px;
+        line-height: 1.2;
+        vertical-align: middle;
+        margin: 0 2px;
+      }
+
+      .small {
+        font-size: 13px;
+        color: #cbd2d9;
+      }
     </style>
-</head>
+  </head>
+  <body>
+    <div class="wrapper">
+      <div class="center">
+        <div class="panel" role="region" aria-label="Screen Recorder Notice">
+          <img class="logo" src="logo.svg" alt="Application Logo" />
+          <h1>Screen Recorder is Active</h1>
 
-<body>
-    <div class="container">
-        <h1>Don't touch your mouse or keyboard.</h1>
+          <div id="obs" class="notice" role="alert">
+            <strong>Important:</strong> If you are <em>not</em> using OBS, do
+            <u>not</u> touch your mouse or keyboard. This browser is being
+            remotely controlled for recording.
+          </div>
+
+          <p class="small">
+            If you <strong>are</strong> using OBS, you can press
+            <span class="kbd">Alt</span>+<span class="kbd">Tab</span> to switch
+            apps and continue working as usual. The recorder will capture the
+            intended window.
+          </p>
+
+          <ul>
+            <li>If you see this page, everything is ready for capture.</li>
+            <li>
+              Keep this window visible unless your workflow says otherwise.
+            </li>
+            <li>Do not overlay anything over this window unless using OBS.</li>
+            <li>Questions? Refer to the FAQ on Github.</li>
+          </ul>
+
+          <p class="status">Please wait...</p>
+        </div>
+      </div>
     </div>
-</body>
-
+  </body>
 </html>
