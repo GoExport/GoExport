@@ -4,12 +4,10 @@ import config
 import shutil
 import os
 import sys
-import pyttsx3
 import platform
 import psutil
 import ctypes
 import urllib
-import pyautogui
 import subprocess
 import time
 import requests
@@ -385,7 +383,7 @@ def try_command(*input, return_output: bool = False):
     """
     try:
         logger.debug(f"try_command() called with input={input}, return_output={return_output}")
-        result = subprocess.run(args=input, shell=True, capture_output=True, text=True, check=True)
+        result = subprocess.run(args=input, capture_output=True, check=True)
         logger.debug("Command succeeded: %s", result.stdout)
         return result.stdout.strip() if return_output else True
     except subprocess.CalledProcessError as e:
@@ -494,14 +492,6 @@ def print_list(items, message: str = "to select"):
     logger.debug(f"print_list() items={items}, message={message}")
     for index, item in enumerate(items, start=1):
         print(f"[bold blue]Option #{index}:[/bold blue] type \"{item}\"" + (f" ({message})" if message else ""))
-
-# Text to speech
-def say(text: str):
-    """Convert text to speech at normal speed."""
-    logger.debug(f"say() called with text={text}")
-    engine = pyttsx3.init()
-    engine.say(text)
-    engine.runAndWait()
 
 # Checks if the application has an update available
 def has_update():
