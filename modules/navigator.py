@@ -10,8 +10,17 @@ import urllib
 
 class Interface:
     def __init__(self, obs: bool = False):
-        chromium = helpers.get_path(None, helpers.get_config("PATH_CHROMIUM_WINDOWS"))
-        chromedriver = helpers.get_path(None, helpers.get_config("PATH_CHROMEDRIVER_WINDOWS"))
+        # Select Chromium and Chromedriver paths based on OS
+        if helpers.os_is_windows():
+            chromium = helpers.get_path(None, helpers.get_config("PATH_CHROMIUM_WINDOWS"))
+            chromedriver = helpers.get_path(None, helpers.get_config("PATH_CHROMEDRIVER_WINDOWS"))
+            flash_path = helpers.get_path(None, helpers.get_config("PATH_FLASH_WINDOWS"))
+        elif helpers.os_is_linux():
+            chromium = helpers.get_path(None, helpers.get_config("PATH_CHROMIUM_LINUX"))
+            chromedriver = helpers.get_path(None, helpers.get_config("PATH_CHROMEDRIVER_LINUX"))
+            flash_path = helpers.get_path(None, helpers.get_config("PATH_FLASH_LINUX"))
+        else:
+            raise RuntimeError("Unsupported OS")
 
         self.options = Options()
         self.options.add_argument("--disable-infobars")
@@ -19,9 +28,17 @@ class Interface:
         self.options.add_argument("--allow-running-insecure-content")
         self.options.add_argument("force-device-scale-factor=1")
         self.options.add_argument("--high-dpi-support=1")
-        self.options.add_argument("--kiosk")
-        self.options.add_argument(f"--app={helpers.convert_to_file_url(helpers.get_path(helpers.get_app_folder(), helpers.get_config('DEFAULT_ASSETS_FILENAME'), 'start.html'))}?obs={str(obs).lower()}")
+        self.options.add_argument("--kiosk")  # Kiosk mode usually makes Chromium full screen
+        self.options.add_argument("--start-fullscreen")  # Explicitly request full screen
+        self.options.add_argument(f"--ppapi-flash-path={flash_path}")
+        self.options.add_argument("--ppapi-flash-version=32.0.0.465")
+        start_url = helpers.convert_to_file_url(
+            helpers.get_path(helpers.get_app_folder(), helpers.get_config("DEFAULT_ASSETS_FILENAME"), "start.html")
+        ) + f"?obs={str(obs).lower()}"
+        self.options.add_argument(f"--app={start_url}")
         self.options.add_experimental_option("excludeSwitches", ["enable-automation"])
+        if helpers.os_is_linux():
+            self.options.add_argument("--no-sandbox")
         self.options.binary_location = chromium
         self.service = Service(executable_path=chromedriver)
         self.driver = None
