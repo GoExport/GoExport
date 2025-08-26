@@ -164,13 +164,15 @@ PATH_FFPROBE_WINDOWS = [DEFAULT_DEPENDENCIES_FILENAME, "ffmpeg", "bin", "ffprobe
 PATH_FFPLAY_WINDOWS = [DEFAULT_DEPENDENCIES_FILENAME, "ffmpeg", "bin", "ffplay.exe"]
 PATH_CHROMIUM_WINDOWS = [DEFAULT_DEPENDENCIES_FILENAME, "ungoogled-chromium", "chrome.exe"]
 PATH_CHROMEDRIVER_WINDOWS = [DEFAULT_DEPENDENCIES_FILENAME, "chromedriver", "chromedriver.exe"]
+PATH_FLASH_WINDOWS = [DEFAULT_DEPENDENCIES_FILENAME, "ungoogled-chromium", 'extensions', "pepflashplayer.dll"]
 
 # Dependencies for Linux
-# PATH_FFMPEG_LINUX  = helpers.search_path("ffmpeg")
-# PATH_FFPROBE_LINUX = helpers.search_path("ffprobe")
-# PATH_FFPLAY_LINUX  = helpers.search_path("ffplay")
-# PATH_CHROMIUM_LINUX = helpers.search_path("chromium-browser") or helpers.search_path("chromium")
-# PATH_CHROMEDRIVER_LINUX = helpers.search_path("chromedriver")
+PATH_FFMPEG_LINUX  = [DEFAULT_DEPENDENCIES_FILENAME, "ffmpeg", "bin", "ffmpeg"]
+PATH_FFPROBE_LINUX = [DEFAULT_DEPENDENCIES_FILENAME, "ffmpeg", "bin", "ffprobe"]
+PATH_FFPLAY_LINUX  = [DEFAULT_DEPENDENCIES_FILENAME, "ffmpeg", "bin", "ffplay"]
+PATH_CHROMIUM_LINUX = [DEFAULT_DEPENDENCIES_FILENAME, "ungoogled-chromium", "chrome"]
+PATH_CHROMEDRIVER_LINUX = [DEFAULT_DEPENDENCIES_FILENAME, "ungoogled-chromium", "chromedriver"]
+PATH_FLASH_LINUX = [DEFAULT_DEPENDENCIES_FILENAME, "ungoogled-chromium", 'extensions', "libpepflashplayer.so"]
 
 # Data
 UPDATE_CHECK_INTERVAL = 60 * 1000  # 1 minute in milliseconds
