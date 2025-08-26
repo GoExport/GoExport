@@ -118,21 +118,38 @@ class Capture:
             # Try to create input/source (optional)
             if not helpers.get_param("obs_no_overwrite"):
                 try:
-                    self.ws.create_input(
-                        sceneName=f"{helpers.get_config('APP_NAME')} - Scene",
-                        inputName=f"{helpers.get_config('APP_NAME')} - Capture",
-                        inputKind="window_capture",
-                        inputSettings={
-                            "window": "GoExport Viewer:Chrome_WidgetWin_1:chrome.exe",
-                            "cursor": False,
-                            "capture_audio": True,
-                            "client_area": True
-                        },
-                        sceneItemEnabled=True
-                    )
+                    # Output a list of inputs
+                    if helpers.os_is_windows():
+                        self.ws.create_input(
+                            sceneName=f"{helpers.get_config('APP_NAME')} - Scene",
+                            inputName=f"{helpers.get_config('APP_NAME')} - Capture",
+                            inputKind="window_capture",
+                            inputSettings={
+                                "window": "GoExport Viewer:Chrome_WidgetWin_1:chrome.exe",
+                                "cursor": False,
+                                "capture_audio": True,
+                                "client_area": True
+                            },
+                            sceneItemEnabled=True
+                        )
+                    elif helpers.os_is_linux():
+                        ### THIS DOES NOT WORK !!!
+                        # OBS did some weird shit and apparently you can't
+                        # use XComposite anymore, I tried gamers, I really
+                        # did try. HELP WANTED PLEASE.
+                        self.ws.create_input(
+                            sceneName=f"{helpers.get_config('APP_NAME')} - Scene",
+                            inputName=f"{helpers.get_config('APP_NAME')} - Capture",
+                            inputKind="pipewire-screen-capture-source",
+                            inputSettings={
+                                "window": "GoExport Viewer:Chrome_WidgetWin_1:chrome",
+                                "cursor": False
+                            },
+                            sceneItemEnabled=True
+                        )
                 except Exception as e:
                     logger.warning(f"Could not create input/source: {e}")
-            helpers.wait(4, "Waiting for OBS to set up the scene and sources...")
+            helpers.wait(10000, "Waiting for OBS to set up the scene and sources...")
             self.prepared = True
         except Exception as e:
             logger.error(f"Failed to prepare OBS: {e}")
