@@ -54,58 +54,47 @@ class Compatibility:
         logger.info(f"Executable: {helpers.is_frozen()}")
 
         # -- Required dependencies
-        # Gather FFMPEG, FFPROBE, and FFPLAY
-        ffmpeg = helpers.get_path(None, helpers.get_config("PATH_FFMPEG_WINDOWS"))
-        ffprobe = helpers.get_path(None, helpers.get_config("PATH_FFPROBE_WINDOWS"))
-        ffplay = helpers.get_path(None, helpers.get_config("PATH_FFPLAY_WINDOWS"))
+        # Get the paths for FFMPEG, FFPROBE, and FFPLAY.
+        if helpers.os_is_windows():
+            ffmpeg = helpers.get_path(None, helpers.get_config("PATH_FFMPEG_WINDOWS"))
+            ffprobe = helpers.get_path(None, helpers.get_config("PATH_FFPROBE_WINDOWS"))
+            ffplay = helpers.get_path(None, helpers.get_config("PATH_FFPLAY_WINDOWS"))
+        elif helpers.os_is_linux():
+            ffmpeg = helpers.get_path(None, helpers.get_config("PATH_FFMPEG_LINUX"))
+            ffprobe = helpers.get_path(None, helpers.get_config("PATH_FFPROBE_LINUX"))
+            ffplay = helpers.get_path(None, helpers.get_config("PATH_FFPLAY_LINUX"))
+        else:
+            logger.error("Unsupported OS")
+            return False
         
         try:
-            # Check for FFMPEG, FFPROBE, and FFPLAY
+            # Verify that the paths are valid (ffmpeg, ffprobe, ffplay exists)
             if not helpers.try_path(ffmpeg):
-                logger.error(f"Failed to locate {ffmpeg}")
-                return False
+                raise FileNotFoundError(f"Failed to locate {ffmpeg}")
             if not helpers.try_path(ffprobe):
-                logger.error(f"Failed to locate {ffprobe}")
-                return False
+                raise FileNotFoundError(f"Failed to locate {ffprobe}")
             if not helpers.try_path(ffplay):
-                logger.error(f"Failed to locate {ffplay}")
-                return False
+                raise FileNotFoundError(f"Failed to locate {ffplay}")
+        except Exception as e:
+            logger.error(f"Dependency check failed: {e}")
+            return False
 
-            # Verify validity of FFMPEG, FFPROBE, and FFPLAY
-            if not helpers.try_command(ffmpeg, '-h'):
-                logger.error(f"Failed to validate {ffmpeg}")
-                return False
-            if not helpers.try_command(ffprobe, '-h'):
-                logger.error(f"Failed to validate {ffprobe}")
-                return False
-            if not helpers.try_command(ffplay, '-h'):
-                logger.error(f"Failed to validate {ffplay}")
-                return False
-
-            # FFMPEG recording test
-            if helpers.os_is_windows():
-                logger.info("Testing FFMPEG compatibility")
-                if not helpers.try_command(ffmpeg, "-f", "dshow", "-i", "video=screen-capture-recorder:audio=virtual-audio-capturer", "-t", "1", "-f", "null", "-"):
-                    logger.error("FFMPEG test failed - screen and audio recording failed. Did you install the dependencies?")
-                    helpers.show_popup(helpers.get_config("APP_NAME"), "Screen and audio recording failed. Please ensure all dependencies are installed.", 48)
-                    return False
-            # Gather Chromium
+        # Get the paths of Chromium and Chromedriver
+        if helpers.os_is_windows():
             chromium = helpers.get_path(None, helpers.get_config("PATH_CHROMIUM_WINDOWS"))
-            # Check for Chromium
-            if not helpers.try_path(chromium):
-                logger.error(f"Failed to locate {chromium}")
-                return False
-
-            # Gather Chromedriver
             chromedriver = helpers.get_path(None, helpers.get_config("PATH_CHROMEDRIVER_WINDOWS"))
-            # Check for Chromedriver
+        elif helpers.os_is_linux():
+            chromium = helpers.get_path(None, helpers.get_config("PATH_CHROMIUM_LINUX"))
+            chromedriver = helpers.get_path(None, helpers.get_config("PATH_CHROMEDRIVER_LINUX"))
+        else:
+            logger.error("Unsupported OS")
+            return False
+
+        try:
+            if not helpers.try_path(chromium):
+                raise FileNotFoundError(f"Failed to locate {chromium}")
             if not helpers.try_path(chromedriver):
-                logger.error(f"Failed to locate {chromedriver}")
-                return False
-            # Verify validity of Chromedriver
-            if not helpers.try_command(chromedriver, '-v'):
-                logger.error(f"Failed to validate {chromedriver}")
-                return False
+                raise FileNotFoundError(f"Failed to locate {chromedriver}")
         except Exception as e:
             logger.error(f"Dependency check failed: {e}")
             return False
