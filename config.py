@@ -166,7 +166,7 @@ PATH_CHROMIUM_WINDOWS = [DEFAULT_DEPENDENCIES_FILENAME, "ungoogled-chromium", "c
 PATH_CHROMEDRIVER_WINDOWS = [DEFAULT_DEPENDENCIES_FILENAME, "chromedriver", "chromedriver.exe"]
 PATH_OBS_WINDOWS = ["C:\\Program Files", "obs-studio", "bin", "64bit", "obs64.exe"]
 PATH_FLASH_WINDOWS = [DEFAULT_DEPENDENCIES_FILENAME, "ungoogled-chromium", 'extensions', "pepflashplayer.dll"]
-PATH_FLASH_VERSION_WINDOWS = "34.0.0.308"
+PATH_FLASH_VERSION_WINDOWS = "34.0.0.330"
 
 # Dependencies for Linux
 PATH_FFMPEG_LINUX  = [DEFAULT_DEPENDENCIES_FILENAME, "ffmpeg", "bin", "ffmpeg"]
