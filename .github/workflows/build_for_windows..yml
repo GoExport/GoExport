@@ -128,16 +128,29 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Announce Release on Discord
-        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+          REPO_NAME: ${{ github.event.repository.name }}
         run: |
-          version="${{ github.ref_name }}"
           changelog="${{ steps.changelog.outputs.CHANGELOG_CONTENT }}"
+          if [ -z "$changelog" ]; then
+            changelog="There aren't any changelog entries for this release."
+          fi
+          version="${{ github.event.inputs.release_version }}"
 
-          # Escape quotes for JSON
-          changelog=$(echo "$changelog" | sed 's/"/\\"/g')
-            curl -H "Content-Type: application/json" \
+          # Compose the Discord message
+          message="<@&1346974681399427153>
+
+          # ${REPO_NAME} ${version}
+
+          ${changelog}
+
+          <#1347670260844855376>"
+
+          # Use jq to safely encode the JSON payload
+          payload=$(jq -n --arg content "$message" '{content: $content}')
+
+          curl -H "Content-Type: application/json" \
                -X POST \
-               -d "{
-                 \"content\": \"<@&1346974681399427153>\n\n# ${{ github.event.repository.name }} $version\n\n$changelog\n\n<#1347670260844855376>\"
-                 }" \
-               ${{ secrets.DISCORD_WEBHOOK }}
+               -d "$payload" \
+               "$DISCORD_WEBHOOK"
