@@ -149,7 +149,7 @@ class Capture:
                         )
                 except Exception as e:
                     logger.warning(f"Could not create input/source: {e}")
-            helpers.wait(10000, "Waiting for OBS to set up the scene and sources...")
+            helpers.wait(2, "Waiting for OBS to set up the scene and sources...")
             self.prepared = True
         except Exception as e:
             logger.error(f"Failed to prepare OBS: {e}")
