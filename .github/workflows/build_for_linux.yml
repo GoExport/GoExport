@@ -1,0 +1,150 @@
+name: Package Application with PyInstaller for Linux
+on:
+  push:
+    branches:
+      - "main"
+    tags:
+      - "v*"
+      - "b*"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository (with submodules)
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.13"
+
+      - name: Download FFMPEG
+        run: |
+          curl -L -o ffmpeg.tar.xz https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-linux64-gpl.tar.xz
+          mkdir -p dependencies
+          tar -xf ffmpeg.tar.xz -C dependencies
+          mv dependencies/ffmpeg-master-latest-linux64-gpl dependencies/ffmpeg
+          rm ffmpeg.tar.xz
+
+      - name: Download and extract ungoogled-chromium
+        run: |
+          curl -L -o ungoogled-chromium.tar.xz https://github.com/LordTwix/ungoogled-chromium-binaries/releases/download/87.0.4280.67-1.1/ungoogled-chromium_87.0.4280.67-1.1_linux.tar.xz
+          mkdir -p dependencies
+          tar -xf ungoogled-chromium.tar.xz -C dependencies
+          mv dependencies/ungoogled-chromium_87.0.4280.67-1.1_linux dependencies/ungoogled-chromium
+          rm ungoogled-chromium.tar.xz
+
+      - name: Download and extract libpepflashplayer.so
+        run: |
+          curl -L -o flash_player_patched_ppapi_linux.x86_64.tar.gz https://github.com/darktohka/clean-flash-builds/releases/download/v1.7/flash_player_patched_ppapi_linux.x86_64.tar.gz
+          mkdir -p dependencies/ungoogled-chromium/extensions
+          tar -xzvf flash_player_patched_ppapi_linux.x86_64.tar.gz --strip-components=1 -C dependencies/ungoogled-chromium/extensions libpepflashplayer.so
+          rm flash_player_patched_ppapi_linux.x86_64.tar.gz
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Package Application with PyInstaller
+        run: |
+          pyinstaller GoExport.spec
+
+      - name: Copy files to dist folder
+        run: |
+          copy readme.md dist\
+          copy LICENSE dist\
+          xcopy assets dist\assets /E /I /Q /Y
+
+      - name: Build installer
+        uses: Minionguyjpro/Inno-Setup-Action@v1.2.2
+        with:
+          path: setup\GoExport.iss
+          options: /O+
+
+      - name: Upload debug build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dev-build
+          path: dist
+
+      - name: Extract Changelog Section
+        if: startsWith(github.ref, 'refs/tags/')
+        id: changelog
+        shell: pwsh
+        run: |
+          # Extract the tag version from github.ref_name (remove 'v' or 'b' prefix if present)
+          $tagVersion = "${{ github.ref_name }}"
+          $version = $tagVersion -replace '^[vb]', ''
+
+          # Read the changelog file
+          $changelogContent = Get-Content -Path "CHANGELOG.md" -Raw
+
+          # Try to find the changelog section for this version
+          $pattern1 = "(?s)## \[$version\].*?(?=## \[|$)"
+          $pattern2 = "(?s)## \[$tagVersion\].*?(?=## \[|$)"
+
+          $match = [regex]::Match($changelogContent, $pattern1)
+          if (-not $match.Success) {
+            $match = [regex]::Match($changelogContent, $pattern2)
+          }
+
+          if ($match.Success) {
+            # Extract just the content after the version header
+            $sectionContent = $match.Value -replace "^## \[.*?\].*?\r?\n", "" -replace "\r?\n$", ""
+            $changelog = $sectionContent.Trim()
+          } else {
+            $changelog = "No specific changelog found for this version. See commit history below."
+          }
+
+          # Save changelog content to output
+          "CHANGELOG_CONTENT<<EOF" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          $changelog | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "EOF" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
+      - name: Upload Release Asset
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: dist/goexport_setup.exe
+          prerelease: ${{ startsWith(github.ref_name, 'b') }}
+          body: |
+            ${{ steps.changelog.outputs.CHANGELOG_CONTENT }}
+
+            ---
+            **Full Changelog**: https://github.com/${{ github.repository }}/compare/${{ github.event.before }}...${{ github.ref_name }}
+          generate_release_notes: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Announce Release on Discord
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+          REPO_NAME: ${{ github.event.repository.name }}
+        run: |
+          changelog="${{ steps.changelog.outputs.CHANGELOG_CONTENT }}"
+          if [ -z "$changelog" ]; then
+            changelog="There aren't any changelog entries for this release."
+          fi
+          version="${{ github.event.inputs.release_version }}"
+
+          # Compose the Discord message
+          message="<@&1346974681399427153>
+
+          # ${REPO_NAME} ${version}
+
+          ${changelog}
+
+          <#1347670260844855376>"
+
+          # Use jq to safely encode the JSON payload
+          payload=$(jq -n --arg content "$message" '{content: $content}')
+
+          curl -H "Content-Type: application/json" \
+               -X POST \
+               -d "$payload" \
+               "$DISCORD_WEBHOOK"
