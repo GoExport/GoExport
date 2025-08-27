@@ -15,10 +15,12 @@ class Interface:
             chromium = helpers.get_path(None, helpers.get_config("PATH_CHROMIUM_WINDOWS"))
             chromedriver = helpers.get_path(None, helpers.get_config("PATH_CHROMEDRIVER_WINDOWS"))
             flash_path = helpers.get_path(None, helpers.get_config("PATH_FLASH_WINDOWS"))
+            flash_ver = helpers.get_config("PATH_FLASH_VERSION_WINDOWS")
         elif helpers.os_is_linux():
             chromium = helpers.get_path(None, helpers.get_config("PATH_CHROMIUM_LINUX"))
             chromedriver = helpers.get_path(None, helpers.get_config("PATH_CHROMEDRIVER_LINUX"))
             flash_path = helpers.get_path(None, helpers.get_config("PATH_FLASH_LINUX"))
+            flash_ver = helpers.get_config("PATH_FLASH_VERSION_LINUX")
         else:
             raise RuntimeError("Unsupported OS")
 
@@ -28,10 +30,11 @@ class Interface:
         self.options.add_argument("--allow-running-insecure-content")
         self.options.add_argument("force-device-scale-factor=1")
         self.options.add_argument("--high-dpi-support=1")
-        self.options.add_argument("--kiosk")  # Kiosk mode usually makes Chromium full screen
-        self.options.add_argument("--start-fullscreen")  # Explicitly request full screen
+        self.options.add_argument("--kiosk")
+        self.options.add_argument("--start-fullscreen")
         self.options.add_argument(f"--ppapi-flash-path={flash_path}")
-        self.options.add_argument("--ppapi-flash-version=32.0.0.465")
+        self.options.add_argument(f"--ppapi-flash-version={flash_ver}")
+        self.options.add_argument("--enable-unsafe-publish")
         start_url = helpers.convert_to_file_url(
             helpers.get_path(helpers.get_app_folder(), helpers.get_config("DEFAULT_ASSETS_FILENAME"), "start.html")
         ) + f"?obs={str(obs).lower()}"
