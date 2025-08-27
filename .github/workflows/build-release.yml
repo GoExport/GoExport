@@ -1,0 +1,129 @@
+name: Build and Release for All Platforms
+
+on:
+  push:
+    branches:
+      - "main"
+    tags:
+      - "v*"
+      - "b*"
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          # Linux x86_64
+          - os: ubuntu-latest
+            platform: linux
+            arch: x86_64
+            executable_name: Application
+            asset_name: Application-linux-x86_64
+
+          # Windows x86_64
+          - os: windows-latest
+            platform: windows
+            arch: x86_64
+            executable_name: Application.exe
+            asset_name: Application-windows-x86_64.exe
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout repository (with submodules)
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Install binaries (Windows)
+        if: matrix.platform == 'windows'
+        run: |
+          mkdir dependencies
+
+          # Download FFMPEG
+          curl -L -o ffmpeg.zip https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip
+          powershell -Command "Expand-Archive ffmpeg.zip dependencies"
+          move dependencies\ffmpeg-master-latest-win64-gpl dependencies\ffmpeg
+          del ffmpeg.zip
+
+          # Download ungoogled-chromium
+          curl -L -o ungoogled-chromium.zip https://github.com/tangalbert919/ungoogled-chromium-binaries/releases/download/87.0.4280.67-1/ungoogled-chromium_87.0.4280.67-1.1_windows-x64.zip
+          powershell -Command "Expand-Archive ungoogled-chromium.zip dependencies"
+          move dependencies\ungoogled-chromium_87.0.4280.67-1.1_windows dependencies\ungoogled-chromium
+          del ungoogled-chromium.zip
+
+          # Download chromedriver
+          mkdir dependencies\chromedriver
+          curl -L -o chromedriver.zip https://chromedriver.storage.googleapis.com/87.0.4280.20/chromedriver_win32.zip
+          powershell -Command "Expand-Archive chromedriver.zip dependencies\chromedriver"
+          del chromedriver.zip
+
+      - name: Install Linux build dependencies
+        if: matrix.platform == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential
+
+      - name: Package Application with PyInstaller
+        run: |
+          pyinstaller build.spec
+
+      - name: Rename executable for release
+        shell: bash
+        run: |
+          cd dist
+          if [ -f "${{ matrix.executable_name }}" ]; then
+            mv "${{ matrix.executable_name }}" "${{ matrix.asset_name }}"
+          else
+            echo "Warning: Expected executable ${{ matrix.executable_name }} not found"
+            ls -la
+          fi
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.asset_name }}
+          path: dist/${{ matrix.asset_name }}
+
+      - name: Extract changelog entry
+        if: startsWith(github.ref, 'refs/tags/')
+        id: changelog
+        shell: bash
+        run: |
+          version=${GITHUB_REF_NAME#v}
+          echo "Extracting changelog for version $version"
+
+          # Extract the changelog section for this version
+          if grep -q "## \[$version\]" CHANGELOG.md; then
+            # Extract content between this version and the next version heading or links section
+            changelog_content=$(awk "/## \[$version\]/{flag=1; next} /## \[|^\[.*\]:/{flag=0} flag" CHANGELOG.md | sed '/^$/d')
+            echo "Changelog content found for version $version"
+          else
+            echo "No changelog entry found for version $version, using default message"
+            changelog_content="Release $version - See CHANGELOG.md for details"
+          fi
+
+          # Store in output for use in release step
+          echo "content<<EOF" >> $GITHUB_OUTPUT
+          echo "$changelog_content" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Upload Release Asset
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: dist/${{ matrix.asset_name }}
+          prerelease: ${{ startsWith(github.ref_name, 'b') }}
+          body: ${{ steps.changelog.outputs.content }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
