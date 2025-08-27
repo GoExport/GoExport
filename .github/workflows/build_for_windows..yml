@@ -42,6 +42,15 @@ jobs:
           tar -xf chromedriver.zip -C dependencies\chromedriver
           rm chromedriver.zip
 
+          - name: Download pepflashplayer.dll
+            run: |
+              mkdir dependencies\ungoogled-chromium\extensions
+              curl -L -o dependencies\ungoogled-chromium\extensions\pepflashplayer.dll https://github.com/wrapper-offline/wrapper-offline/raw/refs/heads/main/resources/extensions/pepflashplayer.dll
+
+          - name: Download libpepflashplayer.so
+            run: |
+              curl -L -o dependencies\ungoogled-chromium\extensions\libpepflashplayer.so https://github.com/wrapper-offline/wrapper-offline/raw/refs/heads/main/resources/extensions/libpepflashplayer.so
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
