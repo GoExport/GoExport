@@ -17,15 +17,15 @@ jobs:
           - os: ubuntu-latest
             platform: linux
             arch: x86_64
-            executable_name: Application
-            asset_name: Application-linux-x86_64
+            executable_name: GoExport
+            asset_name: GoExport-linux-x86_64
 
           # Windows x86_64
           - os: windows-latest
             platform: windows
             arch: x86_64
-            executable_name: Application.exe
-            asset_name: Application-windows-x86_64.exe
+            executable_name: GoExport.exe
+            asset_name: GoExport-windows-x86_64.exe
 
     runs-on: ${{ matrix.os }}
 
@@ -72,7 +72,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y build-essential
 
-      - name: Package Application with PyInstaller
+      - name: Package GoExport with PyInstaller
         run: |
           pyinstaller build.spec
 
