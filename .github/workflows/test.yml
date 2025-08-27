@@ -45,19 +45,22 @@ jobs:
           "EOF" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
 
       - name: Announce Release on Discord
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+          REPO_NAME: ${{ github.event.repository.name }}
         run: |
           changelog="${{ steps.changelog.outputs.CHANGELOG_CONTENT }}"
           if [ -z "$changelog" ]; then
-          changelog="There aren't any changelog entries for this release."
+            changelog="There aren't any changelog entries for this release."
           fi
 
-          # Escape Discord special characters and quotes
-          changelog=$(echo "$changelog" | sed 's/"/\\"/g; s/@/\\@/g; s/#/\\#/g; s/&/\\&/g; s/`/\\`/g')
+          # Compose the Discord message
+          message="<@&1346974681399427153>\n\n# ${REPO_NAME} ${version}\n\n${changelog}\n\n<#1347670260844855376>"
 
-          changelog=$(echo "$changelog" | sed 's/"/\\"/g')
+          # Use jq to safely encode the JSON payload
+          payload=$(jq -n --arg content "$message" '{content: $content}')
+
           curl -H "Content-Type: application/json" \
                -X POST \
-               -d "{
-                 \"content\": \"<@&1346974681399427153>\n\n# ${{ github.event.repository.name }} $version\n\n$changelog\n\n<#1347670260844855376>\"
-                 }" \
-               ${{ secrets.DISCORD_WEBHOOK }}
+               -d "$payload" \
+               "$DISCORD_WEBHOOK"
