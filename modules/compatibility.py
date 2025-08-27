@@ -17,17 +17,6 @@ class Compatibility:
         # Check app
         logger.info(f"{helpers.get_config('APP_NAME')} v{helpers.get_config('APP_VERSION')}")
 
-        # Check for updates
-        # try:
-        #     if helpers.load("last_update_check") is None or (time() - helpers.load("last_update_check")) > helpers.get_config("UPDATE_CHECK_INTERVAL"):
-        #         helpers.has_update()
-        #         helpers.save("last_update_check", helpers.get_timestamp())
-        #     else:
-        #         logger.info("Skipping update check, last check was recent.")
-        # except Exception as e:
-        #     logger.error(f"Failed to check for updates: {e}")
-        #     return False
-
         # Check OS
         if helpers.os_is_windows():
             logger.info("OS: Windows")
@@ -95,6 +84,22 @@ class Compatibility:
                 raise FileNotFoundError(f"Failed to locate {chromium}")
             if not helpers.try_path(chromedriver):
                 raise FileNotFoundError(f"Failed to locate {chromedriver}")
+        except Exception as e:
+            logger.error(f"Dependency check failed: {e}")
+            return False
+
+        # Get the path for OBS
+        if helpers.os_is_windows():
+            obs = helpers.get_path("C:\\", helpers.get_config("PATH_OBS_WINDOWS"))
+        elif helpers.os_is_linux():
+            obs = helpers.get_path("/", helpers.search_path("obs") or helpers.get_config("PATH_OBS_LINUX") or None)
+        else:
+            logger.error("Unsupported OS")
+            return False
+
+        try:
+            if not helpers.try_path(obs):
+                raise FileNotFoundError(f"Failed to locate {obs}")
         except Exception as e:
             logger.error(f"Dependency check failed: {e}")
             return False
