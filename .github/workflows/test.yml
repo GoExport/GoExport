@@ -1,4 +1,4 @@
-name: Package Application with PyInstaller for Windows
+name: Test notification
 on:
   workflow_dispatch:
 
