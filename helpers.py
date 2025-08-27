@@ -371,6 +371,18 @@ def convert_to_file_url(local_path):
     logger.debug(f"convert_to_file_url() local_path={local_path} -> {result}")
     return result
 
+def run_and_detach(*input):
+    """
+    Run a command in the background and detach it from the terminal.
+    """
+    try:
+        subprocess.Popen(args=input)
+        logger.debug(f"Detached process started: {input}")
+        return True
+    except Exception as e:
+        logger.error(f"Failed to start detached process: {e}")
+        return False
+
 def try_command(*input, return_output: bool = False):
     """
     Try to run a command in the shell and return the output or success status.
@@ -395,6 +407,18 @@ def try_command(*input, return_output: bool = False):
         logger.error("An unexpected error occurred: %s", e)
         logger.debug(f"try_command() Exception: {e}")
         return False
+
+def is_running(path: str):
+    """Check if a process is running by its executable path."""
+    try:
+        for proc in psutil.process_iter(attrs=["pid", "name", "exe"]):
+            exe = proc.info.get("exe")
+            if exe and os.path.normcase(os.path.abspath(exe)) == os.path.normcase(os.path.abspath(path)):
+                logger.debug(f"is_running() found process: {proc.info}")
+                return True
+    except Exception as e:
+        logger.error(f"Failed to check if process is running: {e}")
+    return False
 
 # Convert a list to a tuple
 def flatten_list(input):
