@@ -46,13 +46,13 @@ jobs:
 
       - name: Announce Release on Discord
         run: |
-            changelog="${{ steps.changelog.outputs.CHANGELOG_CONTENT }}"
-            if [ -z "$changelog" ]; then
-            changelog="There aren't any changelog entries for this release."
-            fi
+          changelog="${{ steps.changelog.outputs.CHANGELOG_CONTENT }}"
+          if [ -z "$changelog" ]; then
+          changelog="There aren't any changelog entries for this release."
+          fi
 
-            # Escape Discord special characters and quotes
-            changelog=$(echo "$changelog" | sed 's/"/\\"/g; s/@/\\@/g; s/#/\\#/g; s/&/\\&/g; s/`/\\`/g')
+          # Escape Discord special characters and quotes
+          changelog=$(echo "$changelog" | sed 's/"/\\"/g; s/@/\\@/g; s/#/\\#/g; s/&/\\&/g; s/`/\\`/g')
 
           changelog=$(echo "$changelog" | sed 's/"/\\"/g')
           curl -H "Content-Type: application/json" \
