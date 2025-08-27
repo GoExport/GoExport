@@ -137,7 +137,7 @@ jobs:
           if [ -z "$changelog" ]; then
             changelog="There aren't any changelog entries for this release."
           fi
-          version="${{ github.event.inputs.release_version }}"
+          version="${GITHUB_REF_NAME#v}"
 
           # Compose the Discord message
           message="<@&1346974681399427153>
