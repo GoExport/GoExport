@@ -35,6 +35,8 @@ class Capture:
             self.end_time = self.native.end_time
             self.startup_delay = self.native.startup_delay
             self.ended_delay = self.native.ended_delay
+            if helpers.os_is_linux():
+                raise Exception("Native capture is not supported on Linux. Please use OBS.")
 
     def start(self, output: str, width: int, height: int):
         if self.is_obs:
