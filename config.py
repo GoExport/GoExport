@@ -164,6 +164,7 @@ PATH_FFPROBE_WINDOWS = [DEFAULT_DEPENDENCIES_FILENAME, "ffmpeg", "bin", "ffprobe
 PATH_FFPLAY_WINDOWS = [DEFAULT_DEPENDENCIES_FILENAME, "ffmpeg", "bin", "ffplay.exe"]
 PATH_CHROMIUM_WINDOWS = [DEFAULT_DEPENDENCIES_FILENAME, "ungoogled-chromium", "chrome.exe"]
 PATH_CHROMEDRIVER_WINDOWS = [DEFAULT_DEPENDENCIES_FILENAME, "chromedriver", "chromedriver.exe"]
+PATH_OBS_WINDOWS = ["C:\\Program Files", "obs-studio", "bin", "64bit", "obs64.exe"]
 PATH_FLASH_WINDOWS = [DEFAULT_DEPENDENCIES_FILENAME, "ungoogled-chromium", 'extensions', "pepflashplayer.dll"]
 PATH_FLASH_VERSION_WINDOWS = "34.0.0.308"
 
@@ -173,8 +174,9 @@ PATH_FFPROBE_LINUX = [DEFAULT_DEPENDENCIES_FILENAME, "ffmpeg", "bin", "ffprobe"]
 PATH_FFPLAY_LINUX  = [DEFAULT_DEPENDENCIES_FILENAME, "ffmpeg", "bin", "ffplay"]
 PATH_CHROMIUM_LINUX = [DEFAULT_DEPENDENCIES_FILENAME, "ungoogled-chromium", "chrome"]
 PATH_CHROMEDRIVER_LINUX = [DEFAULT_DEPENDENCIES_FILENAME, "ungoogled-chromium", "chromedriver"]
+PATH_OBS_LINUX = None
 PATH_FLASH_LINUX = [DEFAULT_DEPENDENCIES_FILENAME, "ungoogled-chromium", 'extensions', "libpepflashplayer.so"]
-PATH_FLASH_VERSION_LINUX = "32.0.0.371"
+PATH_FLASH_VERSION_LINUX = "34.0.0.137"
 
 # Data
 UPDATE_CHECK_INTERVAL = 60 * 1000  # 1 minute in milliseconds
