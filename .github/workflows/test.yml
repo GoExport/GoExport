@@ -1,16 +1,35 @@
-name: Test notification
-on:
-  workflow_dispatch:
-    inputs:
-      release_version:
-        description: "Release version to notify"
-        required: true
-        default: "latest"
-
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      - name: Extract Changelog Section
+        id: changelog
+        shell: pwsh
+        run: |
+          $inputVersion = "${{ github.event.inputs.release_version }}"
+          $version = $inputVersion -replace '^[vb]', ''
+
+          $changelogContent = Get-Content -Path "CHANGELOG.md" -Raw
+
+          $pattern1 = "(?s)## \[$version\].*?(?=## \[|$)"
+          $pattern2 = "(?s)## \[$inputVersion\].*?(?=## \[|$)"
+
+          $match = [regex]::Match($changelogContent, $pattern1)
+          if (-not $match.Success) {
+            $match = [regex]::Match($changelogContent, $pattern2)
+          }
+
+          if ($match.Success) {
+            $sectionContent = $match.Value -replace "^## \[.*?\].*?\r?\n", "" -replace "\r?\n$", ""
+            $changelog = $sectionContent.Trim()
+          } else {
+            $changelog = "No specific changelog found for this version. See commit history below."
+          }
+
+          "CHANGELOG_CONTENT<<EOF" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          $changelog | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "EOF" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
       - name: Announce Release on Discord
         run: |
           version="${{ github.event.inputs.release_version }}"
@@ -19,7 +38,6 @@ jobs:
             changelog="There aren't any changelog entries for this release."
           fi
 
-          # Escape quotes for JSON
           changelog=$(echo "$changelog" | sed 's/"/\\"/g')
           curl -H "Content-Type: application/json" \
                -X POST \
