@@ -10,6 +10,9 @@ jobs:
         run: |
           version="${{ github.ref_name }}"
           changelog="${{ steps.changelog.outputs.CHANGELOG_CONTENT }}"
+          if [ -z "$changelog" ]; then
+            changelog="There aren't any changelog entries for this release."
+          fi
 
           # Escape quotes for JSON
           changelog=$(echo "$changelog" | sed 's/"/\\"/g')
