@@ -55,7 +55,13 @@ jobs:
           fi
 
           # Compose the Discord message
-          message="<@&1346974681399427153>\n# ${REPO_NAME} ${version}\n${changelog}\n<#1347670260844855376>"
+          message="<@&1346974681399427153>
+
+          # ${REPO_NAME} ${version}
+
+          ${changelog}
+
+          <#1347670260844855376>"
 
           # Use jq to safely encode the JSON payload
           payload=$(jq -n --arg content "$message" '{content: $content}')
