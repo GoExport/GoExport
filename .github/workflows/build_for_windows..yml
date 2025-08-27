@@ -42,14 +42,12 @@ jobs:
           tar -xf chromedriver.zip -C dependencies\chromedriver
           rm chromedriver.zip
 
-      - name: Download pepflashplayer.dll
+      - name: Download Flash
         run: |
+          curl -L -o ChineseFlash-Patched.7z https://github.com/darktohka/clean-flash-builds/releases/download/v1.52/ChineseFlash-Patched-Win-34.0.0.330.7z
+          7z x ChineseFlash-Patched.7z -oChineseFlash-Patched
           mkdir dependencies\ungoogled-chromium\extensions
-          curl -L -o dependencies\ungoogled-chromium\extensions\pepflashplayer.dll https://github.com/wrapper-offline/wrapper-offline/raw/refs/heads/main/resources/extensions/pepflashplayer.dl
-
-      - name: Download libpepflashplayer.so
-        run: |
-          curl -L -o dependencies\ungoogled-chromium\extensions\libpepflashplayer.so https://github.com/wrapper-offline/wrapper-offline/raw/refs/heads/main/resources/extensions/libpepflashplayer.so
+          copy ChineseFlash-Patched\flash64\pepflashplayer64_34_0_0_330.dll dependencies\ungoogled-chromium\extensions\pepflashplayer.dll
 
       - name: Install dependencies
         run: |
