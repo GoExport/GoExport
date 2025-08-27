@@ -1,0 +1,22 @@
+name: Package Application with PyInstaller for Windows
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Announce Release on Discord
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          version="${{ github.ref_name }}"
+          changelog="${{ steps.changelog.outputs.CHANGELOG_CONTENT }}"
+
+          # Escape quotes for JSON
+          changelog=$(echo "$changelog" | sed 's/"/\\"/g')
+            curl -H "Content-Type: application/json" \
+               -X POST \
+               -d "{
+                 \"content\": \"<@&1346974681399427153>\n\n# ${{ github.event.repository.name }} $version\n\n$changelog\n\n<#1347670260844855376>\"
+                 }" \
+               ${{ secrets.DISCORD_WEBHOOK }}
