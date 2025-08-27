@@ -133,16 +133,12 @@ class Capture:
                             sceneItemEnabled=True
                         )
                     elif helpers.os_is_linux():
-                        ### THIS DOES NOT WORK !!!
-                        # OBS did some weird shit and apparently you can't
-                        # use XComposite anymore, I tried gamers, I really
-                        # did try. HELP WANTED PLEASE.
                         self.ws.create_input(
                             sceneName=f"{helpers.get_config('APP_NAME')} - Scene",
                             inputName=f"{helpers.get_config('APP_NAME')} - Capture",
-                            inputKind="pipewire-screen-capture-source",
+                            inputKind="xcomposite_input",
                             inputSettings={
-                                "window": "GoExport Viewer:Chrome_WidgetWin_1:chrome",
+                                "capture_window": "44040199\r\nGoExport Viewer\r\nmnt_hgfs_GoExport_assets_start.html",
                                 "cursor": False
                             },
                             sceneItemEnabled=True
