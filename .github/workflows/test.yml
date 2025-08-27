@@ -7,7 +7,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Announce Release on Discord
-        if: startsWith(github.ref, 'refs/tags/')
         run: |
           version="${{ github.ref_name }}"
           changelog="${{ steps.changelog.outputs.CHANGELOG_CONTENT }}"
