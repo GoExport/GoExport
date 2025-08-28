@@ -61,28 +61,43 @@ jobs:
           cp LICENSE dist/
           cp -r assets/* dist/assets/
 
-      - name: Install fpm
-        run: sudo apt-get update && sudo apt-get install -y ruby ruby-dev build-essential && sudo gem install --no-document fpm
-
-      - name: Build .deb package
+      - name: Prepare package root
         run: |
-          VERSION="${GITHUB_REF_NAME#v}"
-
-          # Create packaging structure
+          # Create packaging structure that mirrors the target filesystem
           mkdir -p package/usr/local/bin/goexport
           cp -r dist/* package/usr/local/bin/goexport/
 
-          # Build deb
-          fpm -s dir -t deb \
-            -n GoExport \
-            -v "$VERSION" \
-            --architecture amd64 \
-            --description "GoExport is an exporter for Wrapper Offline." \
-            --url "https://github.com/${{ github.repository }}" \
-            --maintainer "Chloe <chloe@lexian.dev>" \
-            --package dist/goexport_amd64.deb \
-            -C package \
-            usr/local/bin/goexport
+      - name: Compute package version
+        id: ver
+        shell: bash
+        run: |
+          ref="${GITHUB_REF_NAME}"
+          # Trim leading v or b when building from tags (v1.2.3 or b1.2.3)
+          if [[ "$GITHUB_REF" == refs/tags/* && "$ref" =~ ^[vb] ]]; then
+            echo "version=${ref#v}" >> "$GITHUB_OUTPUT"
+          else
+            # Fallback for non-tag builds; adjust to your preference
+            echo "version=0.0.0-${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build .deb with build-deb-action
+        uses: jiro4989/build-deb-action@v3
+        with:
+          package: GoExport
+          package_root: package
+          maintainer: "Chloe <chloe@lexian.dev>"
+          version: ${{ steps.ver.outputs.version }}
+          arch: amd64
+          desc: "GoExport is an exporter for Wrapper Offline."
+          homepage: "https://github.com/${{ github.repository }}"
+          # Optional: comma-separated runtime dependencies, e.g. "bash, libc6"
+          # depends: ""
+
+      - name: Move .deb into dist/
+        run: |
+          mkdir -p dist
+          shopt -s nullglob
+          mv ./*.deb dist/ || true
 
       - name: Upload debug build artifact
         uses: actions/upload-artifact@v4
