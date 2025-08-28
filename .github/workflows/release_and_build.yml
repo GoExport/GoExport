@@ -145,7 +145,45 @@ jobs:
           generate_release_notes: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  release_assets:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: [build_windows, build_linux, changelog]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Windows artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dev-build-win
+      - name: Download Linux artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dev-build-linux
+      - name: Upload Windows Release Asset
+        uses: softprops/action-gh-release@v1
+        with:
+          files: dist/goexport_amd64.exe
+          prerelease: ${{ startsWith(github.ref_name, 'b') }}
+          body: |
+            ${{ needs.changelog.outputs.CHANGELOG_CONTENT }}
+            ---
+            **Full Changelog**: https://github.com/${{ github.repository }}/compare/${{ github.event.before }}...${{ github.ref_name }}
+          generate_release_notes: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload Linux Release Asset
+        uses: softprops/action-gh-release@v1
+        with:
+          files: goexport_amd64.tar.gz
+          prerelease: ${{ startsWith(github.ref_name, 'b') }}
+          body: |
+            ${{ needs.changelog.outputs.CHANGELOG_CONTENT }}
+            ---
+            **Full Changelog**: https://github.com/${{ github.repository }}/compare/${{ github.event.before }}...${{ github.ref_name }}
+          generate_release_notes: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   changelog:
+    needs: [build_windows, build_linux]
     runs-on: ubuntu-latest
     outputs:
       CHANGELOG_CONTENT: ${{ steps.changelog.outputs.CHANGELOG_CONTENT }}
@@ -174,8 +212,10 @@ jobs:
           "CHANGELOG_CONTENT<<EOF" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
           $changelog | Out-File -FilePath $env:GITHUB_OUTPUT -Append
           "EOF" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
   announce:
-    needs: changelog
+    if: github.event_name == 'release' && github.event.action == 'published'
+    needs: [build_windows, build_linux, changelog]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -191,4 +231,5 @@ jobs:
           fi
           version="${{ github.ref_name }}"
           message="<@&1346974681399427153>\n\n${REPO_NAME} ${version}\n\n${changelog}\n\n<#1347670260844855376>"
-          # Add your Discord webhook logic here
+          # Send the message to Discord
+          curl -X POST -H "Content-Type: application/json" -d "{\"content\": \"$message\"}" $DISCORD_WEBHOOK
