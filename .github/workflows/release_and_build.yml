@@ -212,9 +212,7 @@ jobs:
           "CHANGELOG_CONTENT<<EOF" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
           $changelog | Out-File -FilePath $env:GITHUB_OUTPUT -Append
           "EOF" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
-
   announce:
-    if: github.event_name == 'release' && github.event.action == 'published'
     needs: [build_windows, build_linux, changelog]
     runs-on: ubuntu-latest
     steps:
