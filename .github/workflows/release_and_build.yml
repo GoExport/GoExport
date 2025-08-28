@@ -1,0 +1,194 @@
+name: Release and Build
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - "main"
+    tags:
+      - "v*"
+      - "b*"
+  release:
+    types: [published]
+jobs:
+  build_windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository (with submodules)
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.13"
+      - name: Download FFMPEG
+        run: |
+          curl -L -o ffmpeg.zip https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip
+          tar -xf ffmpeg.zip -C dependencies
+          move dependencies\ffmpeg-master-latest-win64-gpl dependencies\ffmpeg
+          rm ffmpeg.zip
+      - name: Download ungoogled-chromium
+        run: |
+          curl -L -o ungoogled-chromium.zip https://github.com/tangalbert919/ungoogled-chromium-binaries/releases/download/87.0.4280.67-1/ungoogled-chromium_87.0.4280.67-1.1_windows-x64.zip
+          tar -xf ungoogled-chromium.zip -C dependencies
+          move dependencies\ungoogled-chromium_87.0.4280.67-1.1_windows dependencies\ungoogled-chromium
+          rm ungoogled-chromium.zip
+      - name: Download chromedriver
+        run: |
+          mkdir dependencies\chromedriver
+          curl -L -o chromedriver.zip https://chromedriver.storage.googleapis.com/87.0.4280.20/chromedriver_win32.zip
+          tar -xf chromedriver.zip -C dependencies\chromedriver
+          rm chromedriver.zip
+      - name: Download Flash
+        run: |
+          curl -L -o ChineseFlash-Patched.7z https://github.com/darktohka/clean-flash-builds/releases/download/v1.52/ChineseFlash-Patched-Win-34.0.0.330.7z
+          7z x ChineseFlash-Patched.7z -oChineseFlash-Patched
+          mkdir dependencies\ungoogled-chromium\extensions
+          copy ChineseFlash-Patched\flash64\pepflashplayer64_34_0_0_330.dll dependencies\ungoogled-chromium\extensions\pepflashplayer.dll
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Package Application with PyInstaller
+        run: |
+          pyinstaller GoExport.spec
+      - name: Copy files to dist folder
+        run: |
+          copy readme.md dist\
+          copy LICENSE dist\
+          xcopy assets dist\assets /E /I /Q /Y
+      - name: Build installer
+        uses: Minionguyjpro/Inno-Setup-Action@v1.2.2
+        with:
+          path: setup\GoExport.iss
+          options: /O+
+      - name: Upload debug build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dev-build-win
+          path: dist
+      - name: Upload Release Asset
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: dist/goexport_amd64.exe
+          prerelease: ${{ startsWith(github.ref_name, 'b') }}
+          body: |
+            ${{ needs.changelog.outputs.CHANGELOG_CONTENT }}
+            ---
+            **Full Changelog**: https://github.com/${{ github.repository }}/compare/${{ github.event.before }}...${{ github.ref_name }}
+          generate_release_notes: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  build_linux:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository (with submodules)
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.13"
+      - name: Download FFMPEG
+        run: |
+          curl -L -o ffmpeg.tar.xz https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-linux64-gpl.tar.xz
+          mkdir -p dependencies
+          tar -xf ffmpeg.tar.xz -C dependencies
+          mv dependencies/ffmpeg-master-latest-linux64-gpl dependencies/ffmpeg
+          rm ffmpeg.tar.xz
+      - name: Download and extract ungoogled-chromium
+        run: |
+          curl -L -o ungoogled-chromium.tar.xz https://github.com/LordTwix/ungoogled-chromium-binaries/releases/download/87.0.4280.67-1.1/ungoogled-chromium_87.0.4280.67-1.1_linux.tar.xz
+          mkdir -p dependencies
+          tar -xf ungoogled-chromium.tar.xz -C dependencies
+          mv dependencies/ungoogled-chromium_87.0.4280.67-1.1_linux dependencies/ungoogled-chromium
+          rm ungoogled-chromium.tar.xz
+      - name: Download and extract libpepflashplayer.so
+        run: |
+          curl -L -o flash_player_patched_ppapi_linux.x86_64.tar.gz https://github.com/darktohka/clean-flash-builds/releases/download/v1.7/flash_player_patched_ppapi_linux.x86_64.tar.gz
+          mkdir -p dependencies/ungoogled-chromium/extensions
+          tar -xzvf flash_player_patched_ppapi_linux.x86_64.tar.gz --strip-components=1 -C dependencies/ungoogled-chromium/extensions libpepflashplayer.so
+          rm flash_player_patched_ppapi_linux.x86_64.tar.gz
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Package Application with PyInstaller
+        run: |
+          pyinstaller GoExport.spec
+      - name: Copy files to dist folder
+        run: |
+          mkdir -p dist/assets
+          cp readme.md dist/
+          cp LICENSE dist/
+          cp -r assets/* dist/assets/
+      - name: Create tar.gz archive
+        run: |
+          tar -czvf goexport_amd64.tar.gz -C dist .
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dev-build-linux
+          path: goexport_amd64.tar.gz
+      - name: Upload Release Asset
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: goexport_amd64.tar.gz
+          prerelease: ${{ startsWith(github.ref_name, 'b') }}
+          body: |
+            ${{ needs.changelog.outputs.CHANGELOG_CONTENT }}
+            ---
+            **Full Changelog**: https://github.com/${{ github.repository }}/compare/${{ github.event.before }}...${{ github.ref_name }}
+          generate_release_notes: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  changelog:
+    runs-on: ubuntu-latest
+    outputs:
+      CHANGELOG_CONTENT: ${{ steps.changelog.outputs.CHANGELOG_CONTENT }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Extract Changelog Section
+        id: changelog
+        shell: pwsh
+        run: |
+          $tagVersion = "${{ github.ref_name }}"
+          $version = $tagVersion -replace '^[vb]', ''
+          $changelogContent = Get-Content -Path "CHANGELOG.md" -Raw
+          $pattern1 = "(?s)## \[$version\].*?(?=## \[|$)"
+          $pattern2 = "(?s)## \[$tagVersion\].*?(?=## \[|$)"
+          $match = [regex]::Match($changelogContent, $pattern1)
+          if (-not $match.Success) {
+            $match = [regex]::Match($changelogContent, $pattern2)
+          }
+          if ($match.Success) {
+            $sectionContent = $match.Value -replace "^## \[.*?\].*?\r?\n", "" -replace "\r?\n$", ""
+            $changelog = $sectionContent.Trim()
+          } else {
+            $changelog = "No specific changelog found for this version. See commit history below."
+          }
+          "CHANGELOG_CONTENT<<EOF" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          $changelog | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "EOF" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+  announce:
+    needs: changelog
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Announce Release on Discord
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+          REPO_NAME: ${{ github.event.repository.name }}
+        run: |
+          changelog="${{ needs.changelog.outputs.CHANGELOG_CONTENT }}"
+          if [ -z "$changelog" ]; then
+            changelog="There aren't any changelog entries for this release."
+          fi
+          version="${{ github.ref_name }}"
+          message="<@&1346974681399427153>\n\n${REPO_NAME} ${version}\n\n${changelog}\n\n<#1347670260844855376>"
+          # Add your Discord webhook logic here
