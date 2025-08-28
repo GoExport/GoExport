@@ -131,25 +131,25 @@ jobs:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
           REPO_NAME: ${{ github.event.repository.name }}
         run: |
-          changelog="${{ steps.changelog.outputs.CHANGELOG_CONTENT }}"
-          if [ -z "$changelog" ]; then
-            changelog="There aren't any changelog entries for this release."
-          fi
-          version="${GITHUB_REF_NAME#v}"
+          $changelog = "${{ steps.changelog.outputs.CHANGELOG_CONTENT }}"
+          if ([string]::IsNullOrWhiteSpace($changelog)) {
+            $changelog = "There aren't any changelog entries for this release."
+          }
+          $version = "${GITHUB_REF_NAME#v}"
 
           # Compose the Discord message
-          message="<@&1346974681399427153>
+          $message = "<@&1346974681399427153>
 
-          # ${REPO_NAME} ${version}
+          # ${env:REPO_NAME} $version
 
-          ${changelog}
+          $changelog
 
           <#1347670260844855376>"
 
           # Use jq to safely encode the JSON payload
-          payload=$(jq -n --arg content "$message" '{content: $content}')
+          $payload = & jq -n --arg content "$message" '{content: $content}'
 
-          curl -H "Content-Type: application/json" \
-               -X POST \
-               -d "$payload" \
-               "$DISCORD_WEBHOOK"
+          curl -H "Content-Type: application/json" `
+               -X POST `
+               -d "$payload" `
+               "$env:DISCORD_WEBHOOK"
