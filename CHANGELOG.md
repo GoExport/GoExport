@@ -7,10 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.14.0] - 2025-08-27
 
+### Added
+
+- Support for Ubuntu/Debian
+
 ### Fixed
 
 - Fixed the version number
-- Fixed packaging for Debian
 
 ## [0.13.1] - 2025-08-27
 
