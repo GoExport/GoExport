@@ -172,7 +172,7 @@ class Capture:
                 return False
             self.ws.start_record()
             offset = helpers.get_timestamp("OBS starting")
-            helpers.wait_for(True, self.recording, lambda: self.recording)
+            helpers.wait_for(True, lambda: self.recording, reason="Waiting for OBS to start recording...")
             self.start_time = helpers.get_timestamp("OBS started")
 
             # Calculate startup delay
@@ -188,7 +188,7 @@ class Capture:
         try:
             offset = helpers.get_timestamp("OBS stopping")
             self.ws.stop_record()
-            helpers.wait_for(False, self.recording, lambda: self.recording)
+            helpers.wait_for(False, lambda: self.recording, reason="Waiting for OBS to stop recording...")
             self.end_time = helpers.get_timestamp("OBS stopped")
 
             # Calculate ending delay
