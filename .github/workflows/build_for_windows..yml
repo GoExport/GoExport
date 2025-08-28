@@ -1,4 +1,4 @@
-name: Package Application with PyInstaller for Windows
+name: (Windows) Package Application with PyInstaller
 on:
   push:
     branches:
@@ -135,7 +135,7 @@ jobs:
           if ([string]::IsNullOrWhiteSpace($changelog)) {
             $changelog = "There aren't any changelog entries for this release."
           }
-          $version = "${GITHUB_REF_NAME#v}"
+          $version = ${{ github.ref_name }}
 
           # Compose the Discord message
           $message = "<@&1346974681399427153>

@@ -1,4 +1,4 @@
-name: Package Application with PyInstaller for Linux
+name: (Debian) Package Application with PyInstaller
 on:
   push:
     branches:
@@ -77,8 +77,15 @@ jobs:
             --license "GPL-V3" \
             --url "https://github.com/${{ github.repository }}" \
             --maintainer "Chloe <chloe@lexian.dev>" \
-            --package dist/ \
-            package/=/
+            -C package \
+            usr/local/bin \
+            --output-type deb \
+            --deb-no-default-config-files \
+            --deb-compression gzip \
+            --deb-priority optional \
+            --deb-user root \
+            --deb-group root \
+            --package dist/goexport_${version}_amd64.deb
 
       - name: Upload debug build artifact
         uses: actions/upload-artifact@v4
