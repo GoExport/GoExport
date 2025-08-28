@@ -20,6 +20,11 @@ class Controller:
 
     # Set up
     def setup(self):
+        # Check if OBS is connected (non-windows)
+        if not self.capture.is_obs and not helpers.os_is_windows():
+            logger.error("Native capture is only supported on Windows, you must have OBS running and websockets enabled.")
+            return False
+        
         # Set the LVM
         AVAILABLE_SERVICES = helpers.get_config("AVAILABLE_SERVICES")
         options = list(AVAILABLE_SERVICES.keys())
