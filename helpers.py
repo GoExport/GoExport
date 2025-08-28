@@ -12,6 +12,7 @@ import subprocess
 import time
 import requests
 from rich import print
+from typing import Any, Callable
 from modules.logger import logger
 from datetime import datetime
 import modules.parameters as parameters
@@ -450,25 +451,27 @@ def wait(seconds: float, reason: str = None):
     logger.debug(f"wait() sleeping for {seconds} seconds" + (f" (reason: {reason})" if reason else ""))
     time.sleep(seconds)
 
-def wait_for(expected: any, input: any, func: callable, reason: str = None, loop_speed: float = 0, timeout: float|None = None):
+def wait_for(expected: Any, func: Callable[[], Any], reason: str = None, loop_speed: float = 0.1, timeout: float | None = None) -> Any | None:
     """
-    Waits until the function 'func' returns a value equal to 'expected'.
-    Keeps calling 'func' and sleeping until the value matches.
+    Wait until func() returns `expected`, polling periodically.
+    
     :param expected: The value to wait for.
-    :param input: The initial value to compare.
-    :param func: The function to call to get the new value.
+    :param func: A no-argument function returning the current value.
     :param reason: Optional reason for waiting (for logging).
-    :param loop_speed: How fast to poll the function (in seconds).
-    :param timeout: Maximum time to wait in seconds (None for infinite).
+    :param loop_speed: How often to poll (seconds).
+    :param timeout: Max time to wait (None for infinite).
+    :return: The value if matched, or None if timed out.
     """
     start_time = time.time()
-    while input != expected:
+
+    while True:
+        value = func()
+        if value == expected:
+            return value
         if timeout is not None and (time.time() - start_time) >= timeout:
             logger.warning(f"wait_for() timed out after {timeout} seconds" + (f" (reason: {reason})" if reason else ""))
             return None
-        wait(loop_speed, reason)
-        input = func()
-    return input
+        time.sleep(loop_speed)
 
 # Convert milliseconds to seconds
 def ms_to_s(ms):
