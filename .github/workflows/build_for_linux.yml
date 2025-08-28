@@ -66,27 +66,23 @@ jobs:
 
       - name: Build .deb package
         run: |
-          version="${GITHUB_REF_NAME#v}"   # remove leading v if present
-          mkdir -p package/usr/local/bin
-          cp -r dist/* package/usr/local/bin/
+          VERSION="${GITHUB_REF_NAME#v}"
 
+          # Create packaging structure
+          mkdir -p package/usr/local/bin/goexport
+          cp -r dist/* package/usr/local/bin/goexport/
+
+          # Build deb
           fpm -s dir -t deb \
-            -n goexport \
-            -v "$version" \
+            -n GoExport \
+            -v "$VERSION" \
             --architecture amd64 \
-            --description "GoExport - Wrapper Offline Exporter" \
-            --license "GPL-V3" \
+            --description "GoExport is an exporter for Wrapper Offline." \
             --url "https://github.com/${{ github.repository }}" \
             --maintainer "Chloe <chloe@lexian.dev>" \
+            --package dist/goexport_amd64.deb \
             -C package \
-            usr/local/bin \
-            --output-type deb \
-            --deb-no-default-config-files \
-            --deb-compression gzip \
-            --deb-priority optional \
-            --deb-user root \
-            --deb-group root \
-            --package dist/goexport_${version}_amd64.deb
+            usr/local/bin/goexport
 
       - name: Upload debug build artifact
         uses: actions/upload-artifact@v4
@@ -142,32 +138,3 @@ jobs:
           generate_release_notes: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Announce Release on Discord
-        if: startsWith(github.ref, 'refs/tags/')
-        env:
-          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-          REPO_NAME: ${{ github.event.repository.name }}
-        run: |
-          changelog="${{ steps.changelog.outputs.CHANGELOG_CONTENT }}"
-          if [ -z "$changelog" ]; then
-            changelog="There aren't any changelog entries for this release."
-          fi
-          version="${GITHUB_REF_NAME#v}"
-
-          # Compose the Discord message
-          message="<@&1346974681399427153>
-
-          # ${REPO_NAME} ${version}
-
-          ${changelog}
-
-          <#1347670260844855376>"
-
-          # Use jq to safely encode the JSON payload
-          payload=$(jq -n --arg content "$message" '{content: $content}')
-
-          curl -H "Content-Type: application/json" \
-               -X POST \
-               -d "$payload" \
-               "$DISCORD_WEBHOOK"
