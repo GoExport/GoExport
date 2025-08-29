@@ -136,26 +136,26 @@ jobs:
           echo "$section" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
-  # discord_notify:
-  #   runs-on: ubuntu-latest
-  #   needs: [release, changelog]
-  #   steps:
-  #     - name: Notify Discord
-  #       run: |
-  #         repo_name="${GITHUB_REPOSITORY#*/}"
-  #         tag="${GITHUB_REF_NAME}"
+  discord_notify:
+    runs-on: ubuntu-latest
+    needs: [release, changelog]
+    steps:
+      - name: Notify Discord
+        run: |
+          repo_name="${GITHUB_REPOSITORY#*/}"
+          tag="${GITHUB_REF_NAME}"
 
-  #         changelog="${{ needs.changelog.outputs.changelog }}"
+          changelog="${{ needs.changelog.outputs.changelog }}"
 
-  #         payload=$(jq -n \
-  #           --arg role "<@&1346974681399427153>" \
-  #           --arg repo "$repo_name" \
-  #           --arg tag "$tag" \
-  #           --arg changelog "$changelog" \
-  #           --arg channel "<#1347670260844855376>" \
-  #           '{content: "\($role)\n\n# \($repo) - \($tag)\n\n\($changelog)\n\n\($channel)"}')
+          payload=$(jq -n \
+            --arg role "<@&1346974681399427153>" \
+            --arg repo "$repo_name" \
+            --arg tag "$tag" \
+            --arg changelog "$changelog" \
+            --arg channel "<#1347670260844855376>" \
+            '{content: "\($role)\n\n# \($repo) - \($tag)\n\n\($changelog)\n\n\($channel)"}')
 
-  #         curl -H "Content-Type: application/json" \
-  #           -X POST \
-  #           -d "$payload" \
-  #           ${{ secrets.DISCORD_WEBHOOK }}
+          curl -H "Content-Type: application/json" \
+            -X POST \
+            -d "$payload" \
+            ${{ secrets.DISCORD_WEBHOOK }}
