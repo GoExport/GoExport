@@ -93,8 +93,8 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: repo-${{ matrix.os }}
-          path: .
+          name: app-${{ matrix.os }}
+          path: dist/
           if-no-files-found: ignore
 
   release:
