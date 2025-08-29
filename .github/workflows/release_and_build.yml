@@ -28,10 +28,11 @@ jobs:
 
       - name: Copy required files to dist
         run: |
-          cp -r assets dist/
-          cp -r server dist/
+          mkdir -p dist/assets
+          cp readme.md dist/
           cp LICENSE dist/
-          cp README.md dist/
+          cp -r assets/* dist/assets/
+          cp -r server/* dist/server/
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
