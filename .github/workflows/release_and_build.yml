@@ -24,9 +24,6 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Build with PyInstaller
-        run: pyinstaller GoExport.spec
-
       - name: Download additional dependencies (Linux)
         if: matrix.os == 'ubuntu-latest'
         run: |
@@ -70,6 +67,9 @@ jobs:
           mkdir dependencies\ungoogled-chromium\extensions
           copy ChineseFlash-Patched\flash64\pepflashplayer64_34_0_0_330.dll dependencies\ungoogled-chromium\extensions\pepflashplayer.dll
 
+      - name: Build with PyInstaller
+        run: pyinstaller GoExport.spec
+
       - name: Copy required files to dist
         run: |
           mkdir -p dist/assets
@@ -97,42 +97,42 @@ jobs:
           path: .
           if-no-files-found: ignore
 
-  # release:
-  #   runs-on: ubuntu-latest
-  #   needs: build
-  #   steps:
-  #     - name: Download all artifacts
-  #       uses: actions/download-artifact@v4
-  #       with:
-  #         path: artifacts
+  release:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
 
-  #     - name: List downloaded files
-  #       run: ls -R artifacts
+      - name: List downloaded files
+        run: ls -R artifacts
 
-  #     - name: Upload Release Assets
-  #       uses: softprops/action-gh-release@v1
-  #       with:
-  #         tag_name: ${{ github.ref_name }}
-  #         files: |
-  #           artifacts/**/goexport_linux_portable_amd64.tar.gz
-  #           artifacts/**/goexport_win_installer_amd64.exe
-  #       env:
-  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload Release Assets
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.ref_name }}
+          files: |
+            artifacts/**/goexport_linux_portable_amd64.tar.gz
+            artifacts/**/goexport_win_installer_amd64.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # changelog:
-  #   runs-on: ubuntu-latest
-  #   needs: build
-  #   outputs:
-  #     changelog: ${{ steps.extract.outputs.changelog }}
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - name: Extract changelog
-  #       id: extract
-  #       run: |
-  #         section=$(awk '/## \['"${GITHUB_REF_NAME#v}"'\]/{flag=1; next} /^## /{flag=0} flag' CHANGELOG.md)
-  #         echo "changelog<<EOF" >> $GITHUB_OUTPUT
-  #         echo "$section" >> $GITHUB_OUTPUT
-  #         echo "EOF" >> $GITHUB_OUTPUT
+  changelog:
+    runs-on: ubuntu-latest
+    needs: build
+    outputs:
+      changelog: ${{ steps.extract.outputs.changelog }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Extract changelog
+        id: extract
+        run: |
+          section=$(awk '/## \['"${GITHUB_REF_NAME#v}"'\]/{flag=1; next} /^## /{flag=0} flag' CHANGELOG.md)
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          echo "$section" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
   # discord_notify:
   #   runs-on: ubuntu-latest
