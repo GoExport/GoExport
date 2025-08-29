@@ -88,9 +88,8 @@ jobs:
 
       - name: Archive Linux Build
         if: matrix.os == 'ubuntu-latest'
-        # Create a tarball of the Linux build
         run: |
-          tar -czvf dist/goexport_linux_portable_amd64.tar.gz -C dist .
+          tar --exclude=goexport_linux_portable_amd64.tar.gz -czvf dist/goexport_linux_portable_amd64.tar.gz -C dist .
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
