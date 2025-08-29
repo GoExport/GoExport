@@ -74,12 +74,10 @@ jobs:
         run: |
           mkdir -p dist/assets
           mkdir -p dist/server
-          mkdir -p dist/dependencies
           cp readme.md dist/
           cp LICENSE dist/
           cp -r assets/* dist/assets/
           cp -r server/* dist/server/
-          cp -r dependencies/* dist/dependencies/
 
       - name: Build installer (Windows only)
         uses: Minionguyjpro/Inno-Setup-Action@v1.2.2
@@ -91,16 +89,12 @@ jobs:
       - name: Archive Linux Build
         if: matrix.os == 'ubuntu-latest'
         run: |
-          tar -czf goexport_linux_portable_amd64.tar.gz -C dist .
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: app-${{ matrix.os }}
-          path: |
-            goexport_linux_portable_amd64.tar.gz
-            goexport_win_installer_amd64.exe
-            dist/**
+          name: repo-${{ matrix.os }}
+          path: .
           if-no-files-found: ignore
 
   release:
