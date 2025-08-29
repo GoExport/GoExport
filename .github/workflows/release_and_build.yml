@@ -24,15 +24,20 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Build with PyInstaller
-        run: pyinstaller --onefile main.py
+        run: pyinstaller main.py
+
+      - name: Copy required files to dist
+        run: |
+          cp -r assets dist/
+          cp -r server dist/
+          cp LICENSE dist/
+          cp README.md dist/
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: app-${{ matrix.os }}
-          path: |
-            dist/main.exe
-            dist/main
+          path: dist/
           if-no-files-found: ignore
 
   changelog:
