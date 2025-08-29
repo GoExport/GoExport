@@ -36,36 +36,53 @@ jobs:
           cp -r assets/* dist/assets/
           cp -r server/* dist/server/
 
-      - name: Build installer
+      - name: Build installer (Windows only)
         uses: Minionguyjpro/Inno-Setup-Action@v1.2.2
         if: matrix.os == 'windows-latest'
         with:
           path: setup\GoExport.iss
           options: /O+
 
+      - name: Archive Linux Build
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          tar -czf goexport_linux_portable_amd64.tar.gz -C dist .
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: app-${{ matrix.os }}
-          path: dist/
+          path: |
+            goexport_linux_portable_amd64.tar.gz
+            goexport_win_installer_amd64.exe
+            dist/**
           if-no-files-found: ignore
 
-      - name: Archive Linux Build
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          tar -czf dist/app-ubuntu-latest/goexport_linux_portable_amd64.tar.gz -C dist .
+  release:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
 
-      - name: Upload Release Asset
+      - name: List downloaded files
+        run: ls -R artifacts
+
+      - name: Upload Release Assets
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ github.ref_name }}
           files: |
-            dist/app-ubuntu-latest/goexport_linux_portable_amd64.tar.gz
-            dist/app-windows-latest/goexport_win_installer_amd64.exe
+            artifacts/**/goexport_linux_portable_amd64.tar.gz
+            artifacts/**/goexport_win_installer_amd64.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   changelog:
     runs-on: ubuntu-latest
-    needs: [build]
+    needs: build
     outputs:
       changelog: ${{ steps.extract.outputs.changelog }}
     steps:
@@ -80,24 +97,20 @@ jobs:
 
   discord_notify:
     runs-on: ubuntu-latest
-    needs: [build, changelog]
+    needs: [release, changelog]
     steps:
       - name: Notify Discord
         run: |
           repo_name="${GITHUB_REPOSITORY#*/}"
           tag="${GITHUB_REF_NAME}"
 
-          # Pull in the changelog from the changelog job
           changelog="${{ needs.changelog.outputs.changelog }}"
-
-          # Escape properly for JSON
-          changelog_escaped=$(jq -Rs . <<< "$changelog")
 
           payload=$(jq -n \
             --arg role "<@&1346974681399427153>" \
             --arg repo "$repo_name" \
             --arg tag "$tag" \
-            --argjson changelog "$changelog_escaped" \
+            --arg changelog "$changelog" \
             --arg channel "<#1347670260844855376>" \
             '{content: "\($role)\n\n# \($repo) - \($tag)\n\n\($changelog)\n\n\($channel)"}')
 
