@@ -99,9 +99,24 @@ jobs:
           path: dist/
           if-no-files-found: ignore
 
-  release:
+  changelog:
     runs-on: ubuntu-latest
     needs: build
+    outputs:
+      changelog: ${{ steps.extract.outputs.changelog }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Extract changelog
+        id: extract
+        run: |
+          section=$(awk '/## \['"${GITHUB_REF_NAME#v}"'\]/{flag=1; next} /^## /{flag=0} flag' CHANGELOG.md)
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          echo "$section" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+  release:
+    runs-on: ubuntu-latest
+    needs: changelog
     steps:
       - name: Download all artifacts
         uses: actions/download-artifact@v4
@@ -118,27 +133,13 @@ jobs:
           files: |
             artifacts/**/goexport_linux_portable_amd64.tar.gz
             artifacts/**/goexport_win_installer_amd64.exe
+          body: ${{ needs.changelog.outputs.changelog }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  changelog:
-    runs-on: ubuntu-latest
-    needs: build
-    outputs:
-      changelog: ${{ steps.extract.outputs.changelog }}
-    steps:
-      - uses: actions/checkout@v4
-      - name: Extract changelog
-        id: extract
-        run: |
-          section=$(awk '/## \['"${GITHUB_REF_NAME#v}"'\]/{flag=1; next} /^## /{flag=0} flag' CHANGELOG.md)
-          echo "changelog<<EOF" >> $GITHUB_OUTPUT
-          echo "$section" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-
   discord_notify:
     runs-on: ubuntu-latest
-    needs: [release, changelog]
+    needs: [changelog, release]
     steps:
       - name: Notify Discord
         run: |
