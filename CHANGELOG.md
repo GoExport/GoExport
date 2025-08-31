@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.14.3] - 2025-08-31
+
+GoExport's companion app, GoExport Outro Maker, has received an update as well, which is used in conjunction with this update. If you use GOM (GoExport Outro Maker), make sure to update it to the latest version to ensure compatibility.
+
+### Fixed
+
+- Fixed resolution for 14:9 aspect ratio, video now correctly renders in that aspect ratio at any choice of resolution.
+
 ## [0.14.2] - 2025-08-30
 
 ### Fixed
