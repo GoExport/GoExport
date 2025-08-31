@@ -73,6 +73,29 @@ AVAILABLE_SIZES = {
 }
 
 AVAILABLE_SERVICES = {
+    "local_beta": {
+        "name": "Local (Beta)",
+        "requires": {
+            "movieId",
+        },
+        "domain": [
+            f"{WRAPPER_SERVER_PROTOCOL}://{WRAPPER_SERVER_HOST}:{WRAPPER_SERVER_PORT}",
+        ],
+        "player": [
+            f"{WRAPPER_SERVER_PROTOCOL}://{WRAPPER_SERVER_HOST}:{WRAPPER_SERVER_PORT}",
+            (
+                "player?"
+                "&movieId={movie_id}"
+                "&playerWidth={width}"
+                "&playerHeight={height}"
+                "&isWide={wide}"
+                "&isVideoRecord=1"
+            ),
+        ],
+        "legacy": False,
+        "testing": True,
+        "window": "Video Player - Wrapper#3A Offline"
+    },
     "local": {
         "name": "Local",
         "requires": {
@@ -93,7 +116,9 @@ AVAILABLE_SERVICES = {
                 "&isVideoRecord=1"
             ),
         ],
-        "legacy": False
+        "legacy": False,
+        "testing": False,
+        "window": "GoExport Viewer"
     },
     "ft": {
         "name": "FlashThemes",
@@ -133,7 +158,9 @@ AVAILABLE_SERVICES = {
                 "&allowScriptAccess=always"
             ),
         ],
-        "legacy": True
+        "legacy": True,
+        "testing": False,
+        "window": "GoExport Viewer"
     },
 }
 
