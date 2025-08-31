@@ -82,39 +82,102 @@ class Editor:
                 raise RuntimeError(f"Error trimming clip {clip_id}: {e}")
         else:
             raise NotImplementedError("Trimming is only implemented for Windows using FFmpeg.")
-        
-    def render(self, output: str):
+
+    def export_to_file(self):
         """
-        Renders a video from the list of clips.
-        It concatenates all clips and saves the output to the specified file.
-        :param output: Path to the output video file.
+        Exports the video clips to a text file for ffmpeg concat (copy mode only).
+        """
+        output_file = helpers.get_path(
+            None,
+            helpers.get_config("DEFAULT_OUTPUT_FILENAME"),
+            "clips.txt"
+        )
+        with open(output_file, "w", encoding="utf-8") as f:
+            for clip in self.clips:
+                normalized_clip = clip.replace("\\", "/")
+                while "//" in normalized_clip:
+                    normalized_clip = normalized_clip.replace("//", "/")
+                f.write(f"file '{normalized_clip}'\n")
+        return output_file
+
+
+    def render(self, output: str, reencode: bool = True, target_width: int = 1280, target_height: int = 720, fps: int = 30):
+        """
+        Concatenate all clips and save to 'output'.
+        - reencode=False  -> fast concat (requires identical input formats)
+        - reencode=True   -> safe concat via filter_complex (handles mixed codecs/sizes)
         """
         if not self.clips:
             raise ValueError("No clips to render.")
 
         try:
-            command = [
-                helpers.get_path(None, helpers.get_config("PATH_FFMPEG_WINDOWS")),
-            ]
+            ffmpeg = helpers.get_path(None, helpers.get_config("PATH_FFMPEG_WINDOWS"))
 
+            if not reencode:
+                # ---------- FAST PATH: concat demuxer + stream copy ----------
+                file_list = self.export_to_file()
+                command = [
+                    ffmpeg,
+                    "-y",
+                    "-f", "concat",
+                    "-safe", "0",
+                    "-i", file_list,
+                    "-c", "copy",
+                    output,
+                ]
+                helpers.try_command(*command, return_output=True)
+                return
+
+            # ---------- SAFE PATH: concat filter + re-encode ----------
+            # Build inputs
+            command = [ffmpeg, "-y"]
             for clip in self.clips:
                 command.extend(["-i", clip])
-            
-            helpers.try_command(
-                *command,
-                "-y",
-                "-filter_complex", f"concat=n={len(self.clips)}:v=1:a=1[outv][outa]",
+
+            n = len(self.clips)
+            w, h = int(target_width), int(target_height)
+
+            # Build per-input normalization chains:
+            # - scale to fit, pad to exact size
+            # - reset PTS (fixes "very long" or "black" segments)
+            # - resample audio to a stable layout/rate
+            v_chains = []
+            a_chains = []
+            for i in range(n):
+                v_chains.append(
+                    f"[{i}:v]scale={w}:{h}:force_original_aspect_ratio=decrease,"
+                    f"pad={w}:{h}:(ow-iw)/2:(oh-ih)/2:color=black,"
+                    f"setsar=1,setpts=PTS-STARTPTS[v{i}]"
+                )
+                # If some inputs lack audio, this will error. If you have silent clips,
+                # give them a silent track first (ask if you need that handled automatically).
+                a_chains.append(
+                    f"[{i}:a]aresample=async=1:min_comp=0.001:first_pts=0,asetpts=PTS-STARTPTS[a{i}]"
+                )
+
+            # Concat assembly
+            pairs = "".join(f"[v{i}][a{i}]" for i in range(n))
+            filter_complex = ";".join(v_chains + a_chains) + ";" + \
+                            f"{pairs}concat=n={n}:v=1:a=1[outv][outa]"
+
+            command.extend([
+                "-filter_complex", filter_complex,
                 "-map", "[outv]",
                 "-map", "[outa]",
+                "-r", str(fps),
                 "-c:v", "libx264",
-                "-preset", "ultrafast",
+                "-preset", "veryfast",
                 "-crf", "23",
                 "-pix_fmt", "yuv420p",
                 "-c:a", "aac",
                 "-b:a", "128k",
                 "-ar", "44100",
+                "-ac", "2",
+                "-movflags", "+faststart",
                 output,
-                return_output=True
-            )
+            ])
+
+            helpers.try_command(*command, return_output=True)
+
         except Exception as e:
             raise RuntimeError(f"Error rendering video: {e}")
