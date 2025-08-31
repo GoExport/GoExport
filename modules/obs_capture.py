@@ -61,7 +61,7 @@ class Capture:
             except Exception as e:
                 logger.warning(f"Could not set video settings: {e}")
 
-    def prep(self, width: int, height: int):
+    def prep(self, width: int, height: int, window: str):
         try:
             self.cl.callback.register(self.on_record_state_changed)
             
@@ -125,7 +125,7 @@ class Capture:
                             inputName=f"{helpers.get_config('APP_NAME')} - Capture",
                             inputKind="window_capture",
                             inputSettings={
-                                "window": "GoExport Viewer:Chrome_WidgetWin_1:chrome.exe",
+                                "window": f"{window}:Chrome_WidgetWin_1:chrome.exe",
                                 "cursor": False,
                                 "capture_audio": True,
                                 "client_area": True
@@ -138,7 +138,7 @@ class Capture:
                             inputName=f"{helpers.get_config('APP_NAME')} - Capture",
                             inputKind="xcomposite_input",
                             inputSettings={
-                                "capture_window": "44040199\r\nGoExport Viewer\r\nmnt_hgfs_GoExport_assets_start.html",
+                                "capture_window": f"{window}\r\nchrome",
                                 "cursor": False
                             },
                             sceneItemEnabled=True
@@ -165,9 +165,9 @@ class Capture:
         self.recording = data.output_active
         self.state = data.output_state
 
-    def start(self, width: int, height: int):
+    def start(self, width: int, height: int, window: str):
         try:
-            self.prep(width, height)
+            self.prep(width, height, window)
             if not self.prepared:
                 return False
             self.ws.start_record()
