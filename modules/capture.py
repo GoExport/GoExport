@@ -35,10 +35,10 @@ class Capture:
             self.end_time = self.native.end_time
             self.startup_delay = self.native.startup_delay
             self.ended_delay = self.native.ended_delay
-            
-    def start(self, output: str, width: int, height: int):
+
+    def start(self, output: str, width: int, height: int, window: str):
         if self.is_obs:
-            object = self.obs.start(width, height)
+            object = self.obs.start(width, height, window)
         else:
             object = self.native.start(output, width, height)
         self.retrieve()
