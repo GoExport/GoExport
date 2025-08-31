@@ -216,10 +216,7 @@ class Controller:
 
             # Stop the server
             try:
-                if not self.legacy:
-                    self.server.stop()
-                else:
-                    self.server.stop(force=True)
+                self.server.stop()
             except Exception as e:
                 logger.error(f"Error stopping server: {e}")
                 return False
@@ -293,5 +290,5 @@ class Controller:
             print(f"[bold yellow]Warning:[/bold yellow] Failed to add the outro: {e}")
         
         # Render the video
-        self.editor.render(self.RECORDING_EDITED)
+        self.editor.render(self.RECORDING_EDITED, reencode=outro)
         return True
