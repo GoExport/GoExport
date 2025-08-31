@@ -64,6 +64,12 @@ class Interface:
         self.driver.quit()
         return True
 
+    def inject(self, script: str):
+        """Injects a JavaScript snippet into the page."""
+        self.driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {"source": f'{script}'})
+        logger.info("Injected script into page")
+        return True
+
     def enable_flash(self, manual=False):
         """Enables the Flash Player."""
         url = self.driver.current_url
@@ -85,6 +91,7 @@ class Interface:
         self.tried = True
 
         self.driver.back()
+        self.driver.refresh()
 
         return True
 
@@ -98,12 +105,12 @@ class Interface:
 
     def play(self):
         """Start the video player if supported"""
-        self.driver.execute_script('document.getElementById("flash").play()')
+        self.driver.execute_script('document.getElementById("obj").play()')
         return True
     
     def pause(self):
         """Pause the video player if supported"""
-        self.driver.execute_script('document.getElementById("flash").pause()')
+        self.driver.execute_script('document.getElementById("obj").pause()')
         return True
 
     def await_completed(self):
