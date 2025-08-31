@@ -40,6 +40,12 @@ class Controller:
         logger.info(f"User chose {service}")
         service_data = AVAILABLE_SERVICES[service]
 
+        # Get testing
+        self.testing = service_data.get("testing", False)
+
+        # Get window name
+        self.window = service_data.get("window", "GoExport Viewer")
+
         # Set legacy mode
         self.legacy = service_data.get("legacy", False)
         if self.legacy:
@@ -167,13 +173,15 @@ class Controller:
                 logger.error("Could not start webdriver")
                 return False
 
+            self.browser.inject('function obj_DoFSCommand(command, args) { switch (command) { case "start": startRecord = Date.now(); console.log("Video started " + startRecord); document.getElementById("obj").pause(); document.getElementById("obj").seek(0); break; case "stop": stopRecord = Date.now(); console.log("Video stopped " + stopRecord); break; } }')
+
             if not self.capture.is_obs:
                 if not self.browser.warning(self.width, self.height):
                     logger.error("Could not show warning")
                     return False
 
             if self.legacy:
-                if not self.capture.start(self.RECORDING, self.width, self.height):
+                if not self.capture.start(self.RECORDING, self.width, self.height, self.window):
                     logger.error("Could not start recording")
                     return False
 
@@ -191,7 +199,7 @@ class Controller:
                 return False
             
             if not self.legacy:
-                if not self.capture.start(self.RECORDING, self.width, self.height):
+                if not self.capture.start(self.RECORDING, self.width, self.height, self.window):
                     logger.error("Could not start recording")
                     return False
                 else:
