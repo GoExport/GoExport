@@ -40,11 +40,17 @@ class Controller:
         logger.info(f"User chose {service}")
         service_data = AVAILABLE_SERVICES[service]
 
+        # Check if should host
+        self.host = service_data.get("host", False)
+
         # Get testing
         self.testing = service_data.get("testing", False)
 
         # Get window name
         self.window = service_data.get("window", "GoExport Viewer")
+
+        # Get scripts
+        self.afterloadscripts = service_data.get("afterloadscripts", [])
 
         # Set legacy mode
         self.legacy = service_data.get("legacy", False)
@@ -79,12 +85,13 @@ class Controller:
                 print("[bold yellow]Warning: The resolution you have selected is higher than 720p. This may cause issues with the recording. Please ensure your system can handle this resolution.")
             
         # Start the server
-        self.server = Server()
-        try:
-            self.server.start()
-        except Exception as e:
-            logger.error(f"Error starting server: {e}")
-            return False
+        if self.host:
+            self.server = Server()
+            try:
+                self.server.start()
+            except Exception as e:
+                logger.error(f"Error starting server: {e}")
+                return False
 
         self.svr_name = service_data["name"]
         self.svr_domain = service_data.get("domain", [])
@@ -163,9 +170,19 @@ class Controller:
     def generate(self):
         """Generates the URL."""
         temp = helpers.get_url(self.svr_domain, self.svr_player)
-        self.svr_url = temp.format(movie_id = self.movieid, owner_id = self.ownerid, width = self.width, height = self.height, wide = int(self.widescreen))
+        self.svr_url = self.format(temp)
         print(f"Playback URL: {self.svr_url}")
         return True
+
+    def format(self, input: str) -> str:
+        """Format the string, for example {movie_id} is parsed and replaced with the actual movie ID."""
+        return input.format(
+            movie_id=self.movieid,
+            owner_id=self.ownerid,
+            width=self.width,
+            height=self.height,
+            wide=int(self.widescreen)
+        )
 
     def export(self):
         try:
@@ -173,7 +190,8 @@ class Controller:
                 logger.error("Could not start webdriver")
                 return False
 
-            self.browser.inject('function obj_DoFSCommand(command, args) { switch (command) { case "start": startRecord = Date.now(); console.log("Video started " + startRecord); document.getElementById("obj").pause(); document.getElementById("obj").seek(0); break; case "stop": stopRecord = Date.now(); console.log("Video stopped " + stopRecord); break; } }')
+            if self.testing:
+                self.browser.inject_in_future('function obj_DoFSCommand(command, args) { switch (command) { case "start": startRecord = Date.now(); console.log("Video started " + startRecord); document.getElementById("obj").pause(); document.getElementById("obj").seek(0); break; case "stop": stopRecord = Date.now(); console.log("Video stopped " + stopRecord); break; } }')
 
             if not self.capture.is_obs:
                 if not self.browser.warning(self.width, self.height):
@@ -190,9 +208,18 @@ class Controller:
             except Exception as e:
                 raise RuntimeError(f"Failed to load {self.svr_url}: {e}")
 
-            if not self.browser.enable_flash():
+            # Check if the site has any data; if so, do nothing
+            if self.browser.check_data(self.svr_url):
+                offset = 1
+            else:
+                offset = 0
+
+            if not self.browser.enable_flash(offset=offset):
                 logger.error("Could not enable flash")
                 return False
+
+            for script in self.afterloadscripts:
+                self.browser.inject_now(self.format(script))
 
             if not self.browser.await_started():
                 logger.error("Could not wait for start")
@@ -223,11 +250,12 @@ class Controller:
             self.setpath(self.capture.filename)
 
             # Stop the server
-            try:
-                self.server.stop()
-            except Exception as e:
-                logger.error(f"Error stopping server: {e}")
-                return False
+            if self.host:
+                try:
+                    self.server.stop()
+                except Exception as e:
+                    logger.error(f"Error stopping server: {e}")
+                    return False
 
             # Get timestamps from the browser for when the video started and ended
             timestamps = self.browser.get_timestamps()
