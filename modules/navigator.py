@@ -27,7 +27,6 @@ class Interface:
         self.options = Options()
         self.options.add_argument("--disable-infobars")
         self.options.add_argument("--disable-bookmarks-bar")
-        self.options.add_argument("--no-first-run")
         self.options.add_argument("--kiosk")
         self.options.add_argument("--allow-running-insecure-content")
         self.options.add_argument("force-device-scale-factor=1")
@@ -35,6 +34,7 @@ class Interface:
         self.options.add_argument(f"--ppapi-flash-path={flash_path}")
         self.options.add_argument(f"--ppapi-flash-version={flash_ver}")
         self.options.add_argument("--enable-unsafe-publish")
+        self.options.add_argument(f"--user-data-dir={helpers.get_path(None, helpers.get_config("DEFAULT_OUTPUT_FILENAME"), f"{helpers.get_timestamp()}_chrome_profile_temp")}")  # Use a temporary profile directory
         start_url = helpers.convert_to_file_url(
             helpers.get_path(helpers.get_app_folder(), helpers.get_config("DEFAULT_ASSETS_FILENAME"), "start.html")
         ) + f"?obs={str(obs).lower()}"
@@ -64,19 +64,46 @@ class Interface:
         self.driver.quit()
         return True
 
-    def inject(self, script: str):
+    def inject_now(self, script: str):
+        """Injects a JavaScript snippet into the page immediately."""
+        self.driver.execute_script(script)
+        logger.info("Injected script into page")
+
+    def inject_in_future(self, script: str):
         """Injects a JavaScript snippet into the page."""
         self.driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {"source": f'{script}'})
-        logger.info("Injected script into page")
+        logger.info("Injecting script in the future")
         return True
 
-    def enable_flash(self, manual=False):
+    def check_data(self, url: str):
+        """
+        Checks if there is any data stored for the given URL, including cookies.
+        Returns True if any data exists, False otherwise.
+        """
+        # Check general storage (localStorage, IndexedDB, service workers)
+        storage = self.driver.execute_cdp_cmd("Storage.getUsageAndQuota", {"origin": url})
+        if storage.get("usage", 0) > 0:
+            return True
+
+        # Check cookies
+        all_cookies = self.driver.execute_cdp_cmd("Network.getAllCookies", {}).get("cookies", [])
+        # Extract domain from URL
+        domain = urllib.parse.urlparse(url).netloc
+        site_cookies = [c for c in all_cookies if domain in c["domain"]]
+
+        if site_cookies:
+            return True
+
+        # No data found
+        return False
+
+    def enable_flash(self, offset: int = 0):
         """Enables the Flash Player."""
         url = self.driver.current_url
         self.driver.get(f"chrome://settings/content/siteDetails?site={urllib.parse.quote(url)}")
 
         actions = ActionChains(self.driver)
-        for _ in range(19):
+        for _ in range(19 + offset): # Find a way around this
             actions.send_keys(Keys.TAB)
             actions.perform()
             helpers.wait(0.1)
