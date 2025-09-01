@@ -44,6 +44,7 @@ jobs:
           tar -xzvf flash_player_patched_ppapi_linux.x86_64.tar.gz \
           -C dependencies/ungoogled-chromium/extensions \
           libpepflashplayer.so
+          rm flash_player_patched_ppapi_linux.x86_64.tar.gz
 
       - name: Download additional dependencies (Windows)
         if: matrix.os == 'windows-latest'
@@ -147,7 +148,7 @@ jobs:
           repo_name="${GITHUB_REPOSITORY#*/}"
           tag="${GITHUB_REF_NAME}"
 
-          changelog="${{ needs.changelog.outputs.changelog }}"
+          changelog='${{ needs.changelog.outputs.changelog }}'
 
           payload=$(jq -n \
             --arg role "<@&1346974681399427153>" \
