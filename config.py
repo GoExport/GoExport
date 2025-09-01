@@ -92,9 +92,11 @@ AVAILABLE_SERVICES = {
                 "&isVideoRecord=1"
             ),
         ],
+        "host": False,
         "legacy": False,
         "testing": True,
-        "window": "Video Player - Wrapper#3A Offline"
+        "window": "Video Player - Wrapper#3A Offline",
+        "afterloadscripts": []
     },
     "local": {
         "name": "Local",
@@ -116,51 +118,33 @@ AVAILABLE_SERVICES = {
                 "&isVideoRecord=1"
             ),
         ],
+        "host": True,
         "legacy": False,
         "testing": False,
-        "window": "GoExport Viewer"
+        "window": "GoExport Viewer",
+        "afterloadscripts": []
     },
     "ft": {
         "name": "FlashThemes",
         "requires": {
             "movieId",
             "movieOwnerId",
-            "authorization",
         },
         "domain": [
             "https://flashthemes.net",
         ],
         "player": [
-            f"{SERVER_PROTOCOL}://{SERVER_HOST}:{SERVER_PORT}",
-            (
-                "index.html?"
-                "environment=ft"
-                "&swf=https://lightspeed.flashthemes.net/static/animation/aisd82ij/player.swf?v=2"
-                "&movieId={movie_id}"
-                "&ownerId={owner_id}"
-                "&playerWidth={width}"
-                "&playerHeight={height}"
-                "&isWide={wide}"
-                "&isVideoRecord=1"
-                "&ut=-1"
-                "&apiserver=https://flashthemes.net/"
-                "&autostart=1"
-                "&storePath=https://flashthemes.net/static/store/<store>?v={owner_id}"
-                "&clientThemePath=https://lightspeed.flashthemes.net/static/ct/ad44370a650793d9/<client_theme>"
-                "&isEmbed=1"
-                "&chain_mids="
-                "&ad=0"
-                "&endStyle=1"
-                "&isWide={wide}"
-                "&pwm=1"
-                "&isSpeedy=1"
-                "&allowFullScreen=true"
-                "&allowScriptAccess=always"
-            ),
+            f"{SERVER_PROTOCOL}://flashthemes.net"
         ],
-        "legacy": True,
+        "host": False,
+        "legacy": False,
         "testing": False,
-        "window": "GoExport Viewer"
+        "window": "FlashThemes",
+        "afterloadscripts": [
+            "document.open();",
+            "document.write(\"<!DOCTYPE html><html><head><title>FlashThemes</title><style>html,body{{margin:0;padding:0;width:100%;height:100%;overflow:hidden}}object,embed{{width:100%;height:100%}}</style><script>function obj_DoFSCommand(command,args){{switch(command){{case'start':startRecord=Date.now();console.log('Video started '+startRecord);if(document.getElementById('obj').pause)document.getElementById('obj').pause();if(document.getElementById('obj').seek)document.getElementById('obj').seek(0);break;case'stop':stopRecord=Date.now();console.log('Video stopped '+stopRecord);break;}}}}</script></head><body><object type=\\\"application/x-shockwave-flash\\\" data=\\\"https://lightspeed.flashthemes.net/static/animation/aisd82ij/player.swf?v=2\\\" width=\\\"100%\\\" height=\\\"100%\\\" id=\\\"obj\\\"><param name=\\\"movie\\\" value=\\\"https://lightspeed.flashthemes.net/static/animation/aisd82ij/player.swf?v=2\\\"/><param name=\\\"allowFullScreen\\\" value=\\\"true\\\"/><param name=\\\"allowScriptAccess\\\" value=\\\"always\\\"/><param name=\\\"flashvars\\\" value=\\\"autostart=1&amp;isWide={wide}&amp;ut=-1&amp;isEmbed=1&amp;playerWidth={width}&amp;playerHeight={height}&amp;apiserver=https://flashthemes.net/&amp;storePath=https://flashthemes.net/static/store/<store>?v={owner_id}&amp;clientThemePath=https://lightspeed.flashthemes.net/static/ct/ad44370a650793d9/<client_theme>&amp;movieId={movie_id}&amp;isVideoRecord=1&amp;isSpeedy=0\\\"/></object></body></html>\");"
+            "document.close();"
+        ]
     },
 }
 
