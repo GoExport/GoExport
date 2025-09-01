@@ -137,6 +137,7 @@ jobs:
             artifacts/**/goexport_win_installer_amd64.exe
           body: ${{ needs.changelog.outputs.changelog }}
         env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Notify Discord
         run: |
