@@ -88,20 +88,4 @@ class Compatibility:
             logger.error(f"Dependency check failed: {e}")
             return False
 
-        # Get the path for OBS
-        if helpers.os_is_windows():
-            obs = helpers.get_path("C:\\", helpers.get_config("PATH_OBS_WINDOWS"))
-        elif helpers.os_is_linux():
-            obs = helpers.get_path("/", helpers.search_path("obs") or helpers.get_config("PATH_OBS_LINUX") or None)
-        else:
-            logger.error("Unsupported OS")
-            return False
-
-        try:
-            if not helpers.try_path(obs):
-                raise FileNotFoundError(f"Failed to locate {obs}")
-        except Exception as e:
-            logger.error(f"Dependency check failed: {e}")
-            return False
-
         return True
