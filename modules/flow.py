@@ -107,7 +107,8 @@ class Controller:
             if not helpers.get_param("no_input"):
                 self.auto_edit = Confirm.ask("Would you like to enable automated editing? (Auto editing is experimental but if you can test it and report back we'd appreciate it!)", default=True)
             else:
-                self.auto_edit = helpers.get_param("auto_edit") or True
+                param_auto_edit = helpers.get_param("auto_edit")
+                self.auto_edit = True if param_auto_edit is None else param_auto_edit
             logger.info(f"User chose to enable auto editing: {self.auto_edit}")
 
         # Required: Owner Id

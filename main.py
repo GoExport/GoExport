@@ -59,7 +59,9 @@ def main():
             if not helpers.get_param("no_input"):
                 confirm_outro = Confirm.ask("Would you like to include the outro for GoExport?", default=True)
             else:
-                confirm_outro = True
+                confirm_outro = helpers.get_param("include_outro")
+                if confirm_outro is None:
+                    confirm_outro = True
             logger.info(f"User chose to include the outro: {confirm_outro}")
 
             if not controller.final(confirm_outro):
@@ -71,7 +73,9 @@ def main():
             if not helpers.get_param("no_input"):
                 confirm_outro = Confirm.ask("Would you like to add the outro for GoExport to your project folder?", default=True)
             else:
-                confirm_outro = True
+                confirm_outro = helpers.get_param("include_outro")
+                if confirm_outro is None:
+                    confirm_outro = True
             logger.info(f"User chose to include the outro: {confirm_outro}")
 
             # Copy the outro to the project folder
