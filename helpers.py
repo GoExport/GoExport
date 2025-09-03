@@ -21,8 +21,13 @@ import modules.parameters as parameters
 parameters = parameters.Parameters()
 
 # Function to grab the key and value of a parameter
-def get_param(key: str):
-    value = getattr(parameters, key, None)
+def get_param(key: str, default=None):
+    value = getattr(parameters, key, default)
+    if callable(value):
+        try:
+            value = value()
+        except Exception as e:
+            logger.debug(f"get_param() callable for {key} raised {e}")
     logger.debug(f"get_param() key={key} -> {value}")
     return value
 
