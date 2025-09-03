@@ -44,11 +44,11 @@ def main():
             # Ask if user wants to continue
             print("[blue]Adding an additional video will allow you to merge multiple videos together. This is useful if you want to combine multiple videos into one or you've got a multipart series.")
             
-            # If no input is enabled, skip this question and default to false
+            # If no input is enabled, pull from parameters
             if not helpers.get_param("no_input"):
                 continue_prompt = Confirm.ask("Would you like to add an additional video?", default=False)
             else:
-                continue_prompt = False
+                continue_prompt = helpers.get_param("additional_video", False)
             logger.info(f"User chose to continue: {continue_prompt}")
 
             if not continue_prompt:
@@ -59,7 +59,7 @@ def main():
             if not helpers.get_param("no_input"):
                 confirm_outro = Confirm.ask("Would you like to include the outro for GoExport?", default=True)
             else:
-                confirm_outro = True
+                confirm_outro = helpers.get_param("include_outro", True)
             logger.info(f"User chose to include the outro: {confirm_outro}")
 
             if not controller.final(confirm_outro):
@@ -71,7 +71,7 @@ def main():
             if not helpers.get_param("no_input"):
                 confirm_outro = Confirm.ask("Would you like to add the outro for GoExport to your project folder?", default=True)
             else:
-                confirm_outro = True
+                confirm_outro = helpers.get_param("include_outro", True)
             logger.info(f"User chose to include the outro: {confirm_outro}")
 
             # Copy the outro to the project folder
@@ -87,7 +87,7 @@ def main():
             if not helpers.get_param("no_input"):
                 open_folder = Confirm.ask("Would you like to open the folder containing the video?", default=True)
             else:
-                open_folder = False
+                open_folder = helpers.get_param("open_folder", False)
             logger.info(f"User chose to open the folder: {open_folder}")
             if open_folder:
                 helpers.open_folder(controller.PROJECT_FOLDER)
@@ -96,7 +96,7 @@ def main():
             if not helpers.get_param("no_input"):
                 open_folder = Confirm.ask("Would you like to open the folder containing the video?", default=True)
             else:
-                open_folder = False
+                open_folder = helpers.get_param("open_folder", False)
             logger.info(f"User chose to open the folder: {open_folder}")
             if open_folder:
                 helpers.open_folder(controller.RECORDING_EDITED_PATH)
