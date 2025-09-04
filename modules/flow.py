@@ -31,14 +31,10 @@ class Controller:
 
         # Set the LVM
         if not helpers.get_param("no_input"):
-            service = Prompt.ask(
-                "[bold red]Required:[/bold red] Please select your desired LVM",
-                choices=options,
-                default=helpers.load("service", options[0]),
-            )
+            service = Prompt.ask("[bold red]Required:[/bold red] Please select your desired LVM", choices=options, default=helpers.load("service", options[0]))
             helpers.save("service", service)
         else:
-            service = helpers.get_param("service", helpers.load("service", options[0]))
+            service = helpers.get_param("service")
         if service not in options:
             raise ValueError(f"Invalid service: {service}")
         logger.info(f"User chose {service}")
@@ -68,10 +64,7 @@ class Controller:
                 self.aspect_ratio = Prompt.ask("[bold red]Required:[/bold red] Please select your desired aspect ratio", choices=helpers.get_config("AVAILABLE_ASPECT_RATIOS"), default=helpers.load("aspect_ratio", helpers.get_config("AVAILABLE_ASPECT_RATIOS")[-1]), show_choices=False)
                 helpers.save("aspect_ratio", self.aspect_ratio)
             else:
-                self.aspect_ratio = helpers.get_param(
-                    "aspect_ratio",
-                    helpers.load("aspect_ratio", helpers.get_config("AVAILABLE_ASPECT_RATIOS")[-1]),
-                )
+                self.aspect_ratio = helpers.get_param("aspect_ratio")
             if self.aspect_ratio not in helpers.get_config("AVAILABLE_ASPECT_RATIOS"):
                 raise ValueError(f"Invalid aspect ratio: {self.aspect_ratio}")
             logger.info(f"User chose {self.aspect_ratio}")
@@ -83,13 +76,7 @@ class Controller:
                 self.resolution = Prompt.ask("[bold red]Required:[/bold red] Please select your desired resolution", choices=list(helpers.get_config("AVAILABLE_SIZES")[self.aspect_ratio].keys()), default=helpers.load("resolution", list(helpers.get_config("AVAILABLE_SIZES")[self.aspect_ratio].keys())[0]), show_choices=False)
                 helpers.save("resolution", self.resolution)
             else:
-                self.resolution = helpers.get_param(
-                    "resolution",
-                    helpers.load(
-                        "resolution",
-                        list(helpers.get_config("AVAILABLE_SIZES")[self.aspect_ratio].keys())[0],
-                    ),
-                )
+                self.resolution = helpers.get_param("resolution")
             if self.resolution not in helpers.get_config("AVAILABLE_SIZES")[self.aspect_ratio]:
                 raise ValueError(f"Invalid resolution: {self.resolution}")
             logger.info(f"User chose {self.resolution}")
@@ -120,48 +107,36 @@ class Controller:
             if not helpers.get_param("no_input"):
                 self.auto_edit = Confirm.ask("Would you like to enable automated editing? (Auto editing is experimental but if you can test it and report back we'd appreciate it!)", default=True)
             else:
-                self.auto_edit = helpers.get_param("auto_edit", True)
+                self.auto_edit = helpers.get_param("auto_edit") or True
             logger.info(f"User chose to enable auto editing: {self.auto_edit}")
 
         # Required: Owner Id
         if 'movieOwnerId' in self.svr_required:
-            if not helpers.get_param("no_input"):
-                while True:
-                    self.ownerid = IntPrompt.ask(
-                        "[bold red]Required:[/bold red] Please enter the owner ID",
-                        default=helpers.load("owner_id"),
-                    )
+            while True:
+                if not helpers.get_param("no_input"):
+                    self.ownerid = IntPrompt.ask("[bold red]Required:[/bold red] Please enter the owner ID", default=helpers.load("owner_id"))
                     helpers.save("owner_id", self.ownerid)
-                    logger.info(f"User entered owner ID: {self.ownerid}")
-                    if self.ownerid:
-                        break
-                    print("[bold red]Error:[/bold red] Owner ID cannot be empty. Please enter a valid owner ID.")
-            else:
-                self.ownerid = helpers.get_param("owner_id", helpers.load("owner_id"))
+                else:
+                    self.ownerid = helpers.get_param("owner_id")
                 logger.info(f"User entered owner ID: {self.ownerid}")
-                if not self.ownerid:
-                    raise ValueError("Owner ID cannot be empty when no_input is enabled.")
+                if self.ownerid:
+                    break
+                print("[bold red]Error:[/bold red] Owner ID cannot be empty. Please enter a valid owner ID.")
         else:
             self.ownerid = None
 
         # Required: Movie Id
         if 'movieId' in self.svr_required:
-            if not helpers.get_param("no_input"):
-                while True:
-                    self.movieid = Prompt.ask(
-                        "[bold red]Required:[/bold red] Please enter the movie ID",
-                        default=helpers.load("movie_id"),
-                    )
+            while True:
+                if not helpers.get_param("no_input"):
+                    self.movieid = Prompt.ask("[bold red]Required:[/bold red] Please enter the movie ID", default=helpers.load("movie_id"))
                     helpers.save("movie_id", self.movieid)
-                    logger.info(f"User entered movie ID: {self.movieid}")
-                    if self.movieid:
-                        break
-                    print("[bold red]Error:[/bold red] Movie ID cannot be empty. Please enter a valid movie ID.")
-            else:
-                self.movieid = helpers.get_param("movie_id", helpers.load("movie_id"))
+                else:
+                    self.movieid = helpers.get_param("movie_id")
                 logger.info(f"User entered movie ID: {self.movieid}")
-                if not self.movieid:
-                    raise ValueError("Movie ID cannot be empty when no_input is enabled.")
+                if self.movieid:
+                    break
+                print("[bold red]Error:[/bold red] Movie ID cannot be empty. Please enter a valid movie ID.")
         else:
             self.movieid = None
 
