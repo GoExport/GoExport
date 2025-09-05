@@ -40,16 +40,10 @@ class Controller:
         logger.info(f"User chose {service}")
         service_data = AVAILABLE_SERVICES[service]
 
-        # Check if should host
+        # Check if should host, testing, window name, and after load scripts
         self.host = service_data.get("host", False)
-
-        # Get testing
         self.testing = service_data.get("testing", False)
-
-        # Get window name
         self.window = service_data.get("window", "GoExport Viewer")
-
-        # Get scripts
         self.afterloadscripts = service_data.get("afterloadscripts", [])
 
         # Set legacy mode
@@ -97,11 +91,20 @@ class Controller:
         self.svr_domain = service_data.get("domain", [])
         self.svr_player = service_data.get("player", [])
         self.svr_required = service_data.get("requires", [])
+        self.svr_hostable = service_data.get("hostable", False)
 
         if helpers.exceeds_monitor_resolution(self.width, self.height):
             helpers.show_popup(helpers.get_config("APP_NAME"), f"Your resolution is not large enough to contain this resolution or aspect ratio. Please downscale your video or change your screen orientation or resolution.", 16)
             return False
         
+        logger.info(f"Checking if {self.svr_name} is reachable...")
+        if helpers.try_url(helpers.get_url(self.svr_domain)) is False:
+            if self.svr_hostable:
+                logger.error(f"Could not reach {self.svr_name}, please ensure it is running and try again.")
+            else:
+                logger.error(f"Could not reach {self.svr_name}, please check your internet connection and try again.")
+            return False
+
         # Asks if the user wants automated editing
         if self.auto_edit is None:
             if not helpers.get_param("no_input"):
