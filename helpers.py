@@ -433,7 +433,7 @@ def flatten_list(input):
 
 def show_popup(title: str, message: str, type: int = 0):
     # Suppress the popup if no input is enabled
-    if not parameters.get_param("no_input"):
+    if not get_param("no_input"):
         if os_is_windows():
             logger.debug(f"show_popup() Windows: title={title}, message={message}, type={type}")
             ctypes.windll.user32.MessageBoxW(None, message, title, type)
