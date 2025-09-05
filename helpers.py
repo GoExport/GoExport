@@ -65,10 +65,10 @@ def load(key: str, default=False):
             try:
                 data = json.load(f)
                 logger.debug(f"Loaded data.json: {data}")
-                return data.get(key, None)
+                return data.get(key, default)
             except json.JSONDecodeError:
-                logger.debug(f"JSON decode error in {data_file_path}, returning None.")
-                return None
+                logger.info(f"JSON decode error in {data_file_path}, returning default value.")
+                return default
     return default
 
 # Memory management functions
@@ -322,13 +322,17 @@ def get_url(*parts):
     logger.debug(f"get_url() parts={flattened_parts} -> {url}")
     return url
 
-def try_url(input, expected: int = 200, redirect: bool = False):
+def try_url(input, timeout: int = 5):
+    """
+    Check if a website is active and online.
+    Returns True if the site is reachable (status code 200-399), False otherwise.
+    """
     try:
-        response = requests.head(input, timeout=30, allow_redirects=redirect)
-        logger.debug(f"{input} responded with {response.status_code}")
-        return response.status_code == expected
-    except requests.RequestException:
-        logger.debug(f"try_url() RequestException for {input}")
+        response = requests.get(input, timeout=timeout)
+        logger.debug(f"try_url() {input} responded with {response.status_code}")
+        return 200 <= response.status_code < 400
+    except requests.RequestException as e:
+        logger.debug(f"try_url() RequestException for {input}: {e}")
         return False
 
 def request_url(url: str, params: dict = None, method: str = "GET", timeout: int = 30):
