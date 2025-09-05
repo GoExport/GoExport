@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Added delay to OBS setup to ensure it doesn't crash OBS on slower computers.
 - Fixed an issue where default inputs didn't auto populate when no data was in the data.json file.
+- Renamed "Local" service to "Wrapper Offline" - You still type "Local" when accessing Wrapper Offline.
+- Added a check to ensure the selected service is online, this will hopefully prevent issues where the user selects a service that is offline (for example, Wrapper Offline is not opened).
 
 ## [0.15.1] - 2025-09-01
 
