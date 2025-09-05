@@ -58,31 +58,35 @@ class Capture:
                     denominator=1,
                     numerator=helpers.get_param("OBS_FPS") or helpers.load("OBS_FPS") or helpers.get_config("OBS_FPS")
                 )
+                helpers.wait(1)
             except Exception as e:
                 logger.warning(f"Could not set video settings: {e}")
 
     def prep(self, width: int, height: int, window: str):
         try:
             self.cl.callback.register(self.on_record_state_changed)
-            
+            helpers.wait(1)
             # Try to create profile (optional)
             try:
                 self.ws.create_profile(name=f"{helpers.get_config('APP_NAME')} - Profile")
+                helpers.wait(1)
             except Exception as e:
                 logger.warning(f"Could not create OBS profile: {e}")
                 # If profile exists, try to switch to it
                 try:
                     self.ws.set_current_profile(name=f"{helpers.get_config('APP_NAME')} - Profile")
+                    helpers.wait(1)
                     logger.info("Switched to existing OBS profile.")
                 except Exception as e2:
                     logger.error(f"Could not switch to existing OBS profile: {e2}")
-            
+
             # Set resolution
             self.set(width, height)
 
             # Change recording path
             try:
                 self.ws.set_record_directory(recordDirectory=helpers.get_path(None, helpers.get_config("DEFAULT_OUTPUT_FILENAME")))
+                helpers.wait(1)
             except Exception as e:
                 logger.warning(f"Could not change recording path: {e}")
 
@@ -90,31 +94,38 @@ class Capture:
             try:
                 # Try to create the scene
                 self.ws.create_scene(name=f"{helpers.get_config('APP_NAME')} - Scene")
+                helpers.wait(1)
             except Exception as e:
                 logger.warning(f"Could not create OBS scene: {e}")
                 # If scene exists, delete and recreate it
                 if not helpers.get_param("obs_no_overwrite"):
                     try:
                         self.ws.remove_scene(name=f"{helpers.get_config('APP_NAME')} - Scene")
-                        helpers.wait(2)
+                        helpers.wait(1)
                         self.ws.create_scene(name=f"{helpers.get_config('APP_NAME')} - Scene")
+                        helpers.wait(1)
                         logger.info("Deleted and recreated existing OBS scene.")
+                        helpers.wait(1)
                     except Exception as e2:
                         logger.error(f"Could not delete and recreate OBS scene: {e2}")
 
             # Try to set preview scene (optional)
             try:
                 if self.ws.get_studio_mode_enabled().studio_mode_enabled:
+                    helpers.wait(1)
                     self.ws.set_current_preview_scene(name=f"{helpers.get_config('APP_NAME')} - Scene")
+                    helpers.wait(1)
+                helpers.wait(1)
             except Exception as e:
                 logger.warning(f"Could not set preview scene: {e}")
-            
+
             # Try to set program scene (optional)
             try:
                 self.ws.set_current_program_scene(name=f"{helpers.get_config('APP_NAME')} - Scene")
+                helpers.wait(1)
             except Exception as e:
                 logger.warning(f"Could not set program scene: {e}")
-            
+
             # Try to create input/source (optional)
             if not helpers.get_param("obs_no_overwrite"):
                 try:
@@ -132,6 +143,7 @@ class Capture:
                             },
                             sceneItemEnabled=True
                         )
+                        helpers.wait(1)
                     elif helpers.os_is_linux():
                         self.ws.create_input(
                             sceneName=f"{helpers.get_config('APP_NAME')} - Scene",
@@ -143,6 +155,7 @@ class Capture:
                             },
                             sceneItemEnabled=True
                         )
+                        helpers.wait(1)
                 except Exception as e:
                     logger.warning(f"Could not create input/source: {e}")
             helpers.wait(2, "Waiting for OBS to set up the scene and sources...")
@@ -155,6 +168,7 @@ class Capture:
         try:
             if not helpers.get_param("obs_no_overwrite"):
                 self.ws.remove_scene(name=f"{helpers.get_config('APP_NAME')} - Scene")
+                helpers.wait(1)
             logger.info("OBS: Unprepared successfully.")
             self.prepared = False
         except Exception as e:
@@ -194,7 +208,6 @@ class Capture:
             # Calculate ending delay
             self.ended_delay = self.end_time - offset
             logger.info("OBS: Stopped recording")
-            helpers.wait(2, "Waiting for OBS to finalize the recording...")
         except Exception as e:
             logger.error(f"Failed to stop recording: {e}")
             self._cleanup()
