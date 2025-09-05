@@ -73,33 +73,8 @@ AVAILABLE_SIZES = {
 }
 
 AVAILABLE_SERVICES = {
-    "local_beta": {
-        "name": "Local (Beta)",
-        "requires": {
-            "movieId",
-        },
-        "domain": [
-            f"{WRAPPER_SERVER_PROTOCOL}://{WRAPPER_SERVER_HOST}:{WRAPPER_SERVER_PORT}",
-        ],
-        "player": [
-            f"{WRAPPER_SERVER_PROTOCOL}://{WRAPPER_SERVER_HOST}:{WRAPPER_SERVER_PORT}",
-            (
-                "player?"
-                "&movieId={movie_id}"
-                "&playerWidth={width}"
-                "&playerHeight={height}"
-                "&isWide={wide}"
-                "&isVideoRecord=1"
-            ),
-        ],
-        "host": False,
-        "legacy": False,
-        "testing": True,
-        "window": "Video Player - Wrapper#3A Offline",
-        "afterloadscripts": []
-    },
     "local": {
-        "name": "Local",
+        "name": "Wrapper: Offline",
         "requires": {
             "movieId",
         },
@@ -134,7 +109,7 @@ AVAILABLE_SERVICES = {
             "https://flashthemes.net",
         ],
         "player": [
-            f"{SERVER_PROTOCOL}://flashthemes.net"
+            f"https://flashthemes.net"
         ],
         "host": False,
         "legacy": False,
