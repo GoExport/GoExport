@@ -77,7 +77,11 @@ class Controller:
             self.width, self.height, self.widescreen = helpers.get_config("AVAILABLE_SIZES")[self.aspect_ratio][self.resolution]
             if self.width > 1280 and self.height > 720:
                 print("[bold yellow]Warning: The resolution you have selected is higher than 720p. This may cause issues with the recording. Please ensure your system can handle this resolution.")
-            
+        
+        if helpers.exceeds_monitor_resolution(self.width, self.height):
+            logger.error("The selected resolution exceeds your monitor's resolution. Please select a lower resolution.")
+            return False
+
         # Start the server
         if self.host:
             self.server = Server()
@@ -92,10 +96,6 @@ class Controller:
         self.svr_player = service_data.get("player", [])
         self.svr_required = service_data.get("requires", [])
         self.svr_hostable = service_data.get("hostable", False)
-
-        if helpers.exceeds_monitor_resolution(self.width, self.height):
-            helpers.show_popup(helpers.get_config("APP_NAME"), f"Your resolution is not large enough to contain this resolution or aspect ratio. Please downscale your video or change your screen orientation or resolution.", 16)
-            return False
         
         logger.info(f"Checking if {self.svr_name} is reachable...")
         if helpers.try_url(helpers.get_url(self.svr_domain)) is False:
