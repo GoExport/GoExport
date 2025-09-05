@@ -1,6 +1,6 @@
 # Configuration
 APP_NAME = "GoExport"
-APP_VERSION = "0.15.1"
+APP_VERSION = "0.15.2"
 APP_BETA = False
 DEFAULT_DEPENDENCIES_FILENAME = "dependencies"
 DEFAULT_LIBS_FILENAME = "libs"
@@ -94,6 +94,7 @@ AVAILABLE_SERVICES = {
             ),
         ],
         "host": True,
+        "hostable": True,
         "legacy": False,
         "testing": False,
         "window": "GoExport Viewer",
@@ -112,6 +113,7 @@ AVAILABLE_SERVICES = {
             f"https://flashthemes.net"
         ],
         "host": False,
+        "hostable": False,
         "legacy": False,
         "testing": False,
         "window": "FlashThemes",
