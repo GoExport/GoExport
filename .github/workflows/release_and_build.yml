@@ -9,7 +9,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest, windows-2022]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -47,7 +47,7 @@ jobs:
           rm flash_player_patched_ppapi_linux.x86_64.tar.gz
 
       - name: Download additional dependencies (Windows)
-        if: matrix.os == 'windows-latest'
+        if: matrix.os == 'windows-2022'
         run: |
           curl -L -o ffmpeg.zip https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip
           tar -xf ffmpeg.zip -C dependencies
@@ -70,8 +70,7 @@ jobs:
           copy ChineseFlash-Patched\flash64\pepflashplayer64_34_0_0_330.dll dependencies\ungoogled-chromium\extensions\pepflashplayer.dll
 
       - name: Build with PyInstaller
-        run: pyinstaller --distpath dist --workpath build GoExport.spec
-        working-directory: ${{ github.workspace }}
+        run: pyinstaller GoExport.spec
 
       - name: Copy required files to dist
         run: |
@@ -84,7 +83,7 @@ jobs:
 
       - name: Build installer (Windows only)
         uses: Minionguyjpro/Inno-Setup-Action@v1.2.2
-        if: matrix.os == 'windows-latest'
+        if: matrix.os == 'windows-2022'
         with:
           path: setup\GoExport.iss
           options: /O+
