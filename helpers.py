@@ -329,7 +329,7 @@ def try_url(input, timeout: int = 5):
     Adds common headers: Accept, Accept-Language, Referer, Connection.
     """
     headers = {
-        "User-Agent": "GoExportStatusChecker/1.0 (This is a ping test system to check if a website is online)",
+        "User-Agent": "GoExportStatusChecker/1.0 (+http://goexport.lexian.dev/status.html)",
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
         "Accept-Language": "en-US,en;q=0.5",
         "Connection": "keep-alive",
