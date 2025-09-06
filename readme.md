@@ -18,7 +18,7 @@ Welcome to GoExport, with this tool, you can export your videos for Wrapper Offl
 The following is a list of **known supported LVMs**:
 
 - Wrapper: Offline
-- FlashThemes (Limited)
+- FlashThemes
 
 # 📜 License
 
@@ -37,7 +37,7 @@ This project is licensed under the **GNU General Public License v3.0**. For more
 The following is a list of **known supported LVMs**:
 
 - Wrapper: Offline (aka "Local")
-- FlashThemes (aka "FT") [Limited Support (See FAQ)]
+- FlashThemes (aka "FT")
 
 </details>
 
@@ -52,17 +52,6 @@ Assuming you have a decent computer, this is simply an issue with Flash and is n
   <summary><strong>How do I use GoExport?</strong></summary>
 
 Simply watch the [**official video tutorial**](https://youtu.be/Cen69Mp5T4E) on how to use GoExport. It will guide you through the process of exporting your videos.
-
-</details>
-
-<details>
-  <summary><strong>Why is FlashThemes and other services limited or unsupported?</strong></summary>
-
-FlashThemes is currently unsupported due to security measures imposed by their platform, we don't have any way around this.
-
-Wrapper Online Diamond is similar, but a little more strict, we can't access any videos on their platform without already being authenticated.
-
-**If there's a particular LVM you would like to see supported**, please let us know and we can look into it, alternatively, **If you own an LVM**, please reach out to us for potential support.
 
 </details>
 
