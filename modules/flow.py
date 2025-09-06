@@ -98,12 +98,14 @@ class Controller:
         self.svr_hostable = service_data.get("hostable", False)
         
         logger.info(f"Checking if {self.svr_name} is reachable...")
-        if helpers.try_url(helpers.get_url(self.svr_domain)) is False:
+        self.serverOnline, self.serverStatus = helpers.try_url(helpers.get_url(self.svr_domain))
+        if not self.serverOnline:
             if self.svr_hostable:
-                logger.error(f"Could not reach {self.svr_name}, please ensure it is running and try again.")
+                logger.error(f"Could not reach {self.svr_name} (status: {self.serverStatus}), please ensure it is running and try again.")
             else:
-                logger.error(f"Could not reach {self.svr_name}, please check your internet connection and try again.")
+                logger.error(f"Could not reach {self.svr_name} (status: {self.serverStatus}), please check your internet connection and try again.")
             return False
+        logger.info(f"{self.svr_name} is reachable (status: {self.serverStatus})")
 
         # Asks if the user wants automated editing
         if self.auto_edit is None:
