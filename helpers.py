@@ -325,15 +325,25 @@ def get_url(*parts):
 def try_url(input, timeout: int = 5):
     """
     Check if a website is active and online.
-    Returns True if the site is reachable (status code 200-399), False otherwise.
+    Returns (True, status_code) if the site is reachable (status code 200-399), (False, status_code or None) otherwise.
+    Adds common headers: Accept, Accept-Language, Referer, Connection.
     """
+    headers = {
+        "User-Agent": "GoExportStatusChecker/1.0 (This is a ping test system to check if a website is online)",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.5",
+        "Connection": "keep-alive",
+    }
     try:
-        response = requests.get(input, timeout=timeout)
+        response = requests.get(input, timeout=timeout, headers=headers)
         logger.debug(f"try_url() {input} responded with {response.status_code}")
-        return 200 <= response.status_code < 400
+        if 200 <= response.status_code < 400:
+            return True, response.status_code
+        else:
+            return False, response.status_code
     except requests.RequestException as e:
         logger.debug(f"try_url() RequestException for {input}: {e}")
-        return False
+        return False, None
 
 def request_url(url: str, params: dict = None, method: str = "GET", timeout: int = 30):
     """
