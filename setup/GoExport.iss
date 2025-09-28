@@ -54,6 +54,11 @@ Source: "..\libs\audio_sniffer-x64.dll"; DestDir: "{app}\vendor"; Flags: onlyifd
 Source: "..\libs\screen-capture-recorder-x64.dll"; DestDir: "{app}\vendor"; Flags: onlyifdoesntexist 64bit
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
+[Registry]
+; Append {app} to the user's PATH
+Root: HKCU; Subkey: "Environment"; ValueType: expandsz; \
+    ValueName: "Path"; ValueData: "{olddata};{app}"; Flags: preservestringtype
+
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
 Name: "{group}\{cm:ProgramOnTheWeb,{#MyAppName}}"; Filename: "{#MyAppURL}"
