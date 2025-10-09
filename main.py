@@ -1,9 +1,13 @@
+# GoExport
+import sys
 import helpers
 from modules.compatibility import Compatibility
 from modules.flow import Controller
 from modules.logger import logger
 from rich.prompt import Confirm
 from rich import print
+from PyQt6.QtWidgets import QApplication
+from modules.window import Window
 
 def welcome():
     import art
@@ -31,6 +35,17 @@ def main():
 
         # Welcome message
         welcome()
+
+        # Check if no GUI is enabled
+        if not helpers.get_param("no_gui"):
+            app = QApplication(sys.argv)
+            window = Window(controller)
+
+            # Initalization
+            window.show()
+
+            app.exec()
+            sys.exit(0)
 
         while True:
             if not controller.setup():
