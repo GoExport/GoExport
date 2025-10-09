@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Added GoExport to path on Windows during installation, allowing you to run GoExport from any command prompt or terminal without needing to navigate to its installation directory.
 
+### Changed
+
+- GoExport no longer packages the dependencies within the executable. This is to reduce the size of the executable and to minimize load time. The dependencies will remain in the `dependencies` folder in the GoExport installation directory.
+
 ## [0.15.3] - 2025-09-06
 
 ### Fixed
