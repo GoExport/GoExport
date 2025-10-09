@@ -1,6 +1,7 @@
 # Import pyqt6 modules UIC
 from PyQt6 import uic
 from PyQt6.QtWidgets import QMainWindow, QApplication
+from PyQt6.QtGui import QIcon
 import sys
 import helpers
 from modules.logger import logger
@@ -27,6 +28,7 @@ class Window(QMainWindow):
         super().__init__()
         uic.loadUi(helpers.get_path(None, helpers.get_config("DEFAULT_GUI_FILENAME"), "Main.ui"), self)
         self.setWindowTitle("GoExport")
+        self.setWindowIcon(QIcon(helpers.get_path(helpers.get_app_folder(), helpers.get_config("DEFAULT_ASSETS_FILENAME"), "icon.png")))
         self.sizes = helpers.get_config("AVAILABLE_SIZES")
         self.controller = controller
 
