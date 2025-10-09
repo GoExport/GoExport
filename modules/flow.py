@@ -24,14 +24,109 @@ class Controller:
         if not self.capture.is_obs and not helpers.os_is_windows():
             logger.error("Native capture is only supported on Windows, you must have OBS running and websockets enabled.")
             return False
+
+        # Set the aspect ratio
+        if not self.set_aspect_ratio():
+            logger.error("Could not set aspect ratio")
+            return False
         
+        # Set the resolution
+        if not self.set_resolution():
+            logger.error("Could not set resolution")
+            return False
+
+        # Set the LVM
+        if not self.set_lvm():
+            logger.error("Could not set LVM")
+            return False
+
+        self.start_server()
+        
+        # Check if the server is reachable
+        if not self.verify_server_reachable():
+            return False
+
+        # Set auto edit
+        self.set_auto_edit()
+
+        # Set the owner ID
+        self.set_owner_id()
+
+        # Set the movie ID
+        self.set_movie_id()
+
+        self.setpath()
+
+        # Begin generating the URL
+        try:
+            if not self.generate():
+                logger.error("Could not generate playback URL")
+                return False
+        except Exception as e:
+            logger.error(f"Error generating playback URL: {e}")
+            return False
+
+        return True
+
+    def start_server(self):
+        # Start the server
+        if self.host:
+            self.server = Server()
+            try:
+                self.server.start()
+            except Exception as e:
+                logger.error(f"Error starting server: {e}")
+                return False
+
+    def stop_server(self):
+        if self.host:
+            try:
+                self.server.stop()
+            except Exception as e:
+                logger.error(f"Error stopping server: {e}")
+                return False
+
+    def set_aspect_ratio(self, aspect_ratio: str|None = None):
+        if not helpers.get_param("no_input"):
+            helpers.print_list(helpers.get_config("AVAILABLE_ASPECT_RATIOS"))
+            self.aspect_ratio = aspect_ratio or Prompt.ask("[bold red]Required:[/bold red] Please select your desired aspect ratio", choices=helpers.get_config("AVAILABLE_ASPECT_RATIOS"), default=helpers.load("aspect_ratio", helpers.get_config("AVAILABLE_ASPECT_RATIOS")[-1]), show_choices=False)
+            helpers.save("aspect_ratio", self.aspect_ratio)
+        else:
+            self.aspect_ratio = helpers.get_param("aspect_ratio")
+        if self.aspect_ratio not in helpers.get_config("AVAILABLE_ASPECT_RATIOS"):
+            raise ValueError(f"Invalid aspect ratio: {self.aspect_ratio}")
+        logger.info(f"User chose {self.aspect_ratio}")
+        return True
+
+    def set_resolution(self, resolution: str|None = None):
+        if not helpers.get_param("no_input"):
+            helpers.print_list(list(helpers.get_config("AVAILABLE_SIZES")[self.aspect_ratio].keys()))
+            self.resolution = resolution or Prompt.ask("[bold red]Required:[/bold red] Please select your desired resolution", choices=list(helpers.get_config("AVAILABLE_SIZES")[self.aspect_ratio].keys()), default=helpers.load("resolution", list(helpers.get_config("AVAILABLE_SIZES")[self.aspect_ratio].keys())[0]), show_choices=False)
+            helpers.save("resolution", self.resolution)
+        else:
+            self.resolution = helpers.get_param("resolution")
+        if self.resolution not in helpers.get_config("AVAILABLE_SIZES")[self.aspect_ratio]:
+            raise ValueError(f"Invalid resolution: {self.resolution}")
+        logger.info(f"User chose {self.resolution}")
+        self.width, self.height, self.widescreen = helpers.get_config("AVAILABLE_SIZES")[self.aspect_ratio][self.resolution]
+        if self.width > 1280 and self.height > 720:
+            print("[bold yellow]Warning: The resolution you have selected is higher than 720p. This may cause issues with the recording. Please ensure your system can handle this resolution.")
+        
+        if helpers.exceeds_monitor_resolution(self.width, self.height):
+            logger.error("The selected resolution exceeds your monitor's resolution. Please select a lower resolution.")
+            return False
+        
+        return True
+
+    def set_lvm(self, service: str|None = None):
         # Set the LVM
         AVAILABLE_SERVICES = helpers.get_config("AVAILABLE_SERVICES")
         options = list(AVAILABLE_SERVICES.keys())
 
         # Set the LVM
         if not helpers.get_param("no_input"):
-            service = Prompt.ask("[bold red]Required:[/bold red] Please select your desired LVM", choices=options, default=helpers.load("service", options[0]))
+            # Specifically this; use function argument or ask the user
+            service = service or Prompt.ask("[bold red]Required:[/bold red] Please select your desired LVM", choices=options, default=helpers.load("service", options[0]))
             helpers.save("service", service)
         else:
             service = helpers.get_param("service")
@@ -50,76 +145,30 @@ class Controller:
         self.legacy = service_data.get("legacy", False)
         if self.legacy:
             logger.warning("Legacy mode is enabled: Stability is not guaranteed.")
-
-        # Set the aspect ratio
-        if self.aspect_ratio is None:
-            if not helpers.get_param("no_input"):
-                helpers.print_list(helpers.get_config("AVAILABLE_ASPECT_RATIOS"))
-                self.aspect_ratio = Prompt.ask("[bold red]Required:[/bold red] Please select your desired aspect ratio", choices=helpers.get_config("AVAILABLE_ASPECT_RATIOS"), default=helpers.load("aspect_ratio", helpers.get_config("AVAILABLE_ASPECT_RATIOS")[-1]), show_choices=False)
-                helpers.save("aspect_ratio", self.aspect_ratio)
-            else:
-                self.aspect_ratio = helpers.get_param("aspect_ratio")
-            if self.aspect_ratio not in helpers.get_config("AVAILABLE_ASPECT_RATIOS"):
-                raise ValueError(f"Invalid aspect ratio: {self.aspect_ratio}")
-            logger.info(f"User chose {self.aspect_ratio}")
-
-        # Set the resolution
-        if self.resolution is None:
-            if not helpers.get_param("no_input"):
-                helpers.print_list(list(helpers.get_config("AVAILABLE_SIZES")[self.aspect_ratio].keys()))
-                self.resolution = Prompt.ask("[bold red]Required:[/bold red] Please select your desired resolution", choices=list(helpers.get_config("AVAILABLE_SIZES")[self.aspect_ratio].keys()), default=helpers.load("resolution", list(helpers.get_config("AVAILABLE_SIZES")[self.aspect_ratio].keys())[0]), show_choices=False)
-                helpers.save("resolution", self.resolution)
-            else:
-                self.resolution = helpers.get_param("resolution")
-            if self.resolution not in helpers.get_config("AVAILABLE_SIZES")[self.aspect_ratio]:
-                raise ValueError(f"Invalid resolution: {self.resolution}")
-            logger.info(f"User chose {self.resolution}")
-            self.width, self.height, self.widescreen = helpers.get_config("AVAILABLE_SIZES")[self.aspect_ratio][self.resolution]
-            if self.width > 1280 and self.height > 720:
-                print("[bold yellow]Warning: The resolution you have selected is higher than 720p. This may cause issues with the recording. Please ensure your system can handle this resolution.")
         
-        if helpers.exceeds_monitor_resolution(self.width, self.height):
-            logger.error("The selected resolution exceeds your monitor's resolution. Please select a lower resolution.")
-            return False
-
-        # Start the server
-        if self.host:
-            self.server = Server()
-            try:
-                self.server.start()
-            except Exception as e:
-                logger.error(f"Error starting server: {e}")
-                return False
-
         self.svr_name = service_data["name"]
         self.svr_domain = service_data.get("domain", [])
         self.svr_player = service_data.get("player", [])
         self.svr_required = service_data.get("requires", [])
         self.svr_hostable = service_data.get("hostable", False)
-        
-        logger.info(f"Checking if {self.svr_name} is reachable...")
-        self.serverOnline, self.serverStatus = helpers.try_url(helpers.get_url(self.svr_domain))
-        if not self.serverOnline:
-            if self.svr_hostable:
-                logger.error(f"Could not reach {self.svr_name} (status: {self.serverStatus}), please ensure it is running and try again.")
-            else:
-                logger.error(f"Could not reach {self.svr_name} (status: {self.serverStatus}), please check your internet connection and try again.")
-            return False
-        logger.info(f"{self.svr_name} is reachable (status: {self.serverStatus})")
 
+        return True
+
+    def set_auto_edit(self, auto_edit: bool|None = None):
         # Asks if the user wants automated editing
         if self.auto_edit is None:
             if not helpers.get_param("no_input"):
-                self.auto_edit = Confirm.ask("Would you like to enable automated editing? (Auto editing is experimental but if you can test it and report back we'd appreciate it!)", default=True)
+                self.auto_edit = auto_edit or Confirm.ask("Would you like to enable automated editing?", default=True)
             else:
                 self.auto_edit = helpers.get_param("auto_edit") or True
             logger.info(f"User chose to enable auto editing: {self.auto_edit}")
 
+    def set_owner_id(self, owner_id: int|None = None):
         # Required: Owner Id
         if 'movieOwnerId' in self.svr_required:
             while True:
                 if not helpers.get_param("no_input"):
-                    self.ownerid = IntPrompt.ask("[bold red]Required:[/bold red] Please enter the owner ID", default=helpers.load("owner_id"))
+                    self.ownerid = owner_id or IntPrompt.ask("[bold red]Required:[/bold red] Please enter the owner ID", default=helpers.load("owner_id"))
                     helpers.save("owner_id", self.ownerid)
                 else:
                     self.ownerid = helpers.get_param("owner_id")
@@ -130,11 +179,12 @@ class Controller:
         else:
             self.ownerid = None
 
+    def set_movie_id(self, movie_id: int|None = None):
         # Required: Movie Id
         if 'movieId' in self.svr_required:
             while True:
                 if not helpers.get_param("no_input"):
-                    self.movieid = Prompt.ask("[bold red]Required:[/bold red] Please enter the movie ID", default=helpers.load("movie_id"))
+                    self.movieid = movie_id or Prompt.ask("[bold red]Required:[/bold red] Please enter the movie ID", default=helpers.load("movie_id"))
                     helpers.save("movie_id", self.movieid)
                 else:
                     self.movieid = helpers.get_param("movie_id")
@@ -145,17 +195,16 @@ class Controller:
         else:
             self.movieid = None
 
-        self.setpath()
-
-        # Begin generating the URL
-        try:
-            if not self.generate():
-                logger.error("Could not generate playback URL")
-                return False
-        except Exception as e:
-            logger.error(f"Error generating playback URL: {e}")
+    def verify_server_reachable(self):
+        logger.info(f"Checking if {self.svr_name} is reachable...")
+        self.serverOnline, self.serverStatus = helpers.try_url(helpers.get_url(self.svr_domain))
+        if not self.serverOnline:
+            if self.svr_hostable:
+                logger.error(f"Could not reach {self.svr_name} (status: {self.serverStatus}), please ensure it is running and try again.")
+            else:
+                logger.error(f"Could not reach {self.svr_name} (status: {self.serverStatus}), please check your internet connection and try again.")
             return False
-
+        logger.info(f"{self.svr_name} is reachable (status: {self.serverStatus})")
         return True
 
     def setpath(self, path: str|None = None):
@@ -171,6 +220,8 @@ class Controller:
         self.RECORDING_EDITED_PATH = helpers.get_path(helpers.get_app_folder(), helpers.get_config("DEFAULT_FOLDER_OUTPUT_FILENAME"))
         if self.PROJECT_FOLDER is None:
             self.PROJECT_FOLDER = helpers.get_path(helpers.get_config("DEFAULT_FOLDER_OUTPUT_FILENAME"), self.readable_filename)
+
+        logger.info(f"{self.RECORDING or None} {self.RECORDING_EDITED or None} {self.PROJECT_FOLDER or None}")
 
     def generate(self):
         """Generates the URL."""
@@ -255,12 +306,7 @@ class Controller:
             self.setpath(self.capture.filename)
 
             # Stop the server
-            if self.host:
-                try:
-                    self.server.stop()
-                except Exception as e:
-                    logger.error(f"Error stopping server: {e}")
-                    return False
+            self.stop_server()
 
             # Get timestamps from the browser for when the video started and ended
             timestamps = self.browser.get_timestamps()
