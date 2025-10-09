@@ -37,7 +37,7 @@ class Capture:
     def start(self, output: str, width: int, height: int):
         if helpers.os_is_windows():
             command = [
-                helpers.get_path(None, helpers.get_config("PATH_FFMPEG_WINDOWS")), "-y",
+                helpers.get_path(helpers.get_app_folder(), helpers.get_config("PATH_FFMPEG_WINDOWS")), "-y",
                 "-f", "dshow",
                 "-i", "video=screen-capture-recorder:audio=virtual-audio-capturer",
                 "-vf", f"crop={width}:{height}:0:0,format=yuv420p",

@@ -23,7 +23,7 @@ class Editor:
         
         try:
             output = helpers.try_command(
-                helpers.get_path(None, helpers.get_config("PATH_FFPROBE_WINDOWS")),
+                helpers.get_path(helpers.get_app_folder(), helpers.get_config("PATH_FFPROBE_WINDOWS")),
                 "-v", "error",
                 "-show_entries", "format=duration",
                 "-of", "default=noprint_wrappers=1:nokey=1",
@@ -68,7 +68,7 @@ class Editor:
                 ext = self.clips[clip_id].split(".")[-1]
                 trimmed_path = self.clips[clip_id].replace(f".{ext}", f"_trimmed_{start}_{end}.{ext}")
                 helpers.try_command(
-                    helpers.get_path(None, helpers.get_config("PATH_FFMPEG_WINDOWS")),
+                    helpers.get_path(helpers.get_app_folder(), helpers.get_config("PATH_FFMPEG_WINDOWS")),
                     "-ss", str(start),
                     "-i", self.clips[clip_id],
                     "-c", "copy",
@@ -111,7 +111,7 @@ class Editor:
             raise ValueError("No clips to render.")
 
         try:
-            ffmpeg = helpers.get_path(None, helpers.get_config("PATH_FFMPEG_WINDOWS"))
+            ffmpeg = helpers.get_path(helpers.get_app_folder(), helpers.get_config("PATH_FFMPEG_WINDOWS"))
 
             if not reencode:
                 # ---------- FAST PATH: concat demuxer + stream copy ----------

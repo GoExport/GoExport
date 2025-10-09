@@ -12,14 +12,14 @@ class Interface:
     def __init__(self, obs: bool = False):
         # Select Chromium and Chromedriver paths based on OS
         if helpers.os_is_windows():
-            chromium = helpers.get_path(None, helpers.get_config("PATH_CHROMIUM_WINDOWS"))
-            chromedriver = helpers.get_path(None, helpers.get_config("PATH_CHROMEDRIVER_WINDOWS"))
-            flash_path = helpers.get_path(None, helpers.get_config("PATH_FLASH_WINDOWS"))
+            chromium = helpers.get_path(helpers.get_app_folder(), helpers.get_config("PATH_CHROMIUM_WINDOWS"))
+            chromedriver = helpers.get_path(helpers.get_app_folder(), helpers.get_config("PATH_CHROMEDRIVER_WINDOWS"))
+            flash_path = helpers.get_path(helpers.get_app_folder(), helpers.get_config("PATH_FLASH_WINDOWS"))
             flash_ver = helpers.get_config("PATH_FLASH_VERSION_WINDOWS")
         elif helpers.os_is_linux():
-            chromium = helpers.get_path(None, helpers.get_config("PATH_CHROMIUM_LINUX"))
-            chromedriver = helpers.get_path(None, helpers.get_config("PATH_CHROMEDRIVER_LINUX"))
-            flash_path = helpers.get_path(None, helpers.get_config("PATH_FLASH_LINUX"))
+            chromium = helpers.get_path(helpers.get_app_folder(), helpers.get_config("PATH_CHROMIUM_LINUX"))
+            chromedriver = helpers.get_path(helpers.get_app_folder(), helpers.get_config("PATH_CHROMEDRIVER_LINUX"))
+            flash_path = helpers.get_path(helpers.get_app_folder(), helpers.get_config("PATH_FLASH_LINUX"))
             flash_ver = helpers.get_config("PATH_FLASH_VERSION_LINUX")
         else:
             raise RuntimeError("Unsupported OS")

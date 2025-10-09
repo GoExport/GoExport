@@ -45,13 +45,13 @@ class Compatibility:
         # -- Required dependencies
         # Get the paths for FFMPEG, FFPROBE, and FFPLAY.
         if helpers.os_is_windows():
-            ffmpeg = helpers.get_path(None, helpers.get_config("PATH_FFMPEG_WINDOWS"))
-            ffprobe = helpers.get_path(None, helpers.get_config("PATH_FFPROBE_WINDOWS"))
-            ffplay = helpers.get_path(None, helpers.get_config("PATH_FFPLAY_WINDOWS"))
+            ffmpeg = helpers.get_path(helpers.get_app_folder(), helpers.get_config("PATH_FFMPEG_WINDOWS"))
+            ffprobe = helpers.get_path(helpers.get_app_folder(), helpers.get_config("PATH_FFPROBE_WINDOWS"))
+            ffplay = helpers.get_path(helpers.get_app_folder(), helpers.get_config("PATH_FFPLAY_WINDOWS"))
         elif helpers.os_is_linux():
-            ffmpeg = helpers.get_path(None, helpers.get_config("PATH_FFMPEG_LINUX"))
-            ffprobe = helpers.get_path(None, helpers.get_config("PATH_FFPROBE_LINUX"))
-            ffplay = helpers.get_path(None, helpers.get_config("PATH_FFPLAY_LINUX"))
+            ffmpeg = helpers.get_path(helpers.get_app_folder(), helpers.get_config("PATH_FFMPEG_LINUX"))
+            ffprobe = helpers.get_path(helpers.get_app_folder(), helpers.get_config("PATH_FFPROBE_LINUX"))
+            ffplay = helpers.get_path(helpers.get_app_folder(), helpers.get_config("PATH_FFPLAY_LINUX"))
         else:
             logger.error("Unsupported OS")
             return False
@@ -70,11 +70,11 @@ class Compatibility:
 
         # Get the paths of Chromium and Chromedriver
         if helpers.os_is_windows():
-            chromium = helpers.get_path(None, helpers.get_config("PATH_CHROMIUM_WINDOWS"))
-            chromedriver = helpers.get_path(None, helpers.get_config("PATH_CHROMEDRIVER_WINDOWS"))
+            chromium = helpers.get_path(helpers.get_app_folder(), helpers.get_config("PATH_CHROMIUM_WINDOWS"))
+            chromedriver = helpers.get_path(helpers.get_app_folder(), helpers.get_config("PATH_CHROMEDRIVER_WINDOWS"))
         elif helpers.os_is_linux():
-            chromium = helpers.get_path(None, helpers.get_config("PATH_CHROMIUM_LINUX"))
-            chromedriver = helpers.get_path(None, helpers.get_config("PATH_CHROMEDRIVER_LINUX"))
+            chromium = helpers.get_path(helpers.get_app_folder(), helpers.get_config("PATH_CHROMIUM_LINUX"))
+            chromedriver = helpers.get_path(helpers.get_app_folder(), helpers.get_config("PATH_CHROMEDRIVER_LINUX"))
         else:
             logger.error("Unsupported OS")
             return False

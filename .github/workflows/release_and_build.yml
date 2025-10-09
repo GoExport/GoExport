@@ -76,10 +76,12 @@ jobs:
         run: |
           mkdir -p dist/assets
           mkdir -p dist/server
+          mkdir -p dist/dependencies
           cp readme.md dist/
           cp LICENSE dist/
           cp -r assets/* dist/assets/
           cp -r server/* dist/server/
+          cp -r dependencies/* dist/dependencies/
 
       - name: Build installer (Windows only)
         uses: Minionguyjpro/Inno-Setup-Action@v1.2.2
