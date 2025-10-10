@@ -3,6 +3,7 @@ on:
   push:
     tags:
       - "v*"
+      - "b*"
 
 jobs:
   build:
@@ -113,7 +114,9 @@ jobs:
       - name: Extract changelog
         id: extract
         run: |
-          section=$(awk '/## \['"${GITHUB_REF_NAME#v}"'\]/{flag=1; next} /^## /{flag=0} flag' CHANGELOG.md)
+          version="${GITHUB_REF_NAME#v}"
+          version="${version#b}"
+          section=$(awk '/## \['"$version"'\]/{flag=1; next} /^## /{flag=0} flag' CHANGELOG.md)
           echo "changelog<<EOF" >> $GITHUB_OUTPUT
           echo "$section" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
@@ -130,6 +133,15 @@ jobs:
       - name: List downloaded files
         run: ls -R artifacts
 
+      - name: Check if beta
+        id: check-beta
+        run: |
+          if [[ $GITHUB_REF_NAME == b* ]]; then
+            echo "is_beta=true" >> $GITHUB_OUTPUT
+          else
+            echo "is_beta=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Upload Release Assets
         uses: softprops/action-gh-release@v1
         with:
@@ -138,10 +150,12 @@ jobs:
             artifacts/**/goexport_linux_portable_amd64.tar.gz
             artifacts/**/goexport_win_installer_amd64.exe
           body: ${{ needs.changelog.outputs.changelog }}
+          prerelease: ${{ steps.check-beta.outputs.is_beta }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Notify Discord
+        if: steps.check-beta.outputs.is_beta == 'false'
         run: |
           repo_name="${GITHUB_REPOSITORY#*/}"
           tag="${GITHUB_REF_NAME}"
