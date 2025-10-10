@@ -1,6 +1,6 @@
 # Configuration
 APP_NAME = "GoExport"
-APP_VERSION = "0.15.3"
+APP_VERSION = "0.16.0"
 APP_BETA = False
 DEFAULT_DEPENDENCIES_FILENAME = "dependencies"
 DEFAULT_LIBS_FILENAME = "libs"
@@ -174,3 +174,4 @@ PATH_DATA_FILE = ["data.json"]
 # Development Settings
 DEBUG_MODE = False
 SKIP_COMPAT = False
+FORCE_WINDOW = True
