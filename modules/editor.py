@@ -34,6 +34,12 @@ class Editor:
         except Exception as e:
             raise RuntimeError(f"Error getting length of clip {clip_id}: {e}")
     
+    def reset_clips(self):
+        """
+        Reset the list of video clips.
+        """
+        self.clips = []
+
     def add_clip(self, path: str, position: int = -1):
         """
         Add a video clip to the editor.
