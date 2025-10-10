@@ -195,6 +195,10 @@ class Controller:
         else:
             self.movieid = None
 
+    def reset(self):
+        self.editor.reset_clips()
+        logger.info(f"Editor clips have been reset. {self.editor.clips}")
+
     def verify_server_reachable(self):
         logger.info(f"Checking if {self.svr_name} is reachable...")
         self.serverOnline, self.serverStatus = helpers.try_url(helpers.get_url(self.svr_domain))
