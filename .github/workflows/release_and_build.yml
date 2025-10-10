@@ -22,42 +22,11 @@ jobs:
         with:
           python-version: "3.x"
 
-      - name: Cache pip
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cache/pip
-            ~/Library/Caches/pip
-            %LOCALAPPDATA%\pip\Cache
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Compute binaries cache key
-        id: binaries-cache-key
-        run: |
-          hour=$(date +%H)
-          group=$(( hour / 12 ))
-          date=$(date +%Y-%m-%d)
-          echo "key=binaries-${{ runner.os }}-${date}-${group}" >> $GITHUB_OUTPUT
-
-      - name: Cache binaries
-        uses: actions/cache@v3
-        with:
-          path: dependencies
-          key: ${{ steps.binaries-cache-key.outputs.key }}
-          restore-keys: |
-            binaries-${{ runner.os }}-
-
-      - name: Check if binaries cached
-        id: check-cache
-        run: echo "cached=$([ -d dependencies/ffmpeg ] && echo true || echo false)" >> $GITHUB_OUTPUT
-
       - name: Download additional dependencies (Linux)
-        if: matrix.os == 'ubuntu-latest' && steps.check-cache.outputs.cached == 'false'
+        if: matrix.os == 'ubuntu-latest'
         run: |
           curl -L -o ffmpeg.tar.xz https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-linux64-gpl.tar.xz
           mkdir -p dependencies
@@ -79,7 +48,7 @@ jobs:
           rm flash_player_patched_ppapi_linux.x86_64.tar.gz
 
       - name: Download additional dependencies (Windows)
-        if: matrix.os == 'windows-2022' && steps.check-cache.outputs.cached == 'false'
+        if: matrix.os == 'windows-2022'
         run: |
           curl -L -o ffmpeg.zip https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip
           tar -xf ffmpeg.zip -C dependencies
