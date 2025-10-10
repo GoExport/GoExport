@@ -107,6 +107,13 @@ def is_frozen():
     logger.debug(f"is_frozen() -> {result}")
     return result
 
+def has_console():
+    """Check whether the process has a console window attached."""
+    try:
+        return bool(ctypes.windll.kernel32.GetConsoleWindow())
+    except Exception:
+        return False
+
 def is_admin():
     try:
         result = ctypes.windll.shell32.IsUserAnAdmin()
