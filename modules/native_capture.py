@@ -63,6 +63,7 @@ class Capture:
             shell=False,
             bufsize=0,
             universal_newlines=True,
+            creationflags=subprocess.CREATE_NO_WINDOW if helpers.os_is_windows() else 0,
         )
 
         # Wait for FFmpeg to start
