@@ -417,7 +417,7 @@ def try_command(*input, return_output: bool = False):
     """
     try:
         logger.debug(f"try_command() called with input={input}, return_output={return_output}")
-        result = subprocess.run(args=input, capture_output=True, check=True)
+        result = subprocess.run(args=input, capture_output=True, check=True, creationflags=subprocess.CREATE_NO_WINDOW if os_is_windows() else 0)
         logger.debug("Command succeeded: %s", result.stdout)
         return result.stdout.strip() if return_output else True
     except subprocess.CalledProcessError as e:
