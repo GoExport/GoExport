@@ -9,7 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Added a GUI for Windows and Linux. If you want to revert this change, use the launch parameter `--no-gui` or `-ngui` to launch GoExport in interactive CLI mode.
+- Added a GUI for Windows and Linux.
+- Separated GUI and interactive terminal modes to separate executables for better user experience. `GoExport_CLI.exe` is the command line version, while `GoExport.exe` is the GUI version.
 
 ## [0.15.4] - 2025-09-28
 
