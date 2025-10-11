@@ -1,4 +1,5 @@
 # Import pyqt6 modules UIC
+import os
 from PyQt6 import uic
 from PyQt6.QtWidgets import QMainWindow, QApplication, QMessageBox
 from PyQt6.QtGui import QIcon
@@ -6,6 +7,7 @@ import sys
 import helpers
 from modules.logger import logger
 from modules.flow import Controller
+from modules.capture import Capture
 
 import re
 
@@ -39,6 +41,7 @@ class Settings(QMainWindow):
         helpers.save("obs_websocket_port", self.OBSPort.value())
         helpers.save("obs_websocket_password", self.OBSPass.text())
         logger.info("Settings saved")
+        QMessageBox.information(self, "Settings", "Settings have been saved. Please restart the application for changes to take effect.")
         self.close()
 
 class Window(QMainWindow):
@@ -82,14 +85,35 @@ class Window(QMainWindow):
         self.actionExit.triggered.connect(self.close)
         self.Outro.stateChanged.connect(self.on_outro_changed)
 
+        if controller.capture.is_obs:
+            self.CaptureLabel.setText("Capture Method: OBS")
+        else:
+            self.CaptureLabel.setText("Capture Method: Native")
+
+    def restart(self):
+        python = sys.executable
+        os.execl(python, python, *sys.argv)
+
     def kickstart(self):
         if not self.verify_inputs():
             return
-        
+
+        # Ask if user wants to attach to existing clips
+        response = QMessageBox.StandardButton.No  # Default to not attach (reset)
+        if self.controller.editor.clips:
+            response = QMessageBox.question(
+                self,
+                "Attach to end",
+                "Would you like to attach this video that you are about to export to your already existing videos? (This will merge your previous video with the current video.)",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
+
         # Hide the window
         self.hide()
 
-        self.controller.reset()
+        # Reset the controller if not attaching
+        if response != QMessageBox.StandardButton.Yes:
+            self.controller.reset()
         self.controller.setpath()
         self.controller.start_server()
         self.controller.generate()
