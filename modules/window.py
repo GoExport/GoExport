@@ -1,7 +1,7 @@
 # Import pyqt6 modules UIC
 import os
 from PyQt6 import uic
-from PyQt6.QtWidgets import QMainWindow, QApplication, QMessageBox
+from PyQt6.QtWidgets import QMainWindow, QApplication, QMessageBox, QRadioButton, QButtonGroup
 from PyQt6.QtGui import QIcon
 import sys
 import helpers
@@ -52,6 +52,11 @@ class Window(QMainWindow):
         self.setWindowIcon(QIcon(helpers.get_path(helpers.get_app_folder(), helpers.get_config("DEFAULT_ASSETS_FILENAME"), "icon.png")))
         self.sizes = helpers.get_config("AVAILABLE_SIZES")
         self.controller = controller
+        
+        # Service radio buttons setup
+        self.service_buttons = {}
+        self.service_button_group = QButtonGroup(self)
+        self.setup_service_buttons()
 
         # Reload all variables
         self.reload_variables()
@@ -78,7 +83,6 @@ class Window(QMainWindow):
             )
         )
 
-        self.serviceButton_2.toggled.connect(lambda checked: controller.set_lvm("local") if checked else controller.set_lvm("ft"))
         self.Confirm.clicked.connect(self.kickstart)
         self.OutputFolder.clicked.connect(lambda: helpers.open_folder(self.controller.RECORDING_EDITED_PATH))
         self.actionSettings_2.triggered.connect(self.open_settings)
@@ -93,6 +97,50 @@ class Window(QMainWindow):
     def restart(self):
         python = sys.executable
         os.execl(python, python, *sys.argv)
+
+    def setup_service_buttons(self):
+        """Dynamically create radio buttons for each service in AVAILABLE_SERVICES"""
+        available_services = helpers.get_config("AVAILABLE_SERVICES")
+        layout = self.serviceButtonsLayout
+        
+        # Create a radio button for each service
+        first_button = True
+        for service_id, service_data in available_services.items():
+            # Skip services that don't have a name or are marked as hidden
+            if "name" not in service_data:
+                continue
+            if service_data.get("hidden", False) and helpers.get_config("DEBUG_MODE") is False:
+                continue
+                
+            radio_button = QRadioButton(service_data["name"])
+            
+            # Set the first button as checked by default
+            if first_button:
+                radio_button.setChecked(True)
+                first_button = False
+            
+            # Store reference to the button
+            self.service_buttons[service_id] = radio_button
+            
+            # Add to button group for mutual exclusivity
+            self.service_button_group.addButton(radio_button)
+            
+            # Connect to controller
+            radio_button.toggled.connect(
+                lambda checked, sid=service_id: self.on_service_changed(sid, checked)
+            )
+            
+            # Add to layout
+            layout.addWidget(radio_button)
+        
+        logger.info(f"Loaded {len(self.service_buttons)} services: {list(self.service_buttons.keys())}")
+
+    def on_service_changed(self, service_id, checked):
+        """Handle service selection change"""
+        if checked:
+            logger.info(f"Service changed to: {service_id}")
+            self.controller.set_lvm(service_id)
+            helpers.save("service", service_id)
 
     def kickstart(self):
         if not self.verify_inputs():
@@ -148,21 +196,27 @@ class Window(QMainWindow):
         return self.Outro.isChecked()    
 
     def on_outro_changed(self, state):
-        print("Outro checked:", self.Outro.isChecked())
+        logger.info(f"Outro checked: {self.Outro.isChecked()}")
 
     def open_settings(self):
         self.settings_window = Settings()
         self.settings_window.show()
 
     def reload_variables(self):
-        # Set between the Wrapper or FlashThemes based on the data.json
+        # Set the service based on data.json
         service = helpers.load("service", "local")
-        if service == "local":
-            self.serviceButton_2.setChecked(True)
-            self.controller.set_lvm("local")
+        
+        # Select the appropriate radio button if it exists
+        if service in self.service_buttons:
+            self.service_buttons[service].setChecked(True)
+            self.controller.set_lvm(service)
         else:
-            self.serviceButton.setChecked(True)
-            self.controller.set_lvm("ft")
+            # Fallback to first available service
+            if self.service_buttons:
+                first_service = list(self.service_buttons.keys())[0]
+                self.service_buttons[first_service].setChecked(True)
+                self.controller.set_lvm(first_service)
+                logger.warning(f"Service '{service}' not found, defaulting to '{first_service}'")
         
         # Set the movie ID
         movie_id = helpers.load("movie_id", "")
