@@ -381,5 +381,5 @@ class Controller:
             print(f"[bold yellow]Warning:[/bold yellow] Failed to add the outro: {e}")
         
         # Render the video
-        self.editor.render(self.RECORDING_EDITED, reencode=outro)
+        self.editor.render(self.RECORDING_EDITED, target_width=self.width, target_height=self.height, reencode=outro)
         return True
