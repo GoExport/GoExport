@@ -135,9 +135,9 @@ class Controller:
         logger.info(f"User chose {service}")
         service_data = AVAILABLE_SERVICES[service]
 
-        # Check if should host, testing, window name, and after load scripts
+        # Check if should host, template, window name, and after load scripts
         self.host = service_data.get("host", False)
-        self.testing = service_data.get("testing", False)
+        self.template = service_data.get("template", False)
         self.window = service_data.get("window", "GoExport Viewer")
         self.afterloadscripts = service_data.get("afterloadscripts", [])
 
@@ -250,7 +250,7 @@ class Controller:
                 logger.error("Could not start webdriver")
                 return False
 
-            if self.testing:
+            if self.template:
                 self.browser.inject_in_future('function obj_DoFSCommand(command, args) { switch (command) { case "start": startRecord = Date.now(); console.log("Video started " + startRecord); document.getElementById("obj").pause(); document.getElementById("obj").seek(0); break; case "stop": stopRecord = Date.now(); console.log("Video stopped " + stopRecord); break; } }')
 
             if not self.capture.is_obs:
