@@ -107,6 +107,11 @@ class Window(QMainWindow):
                 "Would you like to attach this video that you are about to export to your already existing videos? (This will merge your previous video with the current video.)",
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
             )
+        
+        # Check the user's resolution is not higher than the capture resolution
+        if helpers.exceeds_monitor_resolution(self.controller.width, self.controller.height):
+            QMessageBox.critical(self, "Error", "The selected resolution exceeds your monitor's resolution. Please select a lower resolution that is less or equal to your monitor's resolution.")
+            return
 
         # Hide the window
         self.hide()
