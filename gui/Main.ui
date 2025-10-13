@@ -44,24 +44,7 @@
          <property name="title">
           <string>Where is the video?</string>
          </property>
-         <layout class="QHBoxLayout" name="horizontalLayout">
-          <item>
-           <widget class="QRadioButton" name="serviceButton_2">
-            <property name="text">
-             <string>Wrapper Offline</string>
-            </property>
-            <property name="checked">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QRadioButton" name="serviceButton">
-            <property name="text">
-             <string>FlashThemes</string>
-            </property>
-           </widget>
-          </item>
+         <layout class="QHBoxLayout" name="serviceButtonsLayout">
          </layout>
         </widget>
        </item>
@@ -289,8 +272,6 @@
   </action>
  </widget>
  <tabstops>
-  <tabstop>serviceButton_2</tabstop>
-  <tabstop>serviceButton</tabstop>
   <tabstop>VideoId</tabstop>
   <tabstop>OwnerId</tabstop>
   <tabstop>AspectRatio</tabstop>
