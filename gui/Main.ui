@@ -244,7 +244,6 @@
      <string>GoExport</string>
     </property>
     <addaction name="actionSettings_2"/>
-    <addaction name="actionUpdate"/>
     <addaction name="separator"/>
     <addaction name="actionExit"/>
    </widget>
