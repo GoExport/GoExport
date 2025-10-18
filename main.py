@@ -4,6 +4,7 @@ import helpers
 from modules.compatibility import Compatibility
 from modules.flow import Controller
 from modules.logger import logger
+from modules.update import Update
 from rich.prompt import Confirm
 from rich import print
 from PyQt6.QtWidgets import QApplication
@@ -15,16 +16,19 @@ def welcome():
     print(Art)
     print(f"[green]{helpers.get_config('APP_NAME')} [bold]v{helpers.get_config('APP_VERSION')} {'[blue]BETA[/blue]' if helpers.get_config('APP_BETA') else ''}[/bold]")
     print(f"[yellow]Created by [link=https://lexian.dev][blue]LexianDEV[/blue][/link] and the outro was created by [link=https://www.youtube.com/@AlexDirector][blue]Alex Director[/blue][/link]")
+    update_message()
     print(f"[blue][link=https://discord.gg/ejwJYtQDrS]Join the Official GoExport Discord server[/link][/blue]")
+
+def update_message():
+    new_version = update.check()
+    if not new_version:
+        return
+    print(f"[green]New update available! [bold]v{new_version}")
 
 def disclaimer():
     print("[orange]Warning: [bold]This application will create and store logs on your system, they will never leave your system unless you choose to share them, in which case the logs may contain personally identifiable information such as system information, file paths, and other data. It is recommended that you exercise caution when sharing these logs.")
 
 def main():
-    # Initalize classes
-    compatibility = Compatibility()
-    controller = Controller()
-    
     try:
         # Run inital compatibility check
         logger.info("Please wait while we verify dependencies")
@@ -39,7 +43,7 @@ def main():
         # Check if no GUI is enabled
         if not helpers.has_console() or not helpers.is_frozen() and helpers.get_config("FORCE_WINDOW"):
             app = QApplication(sys.argv)
-            window = Window(controller)
+            window = Window(controller, update)
 
             # Initalization
             window.show()
@@ -134,6 +138,9 @@ def main():
         return False
 
 if __name__ == '__main__':
+    compatibility = Compatibility()
+    controller = Controller()
+    update = Update()
     try:
         if not main():
             logger.fatal("The application failed to finish")
