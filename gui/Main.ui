@@ -44,8 +44,7 @@
          <property name="title">
           <string>Where is the video?</string>
          </property>
-         <layout class="QHBoxLayout" name="serviceButtonsLayout">
-         </layout>
+         <layout class="QHBoxLayout" name="serviceButtonsLayout"/>
         </widget>
        </item>
        <item>
@@ -245,6 +244,7 @@
      <string>GoExport</string>
     </property>
     <addaction name="actionSettings_2"/>
+    <addaction name="actionUpdate"/>
     <addaction name="separator"/>
     <addaction name="actionExit"/>
    </widget>
@@ -268,6 +268,11 @@
   <action name="actionExit">
    <property name="text">
     <string>Exit</string>
+   </property>
+  </action>
+  <action name="actionUpdate">
+   <property name="text">
+    <string>Update (!)</string>
    </property>
   </action>
  </widget>
