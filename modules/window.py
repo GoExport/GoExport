@@ -8,6 +8,7 @@ import helpers
 from modules.logger import logger
 from modules.flow import Controller
 from modules.capture import Capture
+from modules.update import Update
 
 import re
 
@@ -45,13 +46,14 @@ class Settings(QMainWindow):
         self.close()
 
 class Window(QMainWindow):
-    def __init__(self, controller: Controller):
+    def __init__(self, controller: Controller, update: Update):
         super().__init__()
         uic.loadUi(helpers.get_path(None, helpers.get_config("DEFAULT_GUI_FILENAME"), "Main.ui"), self)
         self.setWindowTitle(f"{helpers.get_config('APP_NAME')} (v{helpers.get_config('APP_VERSION')})")
         self.setWindowIcon(QIcon(helpers.get_path(helpers.get_app_folder(), helpers.get_config("DEFAULT_ASSETS_FILENAME"), "icon.png")))
         self.sizes = helpers.get_config("AVAILABLE_SIZES")
         self.controller = controller
+        self._update = update
         
         # Service radio buttons setup
         self.service_buttons = {}
@@ -93,6 +95,8 @@ class Window(QMainWindow):
             self.CaptureLabel.setText("Capture Method: OBS")
         else:
             self.CaptureLabel.setText("Capture Method: Native")
+        
+        QMessageBox.information(self, "Update available!", f"{helpers.get_config("APP_NAME")} has an update available! v{self._update.current_update}")
 
     def restart(self):
         python = sys.executable
