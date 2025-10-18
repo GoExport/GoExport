@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added a GUI for Windows and Linux.
 - Separated GUI and interactive terminal modes to separate executables for better user experience. `GoExport_CLI.exe` is the command line version, while `GoExport.exe` is the GUI version.
 - Added 2K - 8K 16:9 resolutions (2560x1440, 3840x2160, 5120x2880, 7680x4320).
+- Added auto update detection and notification for both GUI and CLI versions.
 
 ### Fixed
 
