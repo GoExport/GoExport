@@ -197,16 +197,14 @@ def get_app_folder():
         return path
 
 def get_cwd():
-    """Return a reliable working directory for temp or runtime ops."""
     if is_frozen():
-        # When frozen, treat the app folder as the working directory
-        path = get_app_folder()
+        # In PyInstaller, sys._MEIPASS points to the temp folder containing bundled files
+        path = getattr(sys, "_MEIPASS", os.path.dirname(sys.executable))
         logger.debug(f"get_cwd() [frozen]: {path}")
-        return path
     else:
         path = os.getcwd()
         logger.debug(f"get_cwd() [not frozen]: {path}")
-        return path
+    return path
 
 def get_path(cwd: str | None = None, *parts):
     """Construct an absolute path, flattening any lists/tuples in parts."""
