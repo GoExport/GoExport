@@ -113,7 +113,7 @@ def main():
         else:
             # Ask if user wants to open the location of the video
             if helpers.get_param("no_input"):
-                open_folder = helpers.get_param("open_file")
+                open_folder = helpers.get_param("open_folder")
             else:
                 open_folder = Confirm.ask("Would you like to open the folder containing the video?", default=True)
             logger.info(f"User chose to open the folder: {open_folder}")
