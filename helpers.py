@@ -102,11 +102,6 @@ def os_is_mac():
     logger.debug(f"os_is_mac() -> {result}")
     return result
 
-def is_frozen():
-    result = getattr(sys, 'frozen', False)
-    logger.debug(f"is_frozen() -> {result}")
-    return result
-
 def has_console():
     """Check whether the process has a console window attached."""
     try:
@@ -186,14 +181,32 @@ def open_folder(path):
         logger.debug(f"open_folder() Exception: {e}")
         return False
 
-def get_cwd():
-    """Get the current working directory, using PyInstaller paths if applicable."""
+def is_frozen():
+    return getattr(sys, "frozen", False)
+
+def get_app_folder():
+    """Return the directory where the app's executable or main script resides."""
     if is_frozen():
-        logger.debug(f"get_cwd() using sys._MEIPASS: {sys._MEIPASS}")
-        return sys._MEIPASS
-    cwd = os.getcwd()
-    logger.debug(f"get_cwd() using os.getcwd(): {cwd}")
-    return cwd
+        path = os.path.dirname(sys.executable)
+        logger.debug(f"get_app_folder() [frozen]: {path}")
+        return path
+    else:
+        # __file__ is the script location, independent of cwd
+        path = os.path.dirname(os.path.abspath(__file__))
+        logger.debug(f"get_app_folder() [not frozen]: {path}")
+        return path
+
+def get_cwd():
+    """Return a reliable working directory for temp or runtime ops."""
+    if is_frozen():
+        # When frozen, treat the app folder as the working directory
+        path = get_app_folder()
+        logger.debug(f"get_cwd() [frozen]: {path}")
+        return path
+    else:
+        path = os.getcwd()
+        logger.debug(f"get_cwd() [not frozen]: {path}")
+        return path
 
 def get_path(cwd: str | None = None, *parts):
     """Construct an absolute path, flattening any lists/tuples in parts."""
@@ -224,16 +237,6 @@ def get_user_folder(folder: str):
     else:
         logger.debug(f"get_user_folder() unsupported OS")
         return None
-
-def get_app_folder():
-    if is_frozen():
-        result = os.path.dirname(sys.executable)
-        logger.debug(f"get_app_folder() frozen: {result}")
-        return result
-    else:
-        result = get_cwd()
-        logger.debug(f"get_app_folder() not frozen: {result}")
-        return result
 
 def get_config(variable: str, default: str = None):
     result = getattr(config, variable, default)
