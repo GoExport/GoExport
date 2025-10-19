@@ -112,10 +112,10 @@ def main():
                 helpers.open_folder(controller.PROJECT_FOLDER)
         else:
             # Ask if user wants to open the location of the video
-            if not helpers.get_param("no_input"):
-                open_folder = Confirm.ask("Would you like to open the folder containing the video?", default=True)
+            if helpers.get_param("no_input"):
+                open_folder = helpers.get_param("open_file")
             else:
-                open_folder = False
+                open_folder = Confirm.ask("Would you like to open the folder containing the video?", default=True)
             logger.info(f"User chose to open the folder: {open_folder}")
             if open_folder:
                 helpers.open_folder(controller.RECORDING_EDITED_PATH)
