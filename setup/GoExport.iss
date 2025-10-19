@@ -56,8 +56,21 @@ Source: "..\libs\screen-capture-recorder-x64.dll"; DestDir: "{app}\vendor"; Flag
 
 [Registry]
 ; Append {app} to the user's PATH
-Root: HKCU; Subkey: "Environment"; ValueType: expandsz; \
-    ValueName: "Path"; ValueData: "{olddata};{app}"; Flags: preservestringtype
+Root: "HKCU"; \
+    Subkey: "Environment"; \
+    ValueType: expandsz; \
+    ValueName: "Path"; \
+    ValueData: "{olddata};{app}"; \
+    Flags: preservestringtype
+;Add custom protocol goexport://
+Root: HKCR; Subkey: "goexport"; ValueType: string; ValueName: ""; \
+    ValueData: "URL:GoExport Protocol"; Flags: uninsdeletekey
+Root: HKCR; Subkey: "goexport"; ValueType: string; ValueName: "URL Protocol"; \
+    ValueData: ""; Flags: uninsdeletekey
+Root: HKCR; Subkey: "goexport\DefaultIcon"; ValueType: string; \
+    ValueData: "{app}\GoExport_CLI.exe,1"
+Root: HKCR; Subkey: "goexport\shell\open\command"; ValueType: string; \
+    ValueData: """{app}\GoExport_CLI.exe"" --protocol ""%1""";
 
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
