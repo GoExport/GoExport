@@ -6,6 +6,7 @@ on:
       - "b*"
     branches:
       - main
+      - master
   workflow_dispatch:
 
 jobs:
@@ -24,22 +25,12 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: "3.x"
-          cache: pip
 
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      # Add cache for dependencies directory
-      - name: Cache dependencies
-        uses: actions/cache@v4
-        id: cache-dependencies
-        with:
-          path: |
-            dependencies
-          key: ${{ runner.os }}-dependencies-v1
-
       - name: Download additional dependencies (Linux)
-        if: matrix.os == 'ubuntu-22.04' && steps.cache-dependencies.outputs.cache-hit != 'true'
+        if: matrix.os == 'ubuntu-22.04'
         run: |
           curl -L -o ffmpeg.tar.xz https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-linux64-gpl.tar.xz
           mkdir -p dependencies
@@ -61,10 +52,9 @@ jobs:
           rm flash_player_patched_ppapi_linux.x86_64.tar.gz
 
       - name: Download additional dependencies (Windows)
-        if: matrix.os == 'windows-latest' && steps.cache-dependencies.outputs.cache-hit != 'true'
+        if: matrix.os == 'windows-latest'
         run: |
           curl -L -o ffmpeg.zip https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip
-          mkdir -p dependencies
           tar -xf ffmpeg.zip -C dependencies
           move dependencies\ffmpeg-master-latest-win64-gpl dependencies\ffmpeg
           rm ffmpeg.zip
@@ -98,18 +88,9 @@ jobs:
           cp -r server/* dist/server/
           cp -r dependencies/* dist/dependencies/
 
-      - name: Cache Inno Setup installer
-        if: matrix.os == 'windows-latest'
-        uses: actions/cache@v4
-        id: cache-inno-setup
-        with:
-          path: |
-            setup/Output
-          key: ${{ runner.os }}-inno-setup-${{ hashFiles('setup/GoExport.iss', 'dist/**/*') }}
-
       - name: Build installer (Windows only)
         uses: Minionguyjpro/Inno-Setup-Action@v1.2.2
-        if: matrix.os == 'windows-latest' && steps.cache-inno-setup.outputs.cache-hit != 'true'
+        if: matrix.os == 'windows-2022'
         with:
           path: setup\GoExport.iss
           options: /O+
