@@ -10,6 +10,7 @@ __pycache__/
 *.pyd
 
 # Virtual environment directories
+venv-wsl/
 venv/
 env/
 .venv/
