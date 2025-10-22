@@ -104,9 +104,15 @@ def os_is_mac():
 
 def has_console():
     """Check whether the process has a console window attached."""
-    try:
-        return bool(ctypes.windll.kernel32.GetConsoleWindow())
-    except Exception:
+    if os_is_windows():
+        try:
+            return bool(ctypes.windll.kernel32.GetConsoleWindow())
+        except Exception:
+            return False
+    elif os_is_linux() or os_is_mac():
+        # Check if any of stdin/stdout/stderr is a TTY
+        return sys.stdin.isatty() or sys.stdout.isatty() or sys.stderr.isatty()
+    else:
         return False
 
 def is_admin():
