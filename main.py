@@ -42,6 +42,9 @@ def main():
 
         # Check if no GUI is enabled
         if not helpers.has_console() or not helpers.is_frozen() and helpers.get_config("FORCE_WINDOW"):
+            # Set no_input to True to prevent stdin prompts in GUI mode
+            helpers.set_param("no_input", True)
+            
             app = QApplication(sys.argv)
             window = Window(controller, update)
 

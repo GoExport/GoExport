@@ -26,6 +26,11 @@ def get_param(key: str):
     logger.debug(f"get_param() key={key} -> {value}")
     return value
 
+# Function to set the value of a parameter
+def set_param(key: str, value):
+    setattr(parameters, key, value)
+    logger.debug(f"set_param() key={key}, value={value}")
+
 # Save management functions
 def save(key: str, value):
     """
