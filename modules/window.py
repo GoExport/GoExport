@@ -10,22 +10,6 @@ from modules.flow import Controller
 from modules.capture import Capture
 from modules.update import Update
 
-import re
-
-ANSI_ESCAPE = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
-
-class EmittingStream:
-    def __init__(self, text_widget):
-        self.text_widget = text_widget
-
-    def write(self, text):
-        clean_text = ANSI_ESCAPE.sub('', text)  # Remove ANSI codes
-        if clean_text.strip():
-            self.text_widget.appendPlainText(clean_text.strip())
-
-    def flush(self):
-        pass
-
 class Settings(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -62,10 +46,6 @@ class Window(QMainWindow):
 
         # Reload all variables
         self.reload_variables()
-
-        # Redirect print output to Console widget
-        sys.stdout = EmittingStream(self.Console)
-        sys.stderr = EmittingStream(self.Console)
 
         self.AspectRatio.currentTextChanged.connect(self.update_resolutions)
         self.Resolution_2.currentTextChanged.connect(self.on_resolution_selected)
