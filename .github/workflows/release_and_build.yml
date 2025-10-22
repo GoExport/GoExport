@@ -90,7 +90,7 @@ jobs:
 
       - name: Build installer (Windows only)
         uses: Minionguyjpro/Inno-Setup-Action@v1.2.2
-        if: matrix.os == 'windows-2022'
+        if: matrix.os == 'windows-latest'
         with:
           path: setup\GoExport.iss
           options: /O+
