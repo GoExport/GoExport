@@ -211,4 +211,4 @@ PATH_DATA_FILE = ["data.json"]
 # Development Settings
 DEBUG_MODE = False
 SKIP_COMPAT = False
-FORCE_WINDOW = False
+FORCE_WINDOW = True
