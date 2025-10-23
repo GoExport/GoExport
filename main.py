@@ -41,7 +41,7 @@ def main():
         welcome()
 
         # Check if no GUI is enabled
-        if not helpers.has_console() or not helpers.is_frozen() and helpers.get_config("FORCE_WINDOW"):
+        if not helpers.has_console():
             app = QApplication(sys.argv)
             window = Window(controller, update)
 

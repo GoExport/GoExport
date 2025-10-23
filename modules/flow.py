@@ -47,13 +47,19 @@ class Controller:
             return False
 
         # Set auto edit
-        self.set_auto_edit()
+        if not self.set_auto_edit():
+            logger.error("Could not set auto edit")
+            return False
 
         # Set the owner ID
-        self.set_owner_id()
+        if not self.set_owner_id():
+            logger.error("Could not set owner ID")
+            return False
 
         # Set the movie ID
-        self.set_movie_id()
+        if not self.set_movie_id():
+            logger.error("Could not set movie ID")
+            return False
 
         self.setpath()
 
@@ -88,25 +94,47 @@ class Controller:
 
     def set_aspect_ratio(self, aspect_ratio: str|None = None):
         if not helpers.get_param("no_input"):
-            helpers.print_list(helpers.get_config("AVAILABLE_ASPECT_RATIOS"))
-            self.aspect_ratio = aspect_ratio or Prompt.ask("[bold red]Required:[/bold red] Please select your desired aspect ratio", choices=helpers.get_config("AVAILABLE_ASPECT_RATIOS"), default=helpers.load("aspect_ratio", helpers.get_config("AVAILABLE_ASPECT_RATIOS")[-1]), show_choices=False)
-            helpers.save("aspect_ratio", self.aspect_ratio)
+            # GUI/Interactive mode
+            if aspect_ratio is not None:
+                # GUI provided a value - validate it
+                if aspect_ratio not in helpers.get_config("AVAILABLE_ASPECT_RATIOS"):
+                    raise ValueError(f"Invalid aspect ratio: {aspect_ratio}")
+                self.aspect_ratio = aspect_ratio
+                helpers.save("aspect_ratio", self.aspect_ratio)
+            else:
+                # Interactive mode: show options and prompt
+                helpers.print_list(helpers.get_config("AVAILABLE_ASPECT_RATIOS"))
+                self.aspect_ratio = helpers.has_console() and Prompt.ask("[bold red]Required:[/bold red] Please select your desired aspect ratio", choices=helpers.get_config("AVAILABLE_ASPECT_RATIOS"), default=helpers.load("aspect_ratio", helpers.get_config("AVAILABLE_ASPECT_RATIOS")[-1]), show_choices=False)
+                helpers.save("aspect_ratio", self.aspect_ratio)
         else:
+            # CLI mode
             self.aspect_ratio = helpers.get_param("aspect_ratio")
-        if self.aspect_ratio not in helpers.get_config("AVAILABLE_ASPECT_RATIOS"):
-            raise ValueError(f"Invalid aspect ratio: {self.aspect_ratio}")
+            if self.aspect_ratio not in helpers.get_config("AVAILABLE_ASPECT_RATIOS"):
+                raise ValueError(f"Invalid aspect ratio: {self.aspect_ratio}")
+        
         logger.info(f"User chose {self.aspect_ratio}")
         return True
 
     def set_resolution(self, resolution: str|None = None):
         if not helpers.get_param("no_input"):
-            helpers.print_list(list(helpers.get_config("AVAILABLE_SIZES")[self.aspect_ratio].keys()))
-            self.resolution = resolution or Prompt.ask("[bold red]Required:[/bold red] Please select your desired resolution", choices=list(helpers.get_config("AVAILABLE_SIZES")[self.aspect_ratio].keys()), default=helpers.load("resolution", list(helpers.get_config("AVAILABLE_SIZES")[self.aspect_ratio].keys())[0]), show_choices=False)
-            helpers.save("resolution", self.resolution)
+            # GUI/Interactive mode
+            if resolution is not None:
+                # GUI provided a value - validate it
+                if resolution not in helpers.get_config("AVAILABLE_SIZES")[self.aspect_ratio]:
+                    raise ValueError(f"Invalid resolution: {resolution}")
+                self.resolution = resolution
+                helpers.save("resolution", self.resolution)
+            else:
+                # Interactive mode: show options and prompt
+                helpers.print_list(list(helpers.get_config("AVAILABLE_SIZES")[self.aspect_ratio].keys()))
+                self.resolution = helpers.has_console() and Prompt.ask("[bold red]Required:[/bold red] Please select your desired resolution", choices=list(helpers.get_config("AVAILABLE_SIZES")[self.aspect_ratio].keys()), default=helpers.load("resolution", list(helpers.get_config("AVAILABLE_SIZES")[self.aspect_ratio].keys())[0]), show_choices=False)
+                helpers.save("resolution", self.resolution)
         else:
+            # CLI mode
             self.resolution = helpers.get_param("resolution")
-        if self.resolution not in helpers.get_config("AVAILABLE_SIZES")[self.aspect_ratio]:
-            raise ValueError(f"Invalid resolution: {self.resolution}")
+            if self.resolution not in helpers.get_config("AVAILABLE_SIZES")[self.aspect_ratio]:
+                raise ValueError(f"Invalid resolution: {self.resolution}")
+        
         logger.info(f"User chose {self.resolution}")
         self.width, self.height, self.widescreen = helpers.get_config("AVAILABLE_SIZES")[self.aspect_ratio][self.resolution]
         if self.width > 1280 and self.height > 720:
@@ -123,15 +151,23 @@ class Controller:
         AVAILABLE_SERVICES = helpers.get_config("AVAILABLE_SERVICES")
         options = list(AVAILABLE_SERVICES.keys())
 
-        # Set the LVM
         if not helpers.get_param("no_input"):
-            # Specifically this; use function argument or ask the user
-            service = service or Prompt.ask("[bold red]Required:[/bold red] Please select your desired LVM", choices=options, default=helpers.load("service", options[0]))
-            helpers.save("service", service)
+            # GUI/Interactive mode
+            if service is not None:
+                # GUI provided a value - validate it
+                if service not in options:
+                    raise ValueError(f"Invalid service: {service}")
+                helpers.save("service", service)
+            else:
+                # Interactive mode: prompt user
+                service = helpers.has_console() and Prompt.ask("[bold red]Required:[/bold red] Please select your desired LVM", choices=options, default=helpers.load("service", options[0]))
+                helpers.save("service", service)
         else:
+            # CLI mode
             service = helpers.get_param("service")
-        if service not in options:
-            raise ValueError(f"Invalid service: {service}")
+            if service not in options:
+                raise ValueError(f"Invalid service: {service}")
+        
         logger.info(f"User chose {service}")
         service_data = AVAILABLE_SERVICES[service]
 
@@ -158,42 +194,77 @@ class Controller:
         # Asks if the user wants automated editing
         if self.auto_edit is None:
             if not helpers.get_param("no_input"):
-                self.auto_edit = auto_edit or Confirm.ask("Would you like to enable automated editing?", default=True)
+                # GUI mode: use provided value or default to True
+                if auto_edit is not None:
+                    self.auto_edit = auto_edit
+                else:
+                    # Interactive mode: prompt user
+                    self.auto_edit = helpers.has_console() and Confirm.ask("Would you like to enable automated editing?", default=True)
             else:
+                # CLI mode: use parameter or default
                 self.auto_edit = helpers.get_param("auto_edit") or True
             logger.info(f"User chose to enable auto editing: {self.auto_edit}")
+        return True
 
     def set_owner_id(self, owner_id: int|None = None):
         # Required: Owner Id
         if 'movieOwnerId' in self.svr_required:
-            while True:
-                if not helpers.get_param("no_input"):
-                    self.ownerid = owner_id or IntPrompt.ask("[bold red]Required:[/bold red] Please enter the owner ID", default=helpers.load("owner_id"))
+            if not helpers.get_param("no_input"):
+                # GUI/Interactive mode
+                if owner_id is not None:
+                    # GUI provided a value
+                    self.ownerid = owner_id
                     helpers.save("owner_id", self.ownerid)
+                    logger.info(f"User set owner ID: {self.ownerid}")
                 else:
-                    self.ownerid = helpers.get_param("owner_id")
-                logger.info(f"User entered owner ID: {self.ownerid}")
-                if self.ownerid:
-                    break
-                print("[bold red]Error:[/bold red] Owner ID cannot be empty. Please enter a valid owner ID.")
+                    # Interactive mode: prompt until valid
+                    while True:
+                        self.ownerid = helpers.has_console() and IntPrompt.ask("[bold red]Required:[/bold red] Please enter the owner ID", default=helpers.load("owner_id"))
+                        if self.ownerid:
+                            helpers.save("owner_id", self.ownerid)
+                            logger.info(f"User entered owner ID: {self.ownerid}")
+                            break
+                        print("[bold red]Error:[/bold red] Owner ID cannot be empty. Please enter a valid owner ID.")
+            else:
+                # CLI mode
+                self.ownerid = helpers.get_param("owner_id")
+                if not self.ownerid:
+                    logger.error("Owner ID is required but not provided in CLI mode")
+                    return False
+                logger.info(f"CLI owner ID: {self.ownerid}")
         else:
             self.ownerid = None
+        return True
 
-    def set_movie_id(self, movie_id: int|None = None):
+    def set_movie_id(self, movie_id: str|None = None):
         # Required: Movie Id
         if 'movieId' in self.svr_required:
-            while True:
-                if not helpers.get_param("no_input"):
-                    self.movieid = movie_id or Prompt.ask("[bold red]Required:[/bold red] Please enter the movie ID", default=helpers.load("movie_id"))
+            if not helpers.get_param("no_input"):
+                # GUI/Interactive mode
+                if movie_id is not None:
+                    # GUI provided a value
+                    self.movieid = movie_id
                     helpers.save("movie_id", self.movieid)
+                    logger.info(f"User set movie ID: {self.movieid}")
                 else:
-                    self.movieid = helpers.get_param("movie_id")
-                logger.info(f"User entered movie ID: {self.movieid}")
-                if self.movieid:
-                    break
-                print("[bold red]Error:[/bold red] Movie ID cannot be empty. Please enter a valid movie ID.")
+                    # Interactive mode: prompt until valid
+                    while True:
+                        self.movieid = helpers.has_console() and Prompt.ask("[bold red]Required:[/bold red] Please enter the movie ID", default=helpers.load("movie_id"))
+                        if self.movieid:
+                            helpers.save("movie_id", self.movieid)
+                            logger.info(f"User entered movie ID: {self.movieid}")
+                            break
+                        print("[bold red]Error:[/bold red] Movie ID cannot be empty. Please enter a valid movie ID.")
+            else:
+                # CLI mode
+                self.movieid = helpers.get_param("movie_id")
+                if not self.movieid:
+                    logger.error("Movie ID is required but not provided in CLI mode")
+                    return False
+                logger.info(f"CLI movie ID: {self.movieid}")
         else:
             self.movieid = None
+        return True
 
     def reset(self):
         self.editor.reset_clips()

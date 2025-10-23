@@ -108,6 +108,8 @@ def os_is_mac():
     return result
 
 def has_console():
+    if not is_frozen() and get_config("FORCE_WINDOW"):
+        return False
     """Check whether the process has a console window attached."""
     if os_is_windows():
         try:

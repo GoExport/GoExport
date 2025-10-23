@@ -53,21 +53,8 @@ class Window(QMainWindow):
 
         self.ui.AspectRatio.currentTextChanged.connect(self.update_resolutions)
         self.ui.Resolution_2.currentTextChanged.connect(self.on_resolution_selected)
-        self.ui.VideoId.editingFinished.connect(
-            lambda: (
-                controller.set_movie_id(text)
-                if (text := self.ui.VideoId.text().strip())
-                else None
-            )
-        )
-
-        self.ui.OwnerId.editingFinished.connect(
-            lambda: (
-                controller.set_owner_id(value)
-                if (value := self.ui.OwnerId.value())
-                else None
-            )
-        )
+        self.ui.VideoId.editingFinished.connect(self.on_movie_id_changed)
+        self.ui.OwnerId.editingFinished.connect(self.on_owner_id_changed)
 
         self.ui.Confirm.clicked.connect(self.kickstart)
         self.ui.OutputFolder.clicked.connect(lambda: helpers.open_folder(self.controller.RECORDING_EDITED_PATH))
@@ -80,7 +67,8 @@ class Window(QMainWindow):
         else:
             self.ui.CaptureLabel.setText("Capture Method: Native")
         
-        QMessageBox.information(self, "Update available!", f"{helpers.get_config("APP_NAME")} has an update available! v{self._update.current_update}")
+        if self._update.current_update:
+            QMessageBox.information(self, "Update available!", f"{helpers.get_config('APP_NAME')} has an update available! v{self._update.current_update}")
 
     def restart(self):
         python = sys.executable
@@ -127,8 +115,42 @@ class Window(QMainWindow):
         """Handle service selection change"""
         if checked:
             logger.info(f"Service changed to: {service_id}")
-            self.controller.set_lvm(service_id)
-            helpers.save("service", service_id)
+            try:
+                if not self.controller.set_lvm(service_id):
+                    QMessageBox.critical(self, "Error", f"Failed to set service to {service_id}")
+                    return
+                helpers.save("service", service_id)
+            except ValueError as e:
+                QMessageBox.critical(self, "Error", str(e))
+                logger.error(f"Invalid service selection: {e}")
+
+    def on_movie_id_changed(self):
+        """Handle movie ID input change"""
+        text = self.ui.VideoId.text().strip()
+        if text:  # Only try to set if there's actual text
+            try:
+                if not self.controller.set_movie_id(text):
+                    QMessageBox.critical(self, "Error", "Failed to set movie ID")
+                    return
+                logger.info(f"Movie ID set to: {text}")
+            except ValueError as e:
+                QMessageBox.critical(self, "Error", str(e))
+                logger.error(f"Invalid movie ID: {e}")
+        # If empty, don't set anything - will be validated later
+
+    def on_owner_id_changed(self):
+        """Handle owner ID input change"""
+        value = self.ui.OwnerId.value()
+        if value > 0:  # Only try to set if there's a valid value
+            try:
+                if not self.controller.set_owner_id(value):
+                    QMessageBox.critical(self, "Error", "Failed to set owner ID")
+                    return
+                logger.info(f"Owner ID set to: {value}")
+            except ValueError as e:
+                QMessageBox.critical(self, "Error", str(e))
+                logger.error(f"Invalid owner ID: {e}")
+        # If 0 or negative, don't set anything - will be validated later
 
     def kickstart(self):
         if not self.verify_inputs():
@@ -170,14 +192,50 @@ class Window(QMainWindow):
         self.ui.OutputFolder.setEnabled(True)
 
     def verify_inputs(self):
-        if not hasattr(self.controller, 'movieid') or not self.controller.movieid:
-            logger.error("Movie ID not set")
-            QMessageBox.critical(self, "Error", "Movie ID not set")
+        """Verify all required inputs are valid before starting export"""
+        # Check if movieId is required and validate it
+        if hasattr(self.controller, 'svr_required') and 'movieId' in self.controller.svr_required:
+            movie_id = self.ui.VideoId.text().strip()
+            if not movie_id:
+                QMessageBox.critical(self, "Error", "Movie ID is required for this service but not provided")
+                return False
+            try:
+                if not self.controller.set_movie_id(movie_id):
+                    QMessageBox.critical(self, "Error", "Failed to set movie ID")
+                    return False
+            except ValueError as e:
+                QMessageBox.critical(self, "Error", f"Invalid movie ID: {e}")
+                return False
+        
+        # Check if movieOwnerId is required and validate it
+        if hasattr(self.controller, 'svr_required') and 'movieOwnerId' in self.controller.svr_required:
+            owner_id = self.ui.OwnerId.value()
+            if owner_id <= 0:
+                QMessageBox.critical(self, "Error", "Owner ID is required for this service but not provided")
+                return False
+            try:
+                if not self.controller.set_owner_id(owner_id):
+                    QMessageBox.critical(self, "Error", "Failed to set owner ID")
+                    return False
+            except ValueError as e:
+                QMessageBox.critical(self, "Error", f"Invalid owner ID: {e}")
+                return False
+        
+        # Validate aspect ratio and resolution
+        try:
+            aspect_ratio = self.ui.AspectRatio.currentText()
+            if not self.controller.set_aspect_ratio(aspect_ratio):
+                QMessageBox.critical(self, "Error", "Failed to set aspect ratio")
+                return False
+                
+            resolution = self.ui.Resolution_2.currentText()
+            if not self.controller.set_resolution(resolution):
+                QMessageBox.critical(self, "Error", "Failed to set resolution")
+                return False
+        except ValueError as e:
+            QMessageBox.critical(self, "Error", f"Invalid resolution settings: {e}")
             return False
-        if not hasattr(self.controller, 'ownerid') or self.controller.ownerid == 0:
-            logger.error("Owner ID not set")
-            QMessageBox.critical(self, "Error", "Owner ID not set")
-            return False
+        
         return True
 
     def should_include_outro(self):
@@ -197,24 +255,30 @@ class Window(QMainWindow):
         # Select the appropriate radio button if it exists
         if service in self.service_buttons:
             self.service_buttons[service].setChecked(True)
-            self.controller.set_lvm(service)
+            try:
+                if not self.controller.set_lvm(service):
+                    logger.error(f"Failed to set service to {service}")
+            except ValueError as e:
+                logger.error(f"Invalid service '{service}': {e}")
         else:
             # Fallback to first available service
             if self.service_buttons:
                 first_service = list(self.service_buttons.keys())[0]
                 self.service_buttons[first_service].setChecked(True)
-                self.controller.set_lvm(first_service)
+                try:
+                    if not self.controller.set_lvm(first_service):
+                        logger.error(f"Failed to set fallback service to {first_service}")
+                except ValueError as e:
+                    logger.error(f"Invalid fallback service '{first_service}': {e}")
                 logger.warning(f"Service '{service}' not found, defaulting to '{first_service}'")
         
-        # Set the movie ID
+        # Set the movie ID - just populate the UI, don't validate yet
         movie_id = helpers.load("movie_id", "")
         self.ui.VideoId.setText(movie_id)
-        self.controller.set_movie_id(movie_id)
 
-        # Set the owner ID
+        # Set the owner ID - just populate the UI, don't validate yet
         owner_id = helpers.load("owner_id", 0)
         self.ui.OwnerId.setValue(owner_id)
-        self.controller.set_owner_id(owner_id)
 
         # aspect ratio combo
         self.ui.AspectRatio.clear()
@@ -224,15 +288,28 @@ class Window(QMainWindow):
         aspect_ratio = helpers.load("aspect_ratio", "4:3")
         resolution = helpers.load("resolution", "240p")
         self.ui.AspectRatio.setCurrentText(aspect_ratio)
-        self.controller.set_aspect_ratio(aspect_ratio)
+        try:
+            if not self.controller.set_aspect_ratio(aspect_ratio):
+                logger.error(f"Failed to set aspect ratio to {aspect_ratio}")
+        except ValueError as e:
+            logger.error(f"Invalid aspect ratio '{aspect_ratio}': {e}")
+        
         self.update_resolutions(aspect_ratio)
 
         # Set the resolution
         self.ui.Resolution_2.setCurrentText(resolution)
-        self.controller.set_resolution(resolution)
+        try:
+            if not self.controller.set_resolution(resolution):
+                logger.error(f"Failed to set resolution to {resolution}")
+        except ValueError as e:
+            logger.error(f"Invalid resolution '{resolution}': {e}")
 
-        # Disable auto editing
-        self.controller.set_auto_edit(True)
+        # Enable auto editing
+        try:
+            if not self.controller.set_auto_edit(True):
+                logger.error("Failed to set auto edit")
+        except Exception as e:
+            logger.error(f"Error setting auto edit: {e}")
 
     def update_resolutions(self, aspect_ratio):
         self.ui.Resolution_2.disconnect()
@@ -241,14 +318,31 @@ class Window(QMainWindow):
         self.ui.Resolution_2.clear()
         if aspect_ratio in self.sizes:
             self.ui.Resolution_2.addItems(self.sizes[aspect_ratio].keys())
-        self.controller.set_aspect_ratio(aspect_ratio)
+        
+        try:
+            if not self.controller.set_aspect_ratio(aspect_ratio):
+                logger.error(f"Failed to set aspect ratio to {aspect_ratio}")
+        except ValueError as e:
+            logger.error(f"Invalid aspect ratio '{aspect_ratio}': {e}")
+        
         self.ui.Resolution_2.currentTextChanged.connect(self.on_resolution_selected)
-        self.controller.set_resolution(self.ui.Resolution_2.currentText())
+        
+        # Set the current resolution
+        current_resolution = self.ui.Resolution_2.currentText()
+        if current_resolution:
+            try:
+                if not self.controller.set_resolution(current_resolution):
+                    logger.error(f"Failed to set resolution to {current_resolution}")
+            except ValueError as e:
+                logger.error(f"Invalid resolution '{current_resolution}': {e}")
 
     def on_resolution_selected(self, resolution):
         if not resolution:
             return
-        aspect_ratio = self.ui.AspectRatio.currentText()
-        if aspect_ratio in self.sizes and resolution in self.sizes[aspect_ratio]:
-            width, height, widescreen = self.sizes[aspect_ratio][resolution]
-        self.controller.set_resolution(resolution)
+        try:
+            if not self.controller.set_resolution(resolution):
+                logger.error(f"Failed to set resolution to {resolution}")
+                QMessageBox.critical(self, "Error", f"Failed to set resolution to {resolution}")
+        except ValueError as e:
+            logger.error(f"Invalid resolution '{resolution}': {e}")
+            QMessageBox.critical(self, "Error", f"Invalid resolution: {e}")
