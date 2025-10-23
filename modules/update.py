@@ -31,7 +31,7 @@ class Update:
         last_checked = helpers.load("updates_checked", 0)
 
         if current_time < last_checked:
-            self.current_update = helpers.load("update_needed")
+            self.current_update = helpers.load("update_needed", 0)
             return False
 
         helpers.save("updates_checked", adjusted)
