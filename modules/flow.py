@@ -20,11 +20,6 @@ class Controller:
 
     # Set up
     def setup(self):
-        # Check if OBS is connected (non-windows)
-        if not self.capture.is_obs and not helpers.os_is_windows():
-            logger.error("Native capture is only supported on Windows, you must have OBS running and websockets enabled.")
-            return False
-
         # Set the aspect ratio
         if not self.set_aspect_ratio():
             logger.error("Could not set aspect ratio")
