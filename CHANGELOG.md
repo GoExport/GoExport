@@ -7,17 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.16.0] - 2025-10-09
 
+This is a large update for both GUI and CLI versions, as well as GoExport for Linux. It fixes various bugs and improves compatibility.
+
+Huge thanks to the following who helped debug, test, and provide feedback for this update:
+
+- @Go!Makers
+- @QuaixiAnimations
+- @GoSkit2
+
 ### Added
 
 - Added a GUI for Windows and Linux.
 - Separated GUI and interactive terminal modes to separate executables for better user experience. `GoExport_CLI.exe` is the command line version, while `GoExport.exe` is the GUI version.
 - Added 2K - 8K 16:9 resolutions (2560x1440, 3840x2160, 5120x2880, 7680x4320).
 - Added auto update detection and notification for both GUI and CLI versions.
+- Added Native Capture for Linux using `ffmpeg` (which is already included) as an alternative to using OBS for screen capturing.
 
 ### Fixed
 
 - Fixed an issue where GoExport would downscale your video to 720p even if you selected a higher resolution. Credits: [@QuaixiAnimations](https://www.youtube.com/@QuaixiAnimations) and [@GoSkit2](https://www.youtube.com/@GoSkit2)
 - Fixed an issue where GoExport would require `Glibc 2.38` on Linux, now requires `Glibc 2.35` instead for improved compatibility. Credits: [@Go!Makers](https://www.youtube.com/@goskit2)
+- Added support for more file managers on Linux including Dolphin, Nautilus, Thunar, and PCManFM. Credits: [@Go!Makers](https://www.youtube.com/@goskit2)
 
 ## [0.15.4] - 2025-09-28
 
