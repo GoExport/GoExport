@@ -1,5 +1,6 @@
 # GoExport
 import sys
+import os
 import helpers
 from modules.compatibility import Compatibility
 from modules.flow import Controller
@@ -42,14 +43,27 @@ def main():
 
         # Check if no GUI is enabled
         if not helpers.has_console():
-            app = QApplication(sys.argv)
-            window = Window(controller, update)
+            # Set up Qt platform plugin debugging for Linux
+            if helpers.os_is_linux():
+                os.environ['QT_DEBUG_PLUGINS'] = '1'
+                logger.info("Linux detected - Qt platform debugging enabled")
+                
+            try:
+                app = QApplication(sys.argv)
+                window = Window(controller, update)
 
-            # Initalization
-            window.show()
+                # Initalization
+                window.show()
 
-            app.exec()
-            sys.exit(0)
+                app.exec()
+                sys.exit(0)
+            except Exception as e:
+                logger.fatal(f"Failed to initialize GUI: {e}")
+                print(f"[red bold]GUI initialization failed: {e}")
+                print("[yellow]If you're on Linux using X11/XOrg, you may need to install Qt platform plugins:")
+                print("[yellow]sudo apt-get install libxcb-xinerama0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-shape0 libxkbcommon-x11-0 libxcb-cursor0")
+                print("[yellow]Or try running with: QT_QPA_PLATFORM=wayland python main.py")
+                return False
 
         while True:
             if not controller.setup():
