@@ -50,6 +50,23 @@ class Capture:
                 "-ar", "44100",  # Set audio sample rate to avoid bass boosting or distortion
                 output,
             ]
+        elif helpers.os_is_linux():
+            command = [
+                helpers.get_path(helpers.get_app_folder(), helpers.get_config("PATH_FFMPEG_LINUX")), "-y",
+                "-f", "x11grab",
+                "-s", f"{width}x{height}",
+                "-i", ":0.0",
+                "-f", "pulse",
+                "-i", "default",
+                "-c:v", "libx264",
+                "-preset", "ultrafast",
+                "-crf", "23",
+                "-pix_fmt", "yuv420p",
+                "-c:a", "aac",
+                "-b:a", "128k",
+                "-ar", "44100",
+                output,
+            ]
         else:
             logger.error("Unsupported OS")
             return False
