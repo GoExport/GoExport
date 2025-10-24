@@ -7,6 +7,7 @@ class Update:
         repo = helpers.get_config("APP_REPO")
         self.repo_api = f"https://api.github.com/repos/{repo}/releases/latest"
         self.version_key = "latest_version"
+        self.current_update = None  # Initialize the attribute
 
     def _check_for_update(self):
         try:
@@ -31,7 +32,7 @@ class Update:
         last_checked = helpers.load("updates_checked", 0)
 
         if current_time < last_checked:
-            self.current_update = helpers.load("update_needed", 0)
+            self.current_update = helpers.load("update_needed", False)  # Use False as default
             return False
 
         helpers.save("updates_checked", adjusted)
