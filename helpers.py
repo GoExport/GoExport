@@ -183,9 +183,42 @@ def open_folder(path):
             subprocess.Popen(['explorer', path])
             return True
         elif os_is_linux():
-            logger.debug(f"open_folder() using xdg-open for path={path}")
-            subprocess.run(["xdg-open", path])
-            return True
+            logger.debug(f"open_folder() using Linux file manager for path={path}")
+            
+            # Try multiple file managers in order of preference
+            file_managers = [
+                "nautilus",      # GNOME Files
+                "dolphin",       # KDE Dolphin
+                "thunar",        # XFCE
+                "pcmanfm",       # LXDE/LXQt
+                "nemo",          # Cinnamon
+                "caja",          # MATE
+                "xdg-open"       # Fallback to xdg-open
+            ]
+            
+            for fm in file_managers:
+                try:
+                    # Check if the file manager exists
+                    subprocess.run(["which", fm], check=True, 
+                                capture_output=True, timeout=5)
+                    
+                    # Try to open the folder
+                    result = subprocess.run([fm, path], 
+                                        capture_output=True, timeout=10)
+                    
+                    if result.returncode == 0:
+                        logger.debug(f"Successfully opened folder with {fm}")
+                        return True
+                    else:
+                        logger.debug(f"{fm} failed with return code {result.returncode}")
+                        
+                except (subprocess.CalledProcessError, subprocess.TimeoutExpired, FileNotFoundError) as e:
+                    logger.debug(f"{fm} not available or failed: {e}")
+                    continue
+            
+            # If all file managers fail, try a direct approach
+            logger.warning("All file managers failed, trying fallback methods")
+            return False
         else:
             logger.debug(f"open_folder() unsupported OS for path={path}")
             return False
