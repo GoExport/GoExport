@@ -62,6 +62,19 @@ Simply watch the [**guide video**](https://youtu.be/YpbHqPGz4co) on how to get y
 
 </details>
 
+<details>
+  <summary><strong>GUI won't load on Linux (XOrg/X11)</strong></summary>
+
+If the GUI works on Wayland but not on XOrg/X11 (common on Linux Mint and VMware), you're missing Qt platform plugins. See the [Linux GUI Troubleshooting Guide](docs/LINUX_GUI_TROUBLESHOOTING.md) for the solution.
+
+**Quick fix for Ubuntu/Debian/Mint:**
+
+```bash
+sudo apt-get install libxcb-xinerama0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-shape0 libxkbcommon-x11-0 libxcb-cursor0
+```
+
+</details>
+
 If you have any questions or still need support, feel free to reach out to us on our [Discord server](https://discord.gg/ejwJYtQDrS).
 
 # 📂 Installation
