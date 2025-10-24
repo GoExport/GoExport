@@ -7,7 +7,7 @@ class Update:
         repo = helpers.get_config("APP_REPO")
         self.repo_api = f"https://api.github.com/repos/{repo}/releases/latest"
         self.version_key = "latest_version"
-        self.current_update = None  # Initialize the attribute
+        self.current_update = None
 
     def _check_for_update(self):
         try:
