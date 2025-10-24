@@ -22,14 +22,26 @@ class Editor:
             raise IndexError(f"Clip ID {clip_id} is out of range.")
         
         try:
-            output = helpers.try_command(
-                helpers.get_path(helpers.get_app_folder(), helpers.get_config("PATH_FFPROBE_WINDOWS")),
-                "-v", "error",
-                "-show_entries", "format=duration",
-                "-of", "default=noprint_wrappers=1:nokey=1",
-                self.clips[clip_id],
-                return_output=True
-            )
+            if helpers.os_is_windows():
+                output = helpers.try_command(
+                    helpers.get_path(helpers.get_app_folder(), helpers.get_config("PATH_FFPROBE_WINDOWS")),
+                    "-v", "error",
+                    "-show_entries", "format=duration",
+                    "-of", "default=noprint_wrappers=1:nokey=1",
+                    self.clips[clip_id],
+                    return_output=True
+                )
+            elif helpers.os_is_linux():
+                output = helpers.try_command(
+                    helpers.get_path(helpers.get_app_folder(), helpers.get_config("PATH_FFPROBE_LINUX")),
+                    "-v", "error",
+                    "-show_entries", "format=duration",
+                    "-of", "default=noprint_wrappers=1:nokey=1",
+                    self.clips[clip_id],
+                    return_output=True
+                )
+            else:
+                raise NotImplementedError("Unsupported OS for getting clip length.")
             return float(output)
         except Exception as e:
             raise RuntimeError(f"Error getting length of clip {clip_id}: {e}")
@@ -86,8 +98,26 @@ class Editor:
                 print(f"All clips: {self.clips}")
             except Exception as e:
                 raise RuntimeError(f"Error trimming clip {clip_id}: {e}")
+        elif helpers.os_is_linux():
+            try:
+                # Get the clip's file extension
+                ext = self.clips[clip_id].split(".")[-1]
+                trimmed_path = self.clips[clip_id].replace(f".{ext}", f"_trimmed_{start}_{end}.{ext}")
+                helpers.try_command(
+                    helpers.get_path(helpers.get_app_folder(), helpers.get_config("PATH_FFMPEG_LINUX")),
+                    "-ss", str(start),
+                    "-i", self.clips[clip_id],
+                    "-c", "copy",
+                    "-t", str(end - start),
+                    trimmed_path
+                )
+                self.clips[clip_id] = trimmed_path
+                print(f"Clip {clip_id} trimmed: {str(start)} - {str(end)}")
+                print(f"All clips: {self.clips}")
+            except Exception as e:
+                raise RuntimeError(f"Error trimming clip {clip_id}: {e}")
         else:
-            raise NotImplementedError("Trimming is only implemented for Windows using FFmpeg.")
+            raise NotImplementedError("Trimming is not implemented for this OS.")
 
     def export_to_file(self):
         """
@@ -117,7 +147,12 @@ class Editor:
             raise ValueError("No clips to render.")
 
         try:
-            ffmpeg = helpers.get_path(helpers.get_app_folder(), helpers.get_config("PATH_FFMPEG_WINDOWS"))
+            if helpers.os_is_windows():
+                ffmpeg = helpers.get_path(helpers.get_app_folder(), helpers.get_config("PATH_FFMPEG_WINDOWS"))
+            elif helpers.os_is_linux():
+                ffmpeg = helpers.get_path(helpers.get_app_folder(), helpers.get_config("PATH_FFMPEG_LINUX"))
+            else:
+                raise NotImplementedError("Unsupported OS for rendering.")
 
             if not reencode:
                 # ---------- FAST PATH: concat demuxer + stream copy ----------
