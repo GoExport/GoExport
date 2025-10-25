@@ -51,7 +51,7 @@ class Interface:
         start_url = helpers.convert_to_file_url(
             helpers.get_path(helpers.get_app_folder(), helpers.get_config("DEFAULT_ASSETS_FILENAME"), "start.html")
         ) + f"?obs={str(obs).lower()}"
-        self.options.add_argument(f"--app={start_url}")
+        # self.options.add_argument(f"--app={start_url}")
         self.options.add_experimental_option("excludeSwitches", ["enable-automation"])
         self.options.binary_location = chromium
         self.service = Service(executable_path=chromedriver)
