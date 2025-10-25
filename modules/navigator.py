@@ -25,23 +25,34 @@ class Interface:
             raise RuntimeError("Unsupported OS")
 
         self.options = Options()
-        self.options.add_argument("--disable-infobars")
-        self.options.add_argument("--disable-bookmarks-bar")
-        self.options.add_argument("--kiosk")
-        self.options.add_argument("--allow-running-insecure-content")
-        self.options.add_argument("force-device-scale-factor=1")
-        self.options.add_argument("--high-dpi-support=1")
-        self.options.add_argument(f"--ppapi-flash-path={flash_path}")
-        self.options.add_argument(f"--ppapi-flash-version={flash_ver}")
-        self.options.add_argument("--enable-unsafe-publish")
-        self.options.add_argument(f"--user-data-dir={helpers.get_path(None, helpers.get_config("DEFAULT_OUTPUT_FILENAME"), f"{helpers.get_timestamp()}_chrome_profile_temp")}")  # Use a temporary profile directory
+
+        if helpers.os_is_windows():
+            self.options.add_argument("--disable-infobars")
+            self.options.add_argument("--disable-bookmarks-bar")
+            self.options.add_argument("--kiosk")
+            self.options.add_argument("--allow-running-insecure-content")
+            self.options.add_argument("--force-device-scale-factor=1")
+            self.options.add_argument("--high-dpi-support=1")
+            self.options.add_argument(f"--ppapi-flash-path={flash_path}")
+            self.options.add_argument(f"--ppapi-flash-version={flash_ver}")
+            self.options.add_argument("--enable-unsafe-publish")
+        elif helpers.os_is_linux():
+            self.options.add_argument("--disable-infobars")
+            self.options.add_argument("--disable-bookmarks-bar")
+            self.options.add_argument("--kiosk")
+            self.options.add_argument("--no-sandbox")
+            self.options.add_argument("--force-device-scale-factor=1")
+            self.options.add_argument("--high-dpi-support=1")
+            self.options.add_argument(f"--ppapi-flash-path={flash_path}")
+            self.options.add_argument(f"--ppapi-flash-version={flash_ver}")
+
+        # Common options for both OSes
+        self.options.add_argument(f"--user-data-dir={helpers.get_path(None, helpers.get_config("DEFAULT_OUTPUT_FILENAME"), f"{helpers.get_timestamp()}_chrome_profile_temp")}")
         start_url = helpers.convert_to_file_url(
             helpers.get_path(helpers.get_app_folder(), helpers.get_config("DEFAULT_ASSETS_FILENAME"), "start.html")
         ) + f"?obs={str(obs).lower()}"
         self.options.add_argument(f"--app={start_url}")
         self.options.add_experimental_option("excludeSwitches", ["enable-automation"])
-        if helpers.os_is_linux():
-            self.options.add_argument("--no-sandbox")
         self.options.binary_location = chromium
         self.service = Service(executable_path=chromedriver)
         self.driver = None
