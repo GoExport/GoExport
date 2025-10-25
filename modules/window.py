@@ -90,6 +90,8 @@ class Window(QMainWindow):
         self.ui.Resolution_2.currentTextChanged.connect(self.on_resolution_selected)
         self.ui.VideoId.editingFinished.connect(self.on_movie_id_changed)
         self.ui.OwnerId.editingFinished.connect(self.on_owner_id_changed)
+        self.on_movie_id_changed()
+        self.on_owner_id_changed()
 
         self.ui.Confirm.clicked.connect(self.kickstart)
         self.ui.OutputFolder.clicked.connect(lambda: helpers.open_folder(self.controller.RECORDING_EDITED_PATH))
