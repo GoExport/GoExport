@@ -1,7 +1,9 @@
 # Import pyqt6 modules
 import os
+import logging
 from PyQt6.QtWidgets import QMainWindow, QApplication, QMessageBox, QRadioButton, QButtonGroup
 from PyQt6.QtGui import QIcon
+from PyQt6.QtCore import QObject, pyqtSignal
 import sys
 import helpers
 from modules.logger import logger
@@ -11,6 +13,36 @@ from modules.update import Update
 
 # Import compiled UI files
 from gui import Ui_MainWindow_Main, Ui_MainWindow_Settings
+
+class ConsoleHandler(logging.Handler, QObject):
+    """Custom logging handler that emits signals for GUI console updates
+    
+    This handler captures log messages and formats them in a clean way for display
+    in the GUI console widget. It removes the Rich terminal formatting and file
+    location information, showing only "LEVEL message" format.
+    
+    The handler emits a Qt signal when a log message is received, which is connected
+    to the update_console method to update the GUI in a thread-safe manner.
+    """
+    log_signal = pyqtSignal(str)
+    
+    def __init__(self):
+        logging.Handler.__init__(self)
+        QObject.__init__(self)
+        # Set a simple formatter for console output
+        formatter = logging.Formatter('%(levelname)s %(message)s')
+        self.setFormatter(formatter)
+    
+    def emit(self, record):
+        """Clean up log message and emit signal for GUI update"""
+        try:
+            # Get the formatted message using our custom formatter
+            msg = self.format(record)
+            
+            if msg:
+                self.log_signal.emit(msg)
+        except Exception:
+            pass  # Avoid infinite loop if logging fails
 
 class Settings(QMainWindow):
     def __init__(self):
@@ -43,6 +75,9 @@ class Window(QMainWindow):
         self.controller = controller
         self._update = update
         
+        # Setup console logging
+        self.setup_console_logging()
+        
         # Service radio buttons setup
         self.service_buttons = {}
         self.service_button_group = QButtonGroup(self)
@@ -69,6 +104,43 @@ class Window(QMainWindow):
         
         if self._update.current_update:
             QMessageBox.information(self, "Update available!", f"{helpers.get_config('APP_NAME')} has an update available! v{self._update.current_update}")
+
+    def setup_console_logging(self):
+        """Setup console logging handler to display logs in the GUI console widget
+        
+        This creates a custom logging handler that captures log messages and displays
+        them in the Console QPlainTextEdit widget. The handler uses a simple formatter
+        that shows "LEVEL message" format instead of the Rich terminal formatting.
+        """
+        self.console_handler = ConsoleHandler()
+        self.console_handler.log_signal.connect(self.update_console)
+        
+        # Add the handler to the logger
+        logger.addHandler(self.console_handler)
+        
+        # Clear any existing content in console
+        self.ui.Console.clear()
+        logger.info("Console logging initialized")
+
+    def update_console(self, message):
+        """Update the console widget with a new log message"""
+        try:
+            self.ui.Console.appendPlainText(message)
+            # Auto-scroll to bottom
+            scrollbar = self.ui.Console.verticalScrollBar()
+            scrollbar.setValue(scrollbar.maximum())
+        except Exception as e:
+            # Avoid infinite loop by not using logger here
+            print(f"Error updating console: {e}")
+
+    def closeEvent(self, event):
+        """Handle window close event to clean up console handler"""
+        try:
+            if hasattr(self, 'console_handler'):
+                logger.removeHandler(self.console_handler)
+        except Exception:
+            pass
+        super().closeEvent(event)
 
     def restart(self):
         python = sys.executable
