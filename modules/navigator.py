@@ -48,7 +48,7 @@ class Interface:
 
         # Common options for both OSes
         self.options.add_argument(f"--user-data-dir={helpers.get_path(None, helpers.get_config("DEFAULT_OUTPUT_FILENAME"), f"{helpers.get_timestamp()}_chrome_profile_temp")}")
-        start_url = helpers.convert_to_file_url(
+        self.start_url = helpers.convert_to_file_url(
             helpers.get_path(helpers.get_app_folder(), helpers.get_config("DEFAULT_ASSETS_FILENAME"), "start.html")
         ) + f"?obs={str(obs).lower()}"
         # self.options.add_argument(f"--app={start_url}")
@@ -60,6 +60,7 @@ class Interface:
     def start(self):
         """Initializes and starts the Selenium WebDriver."""
         self.driver = webdriver.Chrome(options=self.options, service=self.service)
+        self.driver.get(self.start_url)
         helpers.wait(2)
         return True
     
