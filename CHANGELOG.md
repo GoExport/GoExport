@@ -28,6 +28,7 @@ Huge thanks to the following who helped debug, test, and provide feedback for th
 - Fixed an issue where GoExport would downscale your video to 720p even if you selected a higher resolution. Credits: [@QuaixiAnimations](https://www.youtube.com/@QuaixiAnimations) and [@GoSkit2](https://www.youtube.com/@GoSkit2)
 - Fixed an issue where GoExport would require `Glibc 2.38` on Linux, now requires `Glibc 2.35` instead for improved compatibility. Credits: [@Go!Makers](https://www.youtube.com/@goskit2)
 - Added support for more file managers on Linux including Dolphin, Nautilus, Thunar, and PCManFM. Credits: [@Go!Makers](https://www.youtube.com/@goskit2)
+- Fixed an issue where GoExport on Linux would not open the browser in Kiosk mode. (Fullscreen)
 
 ## [0.15.4] - 2025-09-28
 
