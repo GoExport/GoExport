@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>480</width>
-    <height>509</height>
+    <height>550</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -54,35 +54,9 @@
          </property>
          <layout class="QVBoxLayout" name="verticalLayout_2">
           <item>
-           <widget class="QLabel" name="label">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="text">
-             <string>Video ID</string>
-            </property>
-           </widget>
-          </item>
-          <item>
            <widget class="QLineEdit" name="VideoId">
             <property name="placeholderText">
              <string>Video ID</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QLabel" name="label_2">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="text">
-             <string>User ID</string>
             </property>
            </widget>
           </item>
@@ -225,6 +199,22 @@
         </layout>
        </item>
        <item>
+        <widget class="QPlainTextEdit" name="Console">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="readOnly">
+          <bool>true</bool>
+         </property>
+         <property name="placeholderText">
+          <string>...</string>
+         </property>
+        </widget>
+       </item>
+       <item>
         <widget class="QLabel" name="CaptureLabel">
          <property name="text">
           <string>Capture labell</string>
@@ -294,7 +284,7 @@
   <tabstop>OutputFolder</tabstop>
  </tabstops>
  <resources>
-  <include location="../../GoExport/gui/resources.qrc"/>
+  <include location="resources.qrc"/>
  </resources>
  <connections/>
 </ui>
