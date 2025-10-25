@@ -39,7 +39,6 @@ class Interface:
             self.options.add_argument("--high-dpi-support=1")
             self.options.add_argument(f"--ppapi-flash-path={flash_path}")
             self.options.add_argument(f"--ppapi-flash-version={flash_ver}")
-            self.options.add_argument("--enable-unsafe-publish")
         elif helpers.os_is_linux():
             self.options.add_argument("--disable-infobars")
             self.options.add_argument("--disable-bookmarks-bar")
