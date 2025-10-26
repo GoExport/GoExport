@@ -169,7 +169,6 @@ class Controller:
         # Check if should host, template, window name, and after load scripts
         self.host = service_data.get("host", False)
         self.template = service_data.get("template", False)
-        self.window = service_data.get("window", "GoExport Viewer")
         self.afterloadscripts = service_data.get("afterloadscripts", [])
 
         # Set legacy mode
@@ -325,7 +324,7 @@ class Controller:
                     return False
 
             if self.legacy:
-                if not self.capture.start(self.RECORDING, self.width, self.height, self.window):
+                if not self.capture.start(self.RECORDING, self.width, self.height, f"{self.browser.title} - {self.browser.browserName}"):
                     logger.error("Could not start recording")
                     return False
 
@@ -352,7 +351,7 @@ class Controller:
                 return False
             
             if not self.legacy:
-                if not self.capture.start(self.RECORDING, self.width, self.height, self.window):
+                if not self.capture.start(self.RECORDING, self.width, self.height, f"{self.browser.title} - {self.browser.browserName}"):
                     logger.error("Could not start recording")
                     return False
                 else:
