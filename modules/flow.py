@@ -169,7 +169,12 @@ class Controller:
         # Check if should host, template, window name, and after load scripts
         self.host = service_data.get("host", False)
         self.template = service_data.get("template", False)
+        self.window = service_data.get("window", None)
         self.afterloadscripts = service_data.get("afterloadscripts", [])
+
+        # Gather browser details and compile
+        self.browserName = helpers.get_config("BROWSER_NAME")
+        self.display_name = f"{service_data['name']} - {self.browserName}"
 
         # Set legacy mode
         self.legacy = service_data.get("legacy", False)
@@ -324,7 +329,7 @@ class Controller:
                     return False
 
             if self.legacy:
-                if not self.capture.start(self.RECORDING, self.width, self.height, f"{self.browser.title} - {self.browser.browserName}"):
+                if not self.capture.start(self.RECORDING, self.width, self.height, self.display_name):
                     logger.error("Could not start recording")
                     return False
 
@@ -351,7 +356,7 @@ class Controller:
                 return False
             
             if not self.legacy:
-                if not self.capture.start(self.RECORDING, self.width, self.height, f"{self.browser.title} - {self.browser.browserName}"):
+                if not self.capture.start(self.RECORDING, self.width, self.height, self.display_name):
                     logger.error("Could not start recording")
                     return False
                 else:
