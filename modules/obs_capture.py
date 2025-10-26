@@ -58,14 +58,12 @@ class Capture:
                     denominator=1,
                     numerator=helpers.get_param("OBS_FPS") or helpers.load("OBS_FPS") or helpers.get_config("OBS_FPS")
                 )
-                helpers.wait(1)
             except Exception as e:
                 logger.warning(f"Could not set video settings: {e}")
 
     def prep(self, width: int, height: int, window: str):
         try:
             self.cl.callback.register(self.on_record_state_changed)
-            helpers.wait(1)
             # Try to create profile (optional)
             try:
                 self.ws.create_profile(name=f"{helpers.get_config('APP_NAME')} - Profile")
@@ -101,20 +99,15 @@ class Capture:
                 if not helpers.get_param("obs_no_overwrite"):
                     try:
                         self.ws.remove_scene(name=f"{helpers.get_config('APP_NAME')} - Scene")
-                        helpers.wait(1)
                         self.ws.create_scene(name=f"{helpers.get_config('APP_NAME')} - Scene")
-                        helpers.wait(1)
                         logger.info("Deleted and recreated existing OBS scene.")
-                        helpers.wait(1)
                     except Exception as e2:
                         logger.error(f"Could not delete and recreate OBS scene: {e2}")
 
             # Try to set preview scene (optional)
             try:
                 if self.ws.get_studio_mode_enabled().studio_mode_enabled:
-                    helpers.wait(1)
                     self.ws.set_current_preview_scene(name=f"{helpers.get_config('APP_NAME')} - Scene")
-                    helpers.wait(1)
                 helpers.wait(1)
             except Exception as e:
                 logger.warning(f"Could not set preview scene: {e}")
@@ -122,7 +115,6 @@ class Capture:
             # Try to set program scene (optional)
             try:
                 self.ws.set_current_program_scene(name=f"{helpers.get_config('APP_NAME')} - Scene")
-                helpers.wait(1)
             except Exception as e:
                 logger.warning(f"Could not set program scene: {e}")
 
