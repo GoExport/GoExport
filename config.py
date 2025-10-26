@@ -111,7 +111,7 @@ AVAILABLE_SERVICES = {
         "hostable": True,
         "legacy": False,
         "testing": False,
-        "debug_required": False,
+        "hidden": False,
         "window": "GoExport Viewer",
         "afterloadscripts": []
     },
@@ -131,7 +131,7 @@ AVAILABLE_SERVICES = {
         "hostable": False,
         "legacy": False,
         "testing": False,
-        "debug_required": False,
+        "hidden": False,
         "window": "FlashThemes",
         "afterloadscripts": [
             "document.open();",
