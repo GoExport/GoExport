@@ -215,6 +215,7 @@ PATH_FLASH_VERSION_LINUX = "34.0.0.137"
 # Data
 UPDATE_CHECK_INTERVAL = 60 * 1000  # 1 minute in milliseconds
 PATH_DATA_FILE = ["data.json"]
+BROWSER_NAME = "Chromium"
 
 # Development Settings
 DEBUG_MODE = False
