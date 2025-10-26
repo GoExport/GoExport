@@ -28,6 +28,9 @@ class Interface:
             helpers.get_path(helpers.get_app_folder(), helpers.get_config("DEFAULT_ASSETS_FILENAME"), "start.html")
         ) + f"?obs={str(obs).lower()}"
 
+        self.title = None
+        self.browserName = None
+
         self.options = Options()
 
         if helpers.os_is_windows():
@@ -60,6 +63,7 @@ class Interface:
         """Initializes and starts the Selenium WebDriver."""
         self.driver = webdriver.Chrome(options=self.options, service=self.service)
         self.driver.get(self.start_url)
+        self.browserName = helpers.get_config("BROWSER_NAME")
         helpers.wait(2)
         return True
     
@@ -130,6 +134,7 @@ class Interface:
 
         self.driver.back()
         self.driver.refresh()
+        self.title = self.driver.title
 
         return True
 
