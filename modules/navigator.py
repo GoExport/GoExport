@@ -109,6 +109,7 @@ class Interface:
         return False
 
     def enable_flash(self, offset: int = 0):
+        # If people start having issues, revert 0.05 to 0.1
         """Enables the Flash Player."""
         url = self.driver.current_url
         self.driver.get(f"chrome://settings/content/siteDetails?site={urllib.parse.quote(url)}")
@@ -117,13 +118,13 @@ class Interface:
         for _ in range(19 + offset): # Find a way around this
             actions.send_keys(Keys.TAB)
             actions.perform()
-            helpers.wait(0.1)
+            helpers.wait(0.05)
         actions.send_keys(Keys.SPACE)
         actions.perform()
-        helpers.wait(0.5)
+        helpers.wait(0.05)
         actions.send_keys(Keys.ARROW_DOWN)
         actions.perform()
-        helpers.wait(0.5)
+        helpers.wait(0.05)
         actions.send_keys(Keys.ENTER)
         actions.perform()
         self.tried = True

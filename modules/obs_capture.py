@@ -99,6 +99,7 @@ class Capture:
                 if not helpers.get_param("obs_no_overwrite"):
                     try:
                         self.ws.remove_scene(name=f"{helpers.get_config('APP_NAME')} - Scene")
+                        helpers.wait(1)
                         self.ws.create_scene(name=f"{helpers.get_config('APP_NAME')} - Scene")
                         logger.info("Deleted and recreated existing OBS scene.")
                     except Exception as e2:
@@ -125,7 +126,7 @@ class Capture:
                     if helpers.os_is_windows():
                         self.ws.create_input(
                             sceneName=f"{helpers.get_config('APP_NAME')} - Scene",
-                            inputName=f"{helpers.get_config('APP_NAME')} - Capture",
+                            inputName=f"{helpers.get_config('APP_NAME')} - Capture ({self.random})",
                             inputKind="window_capture",
                             inputSettings={
                                 "window": f"{window}:Chrome_WidgetWin_1:chrome.exe",
@@ -135,11 +136,10 @@ class Capture:
                             },
                             sceneItemEnabled=True
                         )
-                        helpers.wait(1)
                     elif helpers.os_is_linux():
                         self.ws.create_input(
                             sceneName=f"{helpers.get_config('APP_NAME')} - Scene",
-                            inputName=f"{helpers.get_config('APP_NAME')} - Capture",
+                            inputName=f"{helpers.get_config('APP_NAME')} - Capture ({self.random})",
                             inputKind="xcomposite_input",
                             inputSettings={
                                 "capture_window": f"{window}\r\nchrome",
@@ -147,7 +147,6 @@ class Capture:
                             },
                             sceneItemEnabled=True
                         )
-                        helpers.wait(1)
                 except Exception as e:
                     logger.warning(f"Could not create input/source: {e}")
             helpers.wait(2, "Waiting for OBS to set up the scene and sources...")
