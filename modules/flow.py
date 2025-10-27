@@ -174,7 +174,7 @@ class Controller:
 
         # Gather browser details and compile
         self.browserName = helpers.get_config("BROWSER_NAME")
-        self.display_name = f"{service_data['name']} - {self.browserName}"
+        self.display_name = f"{self.window} - {self.browserName}"
 
         # Set legacy mode
         self.legacy = service_data.get("legacy", False)
