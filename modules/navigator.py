@@ -109,6 +109,7 @@ class Interface:
         return False
 
     def enable_flash(self, offset: int = 0):
+        # If people start having issues, revert 0.05 to 0.1
         """Enables the Flash Player."""
         url = self.driver.current_url
         self.driver.get(f"chrome://settings/content/siteDetails?site={urllib.parse.quote(url)}")
