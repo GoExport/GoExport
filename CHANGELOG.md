@@ -31,6 +31,8 @@ In the future, we also plan to release a chrome extension, which will also integ
 - Added auto update detection and notification for both GUI and CLI versions.
 - Added Native Capture for Linux using `ffmpeg` (which is already included) as an alternative to using OBS for screen capturing.
 - Added a protocol in the Windows installer to allow opening and executing GoExport from a web browser (for example, type `goexport://?...` in the address bar of your browser to open GoExport with specific parameters) and it'll automatically launch GoExport CLI. This allows for easier integration with third-party tools and websites. **Note: Ensure you have GoExport installed for this to work. If using Linux, you'll have to manually define the protocol handler.**
+- Added a variety of documentation files in the repository /docs folder.
+- Added a checkbox in the GUI to allow users to choose whether to install documentation files during installation.
 
 ### Fixed
 

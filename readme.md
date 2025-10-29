@@ -15,6 +15,7 @@ Welcome to GoExport, with this tool, you can export your videos for Wrapper Offl
 
 # 📙 Useful Information
 
+- Documentation: [GoExport/docs](https://github.com/GoExport/GoExport/tree/main/docs)
 - Official Website: [https://goexport.lexian.dev](https://goexport.lexian.dev)
 - Official Discord: [https://discord.gg/ejwJYtQDrS](https://discord.gg/ejwJYtQDrS)
 - Wrapper Offline Mod: [GoExport Mod](https://github.com/GoExport/GoExport-Mod)
