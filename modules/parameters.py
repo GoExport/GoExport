@@ -16,6 +16,7 @@ class Parameters:
         parser.add_argument("-mi", "--movie-id", help="Set the movie ID", dest="movie_id")
         parser.add_argument("-ae", "--auto-edit", help="Enable auto editing", action="store_true", dest="auto_edit")
         parser.add_argument("-of", "--open-file", help="Determines if should open destination folder in no-input mode", action="store_true", dest="open_folder")
+        parser.add_argument("-uo", "--use-outro", help="Enable adding outro in no-input mode", action="store_true", dest="use_outro")
         parser.add_argument("--obs-websocket-address", help="Set the OBS WebSocket address", dest="obs_websocket_address")
         parser.add_argument("--obs-websocket-port", help="Set the OBS WebSocket port", dest="obs_websocket_port")
         parser.add_argument("--obs-websocket-password", help="Set the OBS WebSocket password", dest="obs_websocket_password")
@@ -61,6 +62,7 @@ class Parameters:
             "resolution": "resolution",
             "no_input": "no_input",
             "open_folder": "open_folder",
+            "use_outro": "use_outro",
         }
 
         result = {
@@ -71,6 +73,7 @@ class Parameters:
             "resolution": "360p",
             "no_input": True,
             "open_folder": False,
+            "use_outro": False,
         }
 
         # action/service can be provided in netloc or path; prefer netloc (e.g., goexport://upload?...).

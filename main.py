@@ -92,7 +92,7 @@ def main():
             if not helpers.get_param("no_input"):
                 confirm_outro = Confirm.ask("Would you like to include the outro for GoExport?", default=True)
             else:
-                confirm_outro = True
+                confirm_outro = helpers.get_param("use_outro")
             logger.info(f"User chose to include the outro: {confirm_outro}")
 
             if not controller.final(confirm_outro):
