@@ -73,7 +73,7 @@ class Parameters:
             "resolution": "360p",
             "no_input": True,
             "open_folder": False,
-            "use_outro": False,
+            "use_outro": True,
         }
 
         # action/service can be provided in netloc or path; prefer netloc (e.g., goexport://upload?...).
