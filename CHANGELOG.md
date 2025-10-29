@@ -15,7 +15,7 @@ Huge thanks to the following who helped debug, test, and provide feedback for th
 - @QuaixiAnimations
 - @GoSkit2
 
-## Important Announcement
+### Important Announcement
 
 With the release of GoExport 0.16.0, we've drastically improved third party integration, which also includes first party addons and tools from us.
 
