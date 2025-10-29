@@ -52,6 +52,8 @@ Source: "..\ScreenCaptureRecorder.ini"; DestDir: "{userappdata}"; Flags: onlyifd
 ;Install required dlls
 Source: "..\libs\audio_sniffer-x64.dll"; DestDir: "{app}\vendor"; Flags: onlyifdoesntexist 64bit
 Source: "..\libs\screen-capture-recorder-x64.dll"; DestDir: "{app}\vendor"; Flags: onlyifdoesntexist 64bit
+;Documentation files (optional)
+Source: "..\docs\*"; DestDir: "{app}\docs"; Flags: ignoreversion recursesubdirs createallsubdirs; Check: ShouldInstallDocs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Registry]
@@ -87,3 +89,44 @@ Filename: "{app}\{#MyAppExeName}"; Flags: nowait postinstall skipifsilent; Descr
 [UninstallRun]
 Filename: regsvr32; WorkingDir: {app}; Parameters: /s /u vendor\screen-capture-recorder-x64.dll; Check: IsWin64
 Filename: regsvr32; WorkingDir: {app}; Parameters: /s /u vendor\audio_sniffer-x64.dll; MinVersion: 0,6.0.6000; Check: IsWin64
+
+[Code]
+var
+  DocsPage: TWizardPage;
+  InstallDocsCheckBox: TNewCheckBox;
+  DocsLabel: TNewStaticText;
+
+procedure InitializeWizard;
+begin
+  { Create custom page for documentation option }
+  DocsPage := CreateCustomPage(wpSelectTasks, 'Documentation', 'Choose whether to install documentation');
+  
+  { Create label }
+  DocsLabel := TNewStaticText.Create(DocsPage);
+  DocsLabel.Parent := DocsPage.Surface;
+  DocsLabel.Caption := 'GoExport includes comprehensive documentation files that explain' + #13#10 +
+                       'features, configuration, and troubleshooting. Select the option' + #13#10 +
+                       'below if you would like to install these files locally.';
+  DocsLabel.Left := ScaleX(0);
+  DocsLabel.Top := ScaleY(0);
+  DocsLabel.Width := DocsPage.SurfaceWidth;
+  DocsLabel.Height := ScaleY(60);
+  DocsLabel.AutoSize := False;
+  DocsLabel.WordWrap := True;
+  
+  { Create checkbox }
+  InstallDocsCheckBox := TNewCheckBox.Create(DocsPage);
+  InstallDocsCheckBox.Parent := DocsPage.Surface;
+  InstallDocsCheckBox.Caption := 'Install documentation files (located in /docs/)';
+  InstallDocsCheckBox.Left := ScaleX(0);
+  InstallDocsCheckBox.Top := ScaleY(80);
+  InstallDocsCheckBox.Width := DocsPage.SurfaceWidth;
+  InstallDocsCheckBox.Height := ScaleY(20);
+  InstallDocsCheckBox.Checked := True;  { Default to checked }
+end;
+
+function ShouldInstallDocs: Boolean;
+begin
+  { Return the state of the checkbox }
+  Result := InstallDocsCheckBox.Checked;
+end;
