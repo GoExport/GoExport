@@ -15,6 +15,14 @@ Huge thanks to the following who helped debug, test, and provide feedback for th
 - @QuaixiAnimations
 - @GoSkit2
 
+## Important Announcement
+
+With the release of GoExport 0.16.0, we've drastically improved third party integration, which also includes first party addons and tools from us.
+
+We're excited to announce that with the release of GoExport v0.16.0, we've introduced a new Wrapper: Offline modification; called "GoExport Mod." You can find it [here](https://github.com/GoExport/GoExport-Mod)
+
+In the future, we also plan to release a chrome extension, which will also integrate with GoExport seamlessly.
+
 ### Added
 
 - Added a GUI for Windows and Linux.

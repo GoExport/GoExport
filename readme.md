@@ -13,6 +13,12 @@ Welcome to GoExport, with this tool, you can export your videos for Wrapper Offl
 ![GitHub Release](https://img.shields.io/github/v/release/GoExport/GoExport?include_prereleases&cacheBuster=true)
 [![Discord](https://img.shields.io/badge/Discord-%235865F2.svg?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/ejwJYtQDrS)
 
+# 📙 Useful Information
+
+- Official Website: [https://goexport.dev](https://goexport.dev)
+- Official Discord: [https://discord.gg/ejwJYtQDrS](https://discord.gg/ejwJYtQDrS)
+- Wrapper Offline Mod: [GoExport Mod](https://github.com/GoExport/GoExport-Mod)
+
 # ✅ Supported
 
 The following is a list of **known supported LVMs**:
