@@ -19,15 +19,16 @@ Complete guide for setting up GoExport on Linux, including dependencies, PATH co
 
 - Linux kernel 4.15+
 - 4GB RAM
-- 2GB free disk space
+- 5GB free disk space (includes dependencies)
 - X11 or Wayland display server
 
 **Recommended:**
 
 - Linux kernel 5.0+
 - 8GB RAM
-- 10GB free disk space (for recordings)
+- 20GB free disk space (for recordings)
 - GPU with hardware video encoding support
+- **OBS Studio with WebSocket plugin enabled** (for video capture)
 
 **Supported Distributions:**
 
@@ -40,15 +41,27 @@ Complete guide for setting up GoExport on Linux, including dependencies, PATH co
 
 ## Installation
 
+**Note:** Pre-built Linux binaries include all dependencies (FFmpeg, ungoogled-chromium with Flash, chromedriver). You do **not** need to install these separately.
+
 ### Method 1: Extract Pre-built Binary
+
+The pre-built Linux portable tarball (`goexport_linux_portable_amd64.tar.gz`) contains:
+
+- `GoExport` - Main executable (PyInstaller bundle)
+- `dependencies/` - FFmpeg, ungoogled-chromium v87 with Flash Player PPAPI 34.0.0.137
+- `assets/` - Outro videos and HTML templates
+- `server/` - Local web server files
+- `readme.md` and `LICENSE`
+
+**All dependencies are bundled** - no separate installation of FFmpeg, Chrome, or Flash required.
 
 ```bash
 # Download latest release
-wget https://github.com/GoExport/GoExport/releases/latest/download/GoExport-Linux-x64.tar.gz
+wget https://github.com/GoExport/GoExport/releases/latest/download/goexport_linux_portable_amd64.tar.gz
 
 # Extract to /opt
 sudo mkdir -p /opt/GoExport
-sudo tar -xzf GoExport-Linux-x64.tar.gz -C /opt/GoExport
+sudo tar -xzf goexport_linux_portable_amd64.tar.gz -C /opt/GoExport
 
 # Make executable
 sudo chmod +x /opt/GoExport/GoExport
@@ -62,6 +75,8 @@ goexport --version
 
 ### Method 2: Build from Source
 
+**Note:** Building from source requires manually downloading dependencies (FFmpeg, ungoogled-chromium, Flash Player). The GitHub Actions workflow automates this - see `.github/workflows/release_and_build.yml` for exact commands.
+
 ```bash
 # Install build dependencies
 sudo apt install python3 python3-pip python3-venv git
@@ -70,29 +85,25 @@ sudo apt install python3 python3-pip python3-venv git
 git clone https://github.com/GoExport/GoExport.git
 cd GoExport
 
+# Download dependencies (see workflow for URLs)
+# FFmpeg: https://github.com/BtbN/FFmpeg-Builds/releases/latest/ffmpeg-master-latest-linux64-gpl.tar.xz
+# ungoogled-chromium: https://github.com/LordTwix/ungoogled-chromium-binaries/releases/download/87.0.4280.67-1.1/
+# Flash Player: https://github.com/darktohka/clean-flash-builds/releases/download/v1.7/flash_player_patched_ppapi_linux.x86_64.tar.gz
+
 # Create virtual environment
 python3 -m venv venv
 source venv/bin/activate
 
-# Install dependencies
+# Install Python dependencies
 pip install -r requirements.txt
 
 # Run from source
 python main.py
 ```
 
-### Method 3: AppImage (Coming Soon)
+### Method 3: AppImage (Not Available)
 
-```bash
-# Download AppImage
-wget https://github.com/GoExport/GoExport/releases/latest/download/GoExport-x86_64.AppImage
-
-# Make executable
-chmod +x GoExport-x86_64.AppImage
-
-# Run
-./GoExport-x86_64.AppImage
-```
+AppImage distribution is not currently available. Use Method 1 (pre-built binary) or Method 2 (build from source).
 
 ## Dependencies
 
@@ -104,10 +115,8 @@ chmod +x GoExport-x86_64.AppImage
 # Update package list
 sudo apt update
 
-# Install required packages
+# Install required packages for pre-built binary
 sudo apt install -y \
-    python3 \
-    python3-pip \
     libxcb-xinerama0 \
     libxcb-icccm4 \
     libxcb-image0 \
@@ -120,19 +129,23 @@ sudo apt install -y \
     libnss3 \
     libglib2.0-0 \
     libfontconfig1 \
-    libxrender1
+    libxrender1 \
+    libdbus-1-3 \
+    libgbm1 \
+    libasound2
 
-# Install OBS Studio (optional but recommended)
+# For building from source, also install:
+# sudo apt install python3 python3-pip python3-venv
+
+# Install OBS Studio (recommended for video capture on Linux)
 sudo apt install obs-studio
 ```
 
 #### Fedora
 
 ```bash
-# Install required packages
+# Install required packages for pre-built binary
 sudo dnf install -y \
-    python3 \
-    python3-pip \
     qt6-qtbase \
     qt6-qtbase-gui \
     xcb-util-cursor \
@@ -141,19 +154,23 @@ sudo dnf install -y \
     xcb-util-renderutil \
     xcb-util-wm \
     nss \
-    fontconfig
+    fontconfig \
+    dbus-libs \
+    mesa-libgbm \
+    alsa-lib
 
-# Install OBS Studio (optional but recommended)
+# For building from source, also install:
+# sudo dnf install python3 python3-pip
+
+# Install OBS Studio (recommended for video capture on Linux)
 sudo dnf install obs-studio
 ```
 
 #### Arch Linux
 
 ```bash
-# Install required packages
+# Install required packages for pre-built binary
 sudo pacman -S --needed \
-    python \
-    python-pip \
     qt6-base \
     xcb-util-cursor \
     xcb-util-image \
@@ -161,13 +178,21 @@ sudo pacman -S --needed \
     xcb-util-renderutil \
     xcb-util-wm \
     nss \
-    fontconfig
+    fontconfig \
+    dbus \
+    mesa \
+    alsa-lib
 
-# Install OBS Studio (optional but recommended)
+# For building from source, also install:
+# sudo pacman -S python python-pip
+
+# Install OBS Studio (recommended for video capture on Linux)
 sudo pacman -S obs-studio
 ```
 
 ### Python Dependencies
+
+**Only needed if building from source.** Pre-built binaries include all Python dependencies.
 
 ```bash
 # Install from requirements.txt
@@ -187,11 +212,11 @@ pip install \
 
 GoExport includes these dependencies in the `dependencies/` folder:
 
-- **FFmpeg** - Video encoding/processing
-- **ungoogled-chromium** - Flash-enabled browser
-- **Chromedriver** - Browser automation
+- **FFmpeg** - Video encoding/processing (from BtbN/FFmpeg-Builds)
+- **ungoogled-chromium v87.0.4280.67-1.1** - Flash-enabled browser (includes chromedriver)
+- **Flash Player PPAPI 34.0.0.137** - Patched Flash plugin (libpepflashplayer.so)
 
-No additional installation needed for bundled dependencies.
+No additional installation needed for bundled dependencies. The pre-built portable archive includes everything required.
 
 ## PATH Configuration
 
@@ -317,7 +342,7 @@ which goexport
 # Test execution
 goexport --version
 
-# Should output:
+# Should output version string, e.g.:
 # GoExport v0.16.0
 ```
 
@@ -352,11 +377,11 @@ xdg-mime default goexport-protocol.desktop x-scheme-handler/goexport
 xdg-open 'goexport://local?video_id=test&resolution=720p'
 ```
 
-**Note:** Adjust `/opt/GoExport/GoExport` to your actual installation path.
+**Note:** Adjust `/opt/GoExport/GoExport` to your actual installation path. If you extracted the portable tarball to a different location, update the path accordingly.
 
 ## OBS Setup
 
-OBS Studio is required for capture on Linux (native capture is Windows-only).
+**OBS Studio is recommended for video capture on Linux.** Native screen-capture-recorder is Windows-only. While GoExport can run without OBS, you will need it configured to perform video exports.
 
 ### Install OBS Studio
 
