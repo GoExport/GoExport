@@ -64,6 +64,11 @@ class Parameters:
             "no_input": "no_input",
             "open_folder": "open_folder",
             "use_outro": "use_outro",
+            "obs_websocket_address": "obs_websocket_address",
+            "obs_websocket_port": "obs_websocket_port",
+            "obs_websocket_password": "obs_websocket_password",
+            "obs_fps": "obs_fps",
+            "obs_no_overwrite": "obs_no_overwrite",
             "obs_required": "obs_required",
         }
 
@@ -76,6 +81,11 @@ class Parameters:
             "no_input": True,
             "open_folder": False,
             "use_outro": True,
+            "obs_websocket_address": "localhost",
+            "obs_websocket_port": "4455",
+            "obs_websocket_password": "",
+            "obs_fps": "60",
+            "obs_no_overwrite": False,
             "obs_required": False,
         }
 
