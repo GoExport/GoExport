@@ -47,7 +47,8 @@ def log_exception(exc_type, exc_value, exc_tb):
     # Avoid import loops by loading helpers here if needed
     try:
         import helpers
-        helpers.show_popup("Exception occurred", tb_str, 16)
+        if not helpers.get_param("no_input"):
+            helpers.show_popup("Exception occurred", tb_str, 16)
     except Exception:
         logger.error("Failed to show popup or import helpers.", exc_info=True)
 
