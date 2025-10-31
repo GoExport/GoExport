@@ -580,6 +580,77 @@ def is_dll_loadable(dll_path):
         logger.debug(f"is_dll_loadable() DLL not loadable: {dll_path}")
         return False  # DLL not found or not registered
 
+def encode_video(input_path: str, output_path: str, width: int = None, height: int = None, crf: int = 23, preset: str = "medium"):
+    """
+    Encode a video file using FFmpeg with optimal settings for quality and compatibility.
+    This function is designed to be called after raw video capture to produce the final output.
+    
+    :param input_path: Path to the input video file (raw capture).
+    :param output_path: Path to the output video file (encoded).
+    :param width: Optional width for cropping/scaling. If None, uses input dimensions.
+    :param height: Optional height for cropping/scaling. If None, uses input dimensions.
+    :param crf: Constant Rate Factor for quality (0-51, lower is better, 23 is default).
+    :param preset: Encoding preset (ultrafast, superfast, veryfast, faster, fast, medium, slow, slower, veryslow).
+    :return: True if encoding succeeded, False otherwise.
+    """
+    try:
+        logger.info(f"Starting video encoding: {input_path} -> {output_path}")
+        
+        # Build FFmpeg command
+        if os_is_windows():
+            ffmpeg_path = get_path(get_app_folder(), get_config("PATH_FFMPEG_WINDOWS"))
+        elif os_is_linux():
+            ffmpeg_path = get_path(get_app_folder(), get_config("PATH_FFMPEG_LINUX"))
+        else:
+            logger.error("Unsupported OS for video encoding")
+            return False
+        
+        command = [
+            ffmpeg_path, "-y",
+            "-i", input_path,
+        ]
+        
+        # Add video filters if dimensions are specified
+        if width and height:
+            command.extend(["-vf", f"crop={width}:{height}:0:0,format=yuv420p"])
+        else:
+            command.extend(["-vf", "format=yuv420p"])
+        
+        # Add encoding parameters
+        command.extend([
+            "-c:v", "libx264",
+            "-preset", preset,
+            "-crf", str(crf),
+            "-pix_fmt", "yuv420p",
+            "-c:a", "aac",
+            "-b:a", "128k",
+            "-ar", "44100",
+            output_path,
+        ])
+        
+        logger.debug(f"encode_video() command: {' '.join(command)}")
+        
+        # Run encoding process
+        result = subprocess.run(
+            command,
+            cwd=get_cwd(),
+            capture_output=True,
+            text=True,
+            creationflags=subprocess.CREATE_NO_WINDOW if os_is_windows() else 0,
+        )
+        
+        if result.returncode == 0:
+            logger.info(f"Video encoding completed successfully: {output_path}")
+            return True
+        else:
+            logger.error(f"Video encoding failed with return code {result.returncode}")
+            logger.error(f"FFmpeg stderr: {result.stderr}")
+            return False
+            
+    except Exception as e:
+        logger.error(f"Error encoding video: {e}")
+        return False
+
 # Output a list of items to the console
 def print_list(items, message: str = "to select"):
     if not isinstance(items, list):
