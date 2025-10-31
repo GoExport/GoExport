@@ -15,7 +15,8 @@ def _is_frozen():
 def _get_app_folder():
     if _is_frozen():
         return os.path.dirname(sys.executable)
-    return os.path.dirname(os.path.abspath(__file__))
+    # Go up one directory from modules/ to get to project root
+    return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # --- Logging setup ---
 
