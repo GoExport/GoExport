@@ -123,9 +123,10 @@ class Capture:
 
         logger.debug(f"Capture command: {' '.join(command)}")
 
-        # Start the capture process
-        self.process = subprocess.Popen(
+        # Start the capture process with logging
+        self.process = helpers.create_logged_popen(
             command,
+            process_name="ffmpeg_capture",
             cwd=helpers.get_cwd(),
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
