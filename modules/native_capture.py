@@ -100,24 +100,11 @@ class Capture:
             ]
         elif helpers.os_is_linux():
             # Linux: Use x11grab with minimal encoding
-            # Get DISPLAY from environment, fallback to :0
-            display = os.environ.get('DISPLAY', ':0')
-            if not display:
-                logger.error("DISPLAY environment variable not set. Cannot capture screen on Linux without X11/Wayland display.")
-                logger.error("Try running: export DISPLAY=:0")
-                return False
-            
-            logger.info(f"Using DISPLAY: {display}")
-            
-            # x11grab input format is DISPLAY+OFFSET
-            # For capturing from top-left corner: DISPLAY+0,0
-            display_input = f"{display}+0,0"
-            
             command = [
                 helpers.get_path(helpers.get_app_folder(), helpers.get_config("PATH_FFMPEG_LINUX")), "-y",
                 "-f", "x11grab",
                 "-s", f"{width}x{height}",
-                "-i", display_input,
+                "-i", ":0.0",
                 "-f", "pulse",
                 "-i", "alsa_output.pci-0000_00_1b.0.analog-stereo.monitor",
                 "-ac", "2",
