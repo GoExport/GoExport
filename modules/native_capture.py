@@ -4,6 +4,7 @@ import atexit
 import signal
 import os
 import tempfile
+import threading
 from modules.logger import logger
 
 class Capture:
@@ -27,6 +28,7 @@ class Capture:
         self.process = None
         self.width = None
         self.height = None
+        self.output_thread = None
         atexit.register(self.cleanup)
         for sig in (signal.SIGINT, signal.SIGTERM, signal.SIGABRT):
             signal.signal(sig, self._signal_handler)
@@ -123,24 +125,26 @@ class Capture:
 
         logger.debug(f"Capture command: {' '.join(command)}")
 
-        # Start the capture process with logging
-        self.process = helpers.create_logged_popen(
+        # Start the capture process WITHOUT automatic logging
+        # We need to manually read stdout to detect when recording starts
+        self.process = subprocess.Popen(
             command,
-            process_name="ffmpeg_capture",
             cwd=helpers.get_cwd(),
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             shell=False,
-            bufsize=0,
+            bufsize=1,  # Line buffered
             universal_newlines=True,
             creationflags=subprocess.CREATE_NO_WINDOW if helpers.os_is_windows() else 0,
         )
+        
+        logger.info(f"Started FFmpeg capture process (PID: {self.process.pid})")
 
         # Wait for FFmpeg to start capturing
         offset = helpers.get_timestamp("FFmpeg capture starting")
         for line in self.process.stdout:
-            logger.debug(line.strip())
+            logger.debug(f"[ffmpeg_capture] {line.strip()}")
             # Check if FFmpeg has started capturing
             if "Output #0" in line:
                 self.start_time = helpers.get_timestamp("FFmpeg capture started")
@@ -157,6 +161,18 @@ class Capture:
 
         self.startup_delay = self.start_time - offset
         logger.info(f"Capture started successfully (startup delay: {self.startup_delay}ms)")
+        
+        # Start a background thread to continue consuming stdout
+        # This prevents the pipe from filling up and blocking FFmpeg
+        def consume_output():
+            try:
+                for line in self.process.stdout:
+                    logger.debug(f"[ffmpeg_capture] {line.strip()}")
+            except Exception as e:
+                logger.debug(f"Output consumer thread ended: {e}")
+        
+        self.output_thread = threading.Thread(target=consume_output, daemon=True)
+        self.output_thread.start()
 
         return True
 
