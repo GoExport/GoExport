@@ -14,6 +14,9 @@ class Capture:
         self.obs = ObsCapture()
         self.native = NativeCapture()
         self.is_obs = False
+        if not self.is_obs and helpers.get_param("obs_required"):
+            logger.fatal("OBS connection is required but could not be established.")
+            raise Exception("OBS connection is required but could not be established.")
 
         # Connect to OBS WebSocket server
         try:

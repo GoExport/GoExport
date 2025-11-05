@@ -22,6 +22,7 @@ class Parameters:
         parser.add_argument("--obs-websocket-password", help="Set the OBS WebSocket password", dest="obs_websocket_password")
         parser.add_argument("--obs-fps", help="Set the OBS FPS", dest="obs_fps")
         parser.add_argument("--obs-no-overwrite", help="Prevent scene overwriting", action="store_true", dest="obs_no_overwrite")
+        parser.add_argument("--obs-required", help="Require OBS connection", action="store_true", dest="obs_required")
 
         # New: accept a protocol URL passed through --protocol
         parser.add_argument("--protocol", help="Protocol URL e.g. goexport://?video_id=1&user_id=1&aspect_ratio=16:9&resolution=1920x1080&no_input=true", dest="protocol")
@@ -63,6 +64,12 @@ class Parameters:
             "no_input": "no_input",
             "open_folder": "open_folder",
             "use_outro": "use_outro",
+            "obs_websocket_address": "obs_websocket_address",
+            "obs_websocket_port": "obs_websocket_port",
+            "obs_websocket_password": "obs_websocket_password",
+            "obs_fps": "obs_fps",
+            "obs_no_overwrite": "obs_no_overwrite",
+            "obs_required": "obs_required",
         }
 
         result = {
@@ -74,6 +81,12 @@ class Parameters:
             "no_input": True,
             "open_folder": False,
             "use_outro": True,
+            "obs_websocket_address": "localhost",
+            "obs_websocket_port": "4455",
+            "obs_websocket_password": "",
+            "obs_fps": "60",
+            "obs_no_overwrite": False,
+            "obs_required": False,
         }
 
         # action/service can be provided in netloc or path; prefer netloc (e.g., goexport://upload?...).

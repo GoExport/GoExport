@@ -1,0 +1,139 @@
+name: Pre-release Build
+on:
+  push:
+    branches:
+      - beta
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-22.04, windows-latest]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Download additional dependencies (Linux)
+        if: matrix.os == 'ubuntu-22.04'
+        run: |
+          curl -L -o ffmpeg.tar.xz https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-linux64-gpl.tar.xz
+          mkdir -p dependencies
+          tar -xf ffmpeg.tar.xz -C dependencies
+          mv dependencies/ffmpeg-master-latest-linux64-gpl dependencies/ffmpeg
+          rm ffmpeg.tar.xz
+
+          curl -L -o ungoogled-chromium.tar.xz https://github.com/LordTwix/ungoogled-chromium-binaries/releases/download/87.0.4280.67-1.1/ungoogled-chromium_87.0.4280.67-1.1_linux.tar.xz
+          mkdir -p dependencies
+          tar -xf ungoogled-chromium.tar.xz -C dependencies
+          mv dependencies/ungoogled-chromium_87.0.4280.67-1.1_linux dependencies/ungoogled-chromium
+          rm ungoogled-chromium.tar.xz
+
+          curl -L -o flash_player_patched_ppapi_linux.x86_64.tar.gz https://github.com/darktohka/clean-flash-builds/releases/download/v1.7/flash_player_patched_ppapi_linux.x86_64.tar.gz
+          mkdir -p dependencies/ungoogled-chromium/extensions
+          tar -xzvf flash_player_patched_ppapi_linux.x86_64.tar.gz \
+          -C dependencies/ungoogled-chromium/extensions \
+          libpepflashplayer.so
+          rm flash_player_patched_ppapi_linux.x86_64.tar.gz
+
+      - name: Download additional dependencies (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          curl -L -o ffmpeg.zip https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip
+          tar -xf ffmpeg.zip -C dependencies
+          move dependencies\ffmpeg-master-latest-win64-gpl dependencies\ffmpeg
+          rm ffmpeg.zip
+
+          curl -L -o ungoogled-chromium.zip https://github.com/tangalbert919/ungoogled-chromium-binaries/releases/download/87.0.4280.67-1/ungoogled-chromium_87.0.4280.67-1.1_windows-x64.zip
+          tar -xf ungoogled-chromium.zip -C dependencies
+          move dependencies\ungoogled-chromium_87.0.4280.67-1.1_windows dependencies\ungoogled-chromium
+          rm ungoogled-chromium.zip
+
+          mkdir dependencies\chromedriver
+          curl -L -o chromedriver.zip https://chromedriver.storage.googleapis.com/87.0.4280.20/chromedriver_win32.zip
+          tar -xf chromedriver.zip -C dependencies\chromedriver
+          rm chromedriver.zip
+
+          curl -L -o ChineseFlash-Patched.7z https://github.com/darktohka/clean-flash-builds/releases/download/v1.52/ChineseFlash-Patched-Win-34.0.0.330.7z
+          7z x ChineseFlash-Patched.7z -oChineseFlash-Patched
+          mkdir dependencies\ungoogled-chromium\extensions
+          copy ChineseFlash-Patched\flash64\pepflashplayer64_34_0_0_330.dll dependencies\ungoogled-chromium\extensions\pepflashplayer.dll
+
+      - name: Build with PyInstaller
+        run: pyinstaller GoExport.spec
+
+      - name: Copy required files to dist
+        run: |
+          mkdir -p dist/assets
+          mkdir -p dist/server
+          mkdir -p dist/dependencies
+          cp readme.md dist/
+          cp LICENSE dist/
+          cp -r assets/* dist/assets/
+          cp -r server/* dist/server/
+          cp -r dependencies/* dist/dependencies/
+
+      - name: Build installer (Windows only)
+        uses: Minionguyjpro/Inno-Setup-Action@v1.2.2
+        if: matrix.os == 'windows-latest'
+        with:
+          path: setup\GoExport.iss
+          options: /O+
+
+      - name: Archive Linux Build
+        if: matrix.os == 'ubuntu-22.04'
+        run: |
+          tar -czvf goexport_linux_portable_amd64.tar.gz -C dist .
+          mv goexport_linux_portable_amd64.tar.gz dist/
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-${{ matrix.os }}
+          path: dist/
+          if-no-files-found: ignore
+
+  release:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Generate tag name
+        id: generate_tag
+        run: |
+          if [[ "${{ github.ref_type }}" == "tag" ]]; then
+            echo "tag_name=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+          else
+            timestamp=$(date +%Y%m%d-%H%M%S)
+            commit_short=$(echo ${{ github.sha }} | cut -c1-7)
+            echo "tag_name=beta-${timestamp}-${commit_short}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Upload Pre-release Assets
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.generate_tag.outputs.tag_name }}
+          files: |
+            artifacts/**/goexport_linux_portable_amd64.tar.gz
+            artifacts/**/goexport_win_installer_amd64.exe
+          prerelease: true
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

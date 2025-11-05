@@ -180,7 +180,7 @@ def open_folder(path):
     try:
         if os_is_windows():
             logger.debug(f"open_folder() using explorer for path={path}")
-            subprocess.Popen(['explorer', path])
+            create_logged_popen(['explorer', path], process_name="explorer", log_output=False)
             return True
         elif os_is_linux():
             logger.debug(f"open_folder() using Linux file manager for path={path}")
@@ -199,12 +199,12 @@ def open_folder(path):
             for fm in file_managers:
                 try:
                     # Check if the file manager exists
-                    subprocess.run(["which", fm], check=True, 
-                                capture_output=True, timeout=5)
+                    create_logged_run(["which", fm], process_name="which", 
+                                check=True, capture_output=True, timeout=5)
                     
                     # Try to open the folder
-                    result = subprocess.run([fm, path], 
-                                        capture_output=True, timeout=10)
+                    result = create_logged_run([fm, path], process_name=fm,
+                                        capture_output=True, timeout=10, log_output=False)
                     
                     if result.returncode == 0:
                         logger.debug(f"Successfully opened folder with {fm}")
@@ -440,12 +440,175 @@ def convert_to_file_url(local_path):
     logger.debug(f"convert_to_file_url() local_path={local_path} -> {result}")
     return result
 
+def create_logged_popen(args, process_name=None, log_output=True, **kwargs):
+    """
+    Create a subprocess.Popen instance that logs all output to a separate file.
+    
+    :param args: Command and arguments to run (same as subprocess.Popen).
+    :param process_name: Name for the log file. If None, derived from the command.
+    :param log_output: Whether to log output to a file. If False, behaves like normal Popen.
+    :param kwargs: Additional keyword arguments to pass to subprocess.Popen.
+    :return: A subprocess.Popen instance with a logging thread attached.
+    """
+    import threading
+    
+    # Determine process name for log file
+    if process_name is None:
+        if isinstance(args, (list, tuple)) and len(args) > 0:
+            process_name = os.path.basename(str(args[0])).replace('.exe', '').replace('.py', '')
+        else:
+            process_name = "process"
+    
+    process_name = to_filename_safe(process_name)
+    
+    # Create log directory following logger.py conventions
+    app_dir = get_app_folder()
+    log_dir = os.path.join(app_dir, "logs", time.strftime("%Y-%m-%d"))
+    os.makedirs(log_dir, exist_ok=True)
+    
+    # Generate timestamp and log filename
+    timestamp = f"{time.strftime('%H-%M-%S')}-{int(time.time() * 1000) % 1000}"
+    log_file = os.path.join(log_dir, f"{process_name}_{timestamp}.log")
+    
+    logger.debug(f"create_logged_popen() process_name={process_name}, log_file={log_file}")
+    
+    if not log_output:
+        # If logging is disabled, create a normal Popen
+        return subprocess.Popen(args, **kwargs)
+    
+    # Ensure stdout and stderr are captured if not explicitly set
+    if 'stdout' not in kwargs:
+        kwargs['stdout'] = subprocess.PIPE
+    if 'stderr' not in kwargs:
+        kwargs['stderr'] = subprocess.STDOUT
+    if 'universal_newlines' not in kwargs:
+        kwargs['universal_newlines'] = True
+    if 'bufsize' not in kwargs:
+        kwargs['bufsize'] = 1  # Line buffered
+    
+    # Create the process
+    process = subprocess.Popen(args, **kwargs)
+    
+    # Create a thread to log output
+    def log_output_thread():
+        try:
+            with open(log_file, 'w', encoding='utf-8') as f:
+                f.write(f"Process: {' '.join(str(a) for a in (args if isinstance(args, (list, tuple)) else [args]))}\n")
+                f.write(f"Started: {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
+                f.write(f"PID: {process.pid}\n")
+                f.write("-" * 80 + "\n\n")
+                f.flush()
+                
+                if process.stdout:
+                    for line in process.stdout:
+                        f.write(line)
+                        f.flush()
+                
+                f.write("\n" + "-" * 80 + "\n")
+                f.write(f"Ended: {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
+                f.write(f"Return code: {process.returncode}\n")
+        except Exception as e:
+            logger.error(f"Error in logging thread for {process_name}: {e}")
+    
+    # Start the logging thread
+    log_thread = threading.Thread(target=log_output_thread, daemon=True)
+    log_thread.start()
+    
+    # Attach the thread to the process object for potential cleanup
+    process._log_thread = log_thread
+    process._log_file = log_file
+    
+    logger.info(f"Started logged process '{process_name}' (PID: {process.pid}), logging to: {log_file}")
+    
+    return process
+
+def create_logged_run(args, process_name=None, log_output=True, **kwargs):
+    """
+    Run a subprocess command and log all output to a separate file.
+    
+    :param args: Command and arguments to run (same as subprocess.run).
+    :param process_name: Name for the log file. If None, derived from the command.
+    :param log_output: Whether to log output to a file. If False, behaves like normal run.
+    :param kwargs: Additional keyword arguments to pass to subprocess.run.
+    :return: A subprocess.CompletedProcess instance.
+    """
+    # Determine process name for log file
+    if process_name is None:
+        if isinstance(args, (list, tuple)) and len(args) > 0:
+            process_name = os.path.basename(str(args[0])).replace('.exe', '').replace('.py', '')
+        else:
+            process_name = "process"
+    
+    process_name = to_filename_safe(process_name)
+    
+    # Create log directory following logger.py conventions
+    app_dir = get_app_folder()
+    log_dir = os.path.join(app_dir, "logs", time.strftime("%Y-%m-%d"))
+    os.makedirs(log_dir, exist_ok=True)
+    
+    # Generate timestamp and log filename
+    timestamp = f"{time.strftime('%H-%M-%S')}-{int(time.time() * 1000) % 1000}"
+    log_file = os.path.join(log_dir, f"{process_name}_{timestamp}.log")
+    
+    logger.debug(f"create_logged_run() process_name={process_name}, log_file={log_file}")
+    
+    if not log_output:
+        # If logging is disabled, run normally
+        return subprocess.run(args, **kwargs)
+    
+    # Ensure stdout and stderr are captured
+    if 'capture_output' not in kwargs:
+        if 'stdout' not in kwargs:
+            kwargs['stdout'] = subprocess.PIPE
+        if 'stderr' not in kwargs:
+            kwargs['stderr'] = subprocess.PIPE
+    
+    if 'text' not in kwargs and 'universal_newlines' not in kwargs:
+        kwargs['text'] = True
+    
+    # Run the process
+    start_time = time.strftime('%Y-%m-%d %H:%M:%S')
+    result = subprocess.run(args, **kwargs)
+    end_time = time.strftime('%Y-%m-%d %H:%M:%S')
+    
+    # Write output to log file
+    try:
+        with open(log_file, 'w', encoding='utf-8') as f:
+            f.write(f"Process: {' '.join(str(a) for a in (args if isinstance(args, (list, tuple)) else [args]))}\n")
+            f.write(f"Started: {start_time}\n")
+            f.write(f"Ended: {end_time}\n")
+            f.write(f"Return code: {result.returncode}\n")
+            f.write("-" * 80 + "\n\n")
+            
+            if result.stdout:
+                f.write("STDOUT:\n")
+                f.write(result.stdout)
+                f.write("\n")
+            
+            if result.stderr:
+                f.write("\nSTDERR:\n")
+                f.write(result.stderr)
+                f.write("\n")
+            
+            f.write("-" * 80 + "\n")
+        
+        logger.info(f"Logged process '{process_name}' output to: {log_file}")
+    except Exception as e:
+        logger.error(f"Error writing log file for {process_name}: {e}")
+    
+    return result
+
 def run_and_detach(*input):
     """
     Run a command in the background and detach it from the terminal.
     """
     try:
-        subprocess.Popen(args=input)
+        # Determine process name from input
+        process_name = None
+        if len(input) > 0:
+            process_name = os.path.basename(str(input[0])).replace('.exe', '').replace('.py', '')
+        
+        create_logged_popen(args=input, process_name=process_name, log_output=False)
         logger.debug(f"Detached process started: {input}")
         return True
     except Exception as e:
@@ -464,7 +627,19 @@ def try_command(*input, return_output: bool = False):
     """
     try:
         logger.debug(f"try_command() called with input={input}, return_output={return_output}")
-        result = subprocess.run(args=input, capture_output=True, check=True, creationflags=subprocess.CREATE_NO_WINDOW if os_is_windows() else 0)
+        
+        # Determine process name from input
+        process_name = None
+        if len(input) > 0:
+            process_name = os.path.basename(str(input[0])).replace('.exe', '').replace('.py', '')
+        
+        result = create_logged_run(
+            args=input, 
+            process_name=process_name,
+            capture_output=True, 
+            check=True, 
+            creationflags=subprocess.CREATE_NO_WINDOW if os_is_windows() else 0
+        )
         logger.debug("Command succeeded: %s", result.stdout)
         return result.stdout.strip() if return_output else True
     except subprocess.CalledProcessError as e:
@@ -503,7 +678,8 @@ def show_popup(title: str, message: str, type: int = 0):
             ctypes.windll.user32.MessageBoxW(None, message, title, type)
         elif os_is_linux():
             logger.debug(f"show_popup() Linux: title={title}, message={message}")
-            subprocess.run(["zenity", "--info", "--title", title, "--text", message])
+            create_logged_run(["zenity", "--info", "--title", title, "--text", message], 
+                            process_name="zenity", log_output=False)
         else:
             logger.debug(f"show_popup() unsupported OS: title={title}, message={message}")
             logger.error("Unsupported OS")
@@ -579,6 +755,78 @@ def is_dll_loadable(dll_path):
     except OSError:
         logger.debug(f"is_dll_loadable() DLL not loadable: {dll_path}")
         return False  # DLL not found or not registered
+
+def encode_video(input_path: str, output_path: str, width: int = None, height: int = None, crf: int = 23, preset: str = "medium"):
+    """
+    Encode a video file using FFmpeg with optimal settings for quality and compatibility.
+    This function is designed to be called after raw video capture to produce the final output.
+    
+    :param input_path: Path to the input video file (raw capture).
+    :param output_path: Path to the output video file (encoded).
+    :param width: Optional width for cropping/scaling. If None, uses input dimensions.
+    :param height: Optional height for cropping/scaling. If None, uses input dimensions.
+    :param crf: Constant Rate Factor for quality (0-51, lower is better, 23 is default).
+    :param preset: Encoding preset (ultrafast, superfast, veryfast, faster, fast, medium, slow, slower, veryslow).
+    :return: True if encoding succeeded, False otherwise.
+    """
+    try:
+        logger.info(f"Starting video encoding: {input_path} -> {output_path}")
+        
+        # Build FFmpeg command
+        if os_is_windows():
+            ffmpeg_path = get_path(get_app_folder(), get_config("PATH_FFMPEG_WINDOWS"))
+        elif os_is_linux():
+            ffmpeg_path = get_path(get_app_folder(), get_config("PATH_FFMPEG_LINUX"))
+        else:
+            logger.error("Unsupported OS for video encoding")
+            return False
+        
+        command = [
+            ffmpeg_path, "-y",
+            "-i", input_path,
+        ]
+        
+        # Add video filters if dimensions are specified
+        if width and height:
+            command.extend(["-vf", f"crop={width}:{height}:0:0,format=yuv420p"])
+        else:
+            command.extend(["-vf", "format=yuv420p"])
+        
+        # Add encoding parameters
+        command.extend([
+            "-c:v", "libx264",
+            "-preset", preset,
+            "-crf", str(crf),
+            "-pix_fmt", "yuv420p",
+            "-c:a", "aac",
+            "-b:a", "128k",
+            "-ar", "44100",
+            output_path,
+        ])
+        
+        logger.debug(f"encode_video() command: {' '.join(command)}")
+        
+        # Run encoding process
+        result = create_logged_run(
+            command,
+            process_name="ffmpeg_encode",
+            cwd=get_cwd(),
+            capture_output=True,
+            text=True,
+            creationflags=subprocess.CREATE_NO_WINDOW if os_is_windows() else 0,
+        )
+        
+        if result.returncode == 0:
+            logger.info(f"Video encoding completed successfully: {output_path}")
+            return True
+        else:
+            logger.error(f"Video encoding failed with return code {result.returncode}")
+            logger.error(f"FFmpeg stderr: {result.stderr}")
+            return False
+            
+    except Exception as e:
+        logger.error(f"Error encoding video: {e}")
+        return False
 
 # Output a list of items to the console
 def print_list(items, message: str = "to select"):
