@@ -286,9 +286,3 @@ See: [DEVELOPMENT.md](DEVELOPMENT.md#documentation)
 All documentation is licensed under GPL v3.0, same as the GoExport project.
 
 See: [LICENSE](../LICENSE)
-
----
-
-**Last Updated:** 2025-10-29  
-**GoExport Version:** 0.16.0  
-**Maintainer:** [Lexian-droid](https://github.com/Lexian-droid)

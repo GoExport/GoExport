@@ -15,7 +15,8 @@ def _is_frozen():
 def _get_app_folder():
     if _is_frozen():
         return os.path.dirname(sys.executable)
-    return os.path.dirname(os.path.abspath(__file__))
+    # Go up one directory from modules/ to get to project root
+    return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # --- Logging setup ---
 
@@ -47,7 +48,8 @@ def log_exception(exc_type, exc_value, exc_tb):
     # Avoid import loops by loading helpers here if needed
     try:
         import helpers
-        helpers.show_popup("Exception occurred", tb_str, 16)
+        if not helpers.get_param("no_input"):
+            helpers.show_popup("Exception occurred", tb_str, 16)
     except Exception:
         logger.error("Failed to show popup or import helpers.", exc_info=True)
 

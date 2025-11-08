@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.17.0] - 2025-11-05
+
+### Fixed
+
+- Fixed an issue where on Native Capture (For Windows), the recording would freeze after a few seconds.
+
 ## [0.16.0] - 2025-10-09
 
 This is a large update for both GUI and CLI versions, as well as GoExport for Linux. It fixes various bugs and improves compatibility.
@@ -15,7 +21,7 @@ Huge thanks to the following who helped debug, test, and provide feedback for th
 - @QuaixiAnimations
 - @GoSkit2
 
-### Important Announcement
+**Important Announcement**
 
 With the release of GoExport 0.16.0, we've drastically improved third party integration, which also includes first party addons and tools from us.
 
