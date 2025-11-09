@@ -99,8 +99,8 @@ class Parameters:
         for qname, dest in proto_map.items():
             val = _first(qname)
             if val is not None:
-                if dest == "no_input":
-                    # accept true/false/1/0
+                # Convert all boolean parameters
+                if dest in ("no_input", "open_folder", "use_outro", "obs_no_overwrite", "obs_required"):
                     result[dest] = self._str_to_bool(val)
                 else:
                     result[dest] = val
