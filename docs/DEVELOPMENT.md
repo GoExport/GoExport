@@ -881,10 +881,6 @@ def get_clip_length(self, clip_id: int) -> float:
 - Crash when outro file missing
 - Audio desync in multi-video exports
 
-### Deprecated
-
-- Legacy editor mode (will be removed in v0.17.0)
-
 ### Security
 
 - Updated dependency X to fix CVE-YYYY-NNNN
