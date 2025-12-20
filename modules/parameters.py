@@ -136,13 +136,17 @@ class Parameters:
 
 # Singleton instance - created once and reused
 _instance = None
+_lock = __import__('threading').Lock()
 
 def get_parameters():
-    """Get the singleton Parameters instance."""
+    """Get the singleton Parameters instance (thread-safe)."""
     global _instance
     if _instance is None:
-        _instance = Parameters()
+        with _lock:
+            # Double-check locking pattern
+            if _instance is None:
+                _instance = Parameters()
     return _instance
 
 if __name__ == "__main__":
-    params = Parameters()
+    params = get_parameters()
