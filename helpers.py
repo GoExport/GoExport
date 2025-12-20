@@ -17,8 +17,8 @@ from modules.logger import logger
 from datetime import datetime
 import modules.parameters as parameters
 
-# Global variables
-parameters = parameters.Parameters()
+# Global variables - use singleton to avoid duplicate parameter prints
+parameters = parameters.get_parameters()
 
 # Function to grab the key and value of a parameter
 def get_param(key: str):

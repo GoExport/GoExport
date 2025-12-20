@@ -28,8 +28,8 @@ os.makedirs(LOG_DIR, exist_ok=True)
 timestamp = f"{time.strftime('%H-%M-%S')}-{int(time.time() * 1000) % 1000}"
 log_file = os.path.join(LOG_DIR, f"{timestamp}.log")
 
-# Parse parameters to determine no_input mode
-_params = parameters.Parameters()
+# Parse parameters to determine no_input mode (uses singleton)
+_params = parameters.get_parameters()
 _no_input_mode = getattr(_params, 'no_input', False)
 
 # When --no-input is enabled, use STDERR for all console output

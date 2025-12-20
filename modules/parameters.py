@@ -1,4 +1,5 @@
 import argparse
+import sys
 import urllib.parse
 
 class Parameters:
@@ -41,9 +42,13 @@ class Parameters:
                 if v is not None:
                     setattr(args, k, v)
 
-        # Expose as attributes on the instance and print
+        # Expose as attributes on the instance and print (to stderr in no-input mode)
         for key, value in vars(args).items():
-            print(f"Parameter {key} set to {value}")
+            # In no-input mode, print to stderr to keep stdout clean for JSON output
+            if args.no_input:
+                print(f"Parameter {key} set to {value}", file=sys.stderr)
+            else:
+                print(f"Parameter {key} set to {value}")
             setattr(self, key, value)
 
     def _parse_protocol(self, uri: str):
@@ -127,6 +132,17 @@ class Parameters:
         if s is None:
             return False
         return s.strip().lower() in ("1", "true", "yes", "y", "t")
+
+
+# Singleton instance - created once and reused
+_instance = None
+
+def get_parameters():
+    """Get the singleton Parameters instance."""
+    global _instance
+    if _instance is None:
+        _instance = Parameters()
+    return _instance
 
 if __name__ == "__main__":
     params = Parameters()
