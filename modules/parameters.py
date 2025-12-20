@@ -23,6 +23,7 @@ class Parameters:
         parser.add_argument("--obs-fps", help="Set the OBS FPS", dest="obs_fps")
         parser.add_argument("--obs-no-overwrite", help="Prevent scene overwriting", action="store_true", dest="obs_no_overwrite")
         parser.add_argument("--obs-required", help="Require OBS connection", action="store_true", dest="obs_required")
+        parser.add_argument("--output-path", help="Custom output path for the final rendered video", dest="output_path")
 
         # New: accept a protocol URL passed through --protocol
         parser.add_argument("--protocol", help="Protocol URL e.g. goexport://?video_id=1&user_id=1&aspect_ratio=16:9&resolution=1920x1080&no_input=true", dest="protocol")
@@ -70,6 +71,7 @@ class Parameters:
             "obs_fps": "obs_fps",
             "obs_no_overwrite": "obs_no_overwrite",
             "obs_required": "obs_required",
+            "output_path": "output_path",
         }
 
         result = {
@@ -87,6 +89,7 @@ class Parameters:
             "obs_fps": "60",
             "obs_no_overwrite": False,
             "obs_required": False,
+            "output_path": None,
         }
 
         # action/service can be provided in netloc or path; prefer netloc (e.g., goexport://upload?...).
