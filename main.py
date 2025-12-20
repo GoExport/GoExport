@@ -39,8 +39,8 @@ def disclaimer():
 
 def main():
     try:
-        # Enable structured output if --no-input mode
-        if helpers.get_param("no_input"):
+        # Enable structured output if --json flag is set
+        if helpers.get_param("json"):
             structured_output.enabled = True
             structured_output.started(message="GoExport started in server mode")
 

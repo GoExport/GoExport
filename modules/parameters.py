@@ -9,6 +9,7 @@ class Parameters:
         )
         # CLI args (same as yours)
         parser.add_argument("-ni", "--no-input", help="Skip all user input", action="store_true", dest="no_input")
+        parser.add_argument("-j", "--json", help="Enable structured JSON output to STDOUT (diagnostics go to STDERR)", action="store_true", dest="json")
         parser.add_argument("-v", "--verbose", help="Enable verbose output", action="store_true", dest="verbose")
         parser.add_argument("-s", "--service", help="Set the service to use", dest="service")
         parser.add_argument("-r", "--resolution", help="Set the resolution to use", dest="resolution")
@@ -42,10 +43,10 @@ class Parameters:
                 if v is not None:
                     setattr(args, k, v)
 
-        # Expose as attributes on the instance and print (to stderr in no-input mode)
+        # Expose as attributes on the instance and print (to stderr in json/no-input mode)
         for key, value in vars(args).items():
-            # In no-input mode, print to stderr to keep stdout clean for JSON output
-            if args.no_input:
+            # In json mode or no-input mode, print to stderr to keep stdout clean for JSON output
+            if args.json or args.no_input:
                 print(f"Parameter {key} set to {value}", file=sys.stderr)
             else:
                 print(f"Parameter {key} set to {value}")
@@ -70,6 +71,7 @@ class Parameters:
             "aspect_ratio": "aspect_ratio",
             "resolution": "resolution",
             "no_input": "no_input",
+            "json": "json",
             "open_folder": "open_folder",
             "use_outro": "use_outro",
             "obs_websocket_address": "obs_websocket_address",
@@ -90,6 +92,7 @@ class Parameters:
             "aspect_ratio": "16:9",
             "resolution": "360p",
             "no_input": True,
+            "json": False,
             "open_folder": False,
             "use_outro": True,
             "obs_websocket_address": "localhost",
@@ -114,7 +117,7 @@ class Parameters:
             val = _first(qname)
             if val is not None:
                 # Convert all boolean parameters
-                if dest in ("no_input", "open_folder", "use_outro", "obs_no_overwrite", "obs_required"):
+                if dest in ("no_input", "json", "open_folder", "use_outro", "obs_no_overwrite", "obs_required"):
                     result[dest] = self._str_to_bool(val)
                 # Convert integer parameters
                 elif dest in ("load_timeout", "video_timeout"):

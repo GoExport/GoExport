@@ -12,8 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added the ability to choose custom output filename and directory via command line the argument:
   - `--output-path "C:\Path\To\Dir\filename.mp4"`
 - **Server environment optimizations:**
-  - When `--no-input` is provided, GoExport now emits structured, line-delimited JSON to STDOUT suitable for real-time parsing
-  - STDERR is used for warnings, diagnostics, and error messages in `--no-input` mode
+  - Added `--json` (`-j`) argument to enable structured, line-delimited JSON output to STDOUT suitable for real-time parsing
+  - When `--json` is provided, STDERR is used for warnings, diagnostics, and error messages
+  - `--json` can be used independently or alongside `--no-input` for flexible server integration
   - Added `--load-timeout` argument to limit time waiting for video to load (default: 30 minutes, 0 to disable)
   - Added `--video-timeout` argument to limit time waiting for video to finish after loading (default: 0/disabled)
 - **Timeout behavior:**

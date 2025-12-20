@@ -1,5 +1,5 @@
 # Structured output module for server environment
-# When --no-input is enabled, emit line-delimited JSON to STDOUT
+# When --json is enabled, emit line-delimited JSON to STDOUT
 
 import json
 import sys

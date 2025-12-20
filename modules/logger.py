@@ -28,13 +28,14 @@ os.makedirs(LOG_DIR, exist_ok=True)
 timestamp = f"{time.strftime('%H-%M-%S')}-{int(time.time() * 1000) % 1000}"
 log_file = os.path.join(LOG_DIR, f"{timestamp}.log")
 
-# Parse parameters to determine no_input mode (uses singleton)
+# Parse parameters to determine no_input/json mode (uses singleton)
 _params = parameters.get_parameters()
 _no_input_mode = getattr(_params, 'no_input', False)
+_json_mode = getattr(_params, 'json', False)
 
-# When --no-input is enabled, use STDERR for all console output
+# When --json or --no-input is enabled, use STDERR for all console output
 # This keeps STDOUT clean for structured JSON output
-if _no_input_mode:
+if _json_mode or _no_input_mode:
     # Create a console that writes to STDERR
     _console = Console(file=sys.stderr, force_terminal=True)
     _rich_handler = RichHandler(console=_console)
