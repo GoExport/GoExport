@@ -295,15 +295,26 @@ class Controller:
         custom_output_path = helpers.get_param("output_path")
         
         if custom_output_path:
+            # Convert to absolute path for consistency
+            custom_output_path = os.path.abspath(custom_output_path)
+            
             # Use custom output path for final rendered video
             if os.path.isdir(custom_output_path):
-                # If it's a directory, append the filename
+                # If it's an existing directory, append the filename
+                self.RECORDING_EDITED = os.path.join(custom_output_path, self.filename)
+                self.RECORDING_EDITED_PATH = custom_output_path
+            elif custom_output_path.endswith(os.sep) or (not os.path.splitext(custom_output_path)[1]):
+                # If path ends with separator or has no extension, treat as directory
+                # Create directory if it doesn't exist
+                os.makedirs(custom_output_path, exist_ok=True)
                 self.RECORDING_EDITED = os.path.join(custom_output_path, self.filename)
                 self.RECORDING_EDITED_PATH = custom_output_path
             else:
                 # If it's a full file path, use it as-is
                 self.RECORDING_EDITED = custom_output_path
-                self.RECORDING_EDITED_PATH = os.path.dirname(os.path.abspath(custom_output_path))
+                self.RECORDING_EDITED_PATH = os.path.dirname(custom_output_path)
+                # Ensure the directory exists
+                os.makedirs(self.RECORDING_EDITED_PATH, exist_ok=True)
         else:
             # Use default output path
             self.RECORDING_EDITED = helpers.get_path(helpers.get_path(helpers.get_app_folder(), helpers.get_config("DEFAULT_FOLDER_OUTPUT_FILENAME")), self.filename)
