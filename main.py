@@ -1,6 +1,7 @@
 # GoExport
 import sys
 import os
+import builtins
 import helpers
 from modules.compatibility import Compatibility
 from modules.flow import Controller
@@ -175,7 +176,6 @@ def main():
         logger.error(f"Timeout: {e.message}")
         structured_output.skipped(reason=e.message, timeout_type=e.timeout_type)
         # Write human-readable explanation to STDERR (use builtin print, not rich print)
-        import builtins
         builtins.print(f"Export skipped: {e.message}", file=sys.stderr)
         sys.exit(EXIT_TIMEOUT)
     except Exception as e:
@@ -196,7 +196,6 @@ if __name__ == '__main__':
         # Handle timeout errors at the top level as well
         logger.error(f"Timeout: {e.message}")
         structured_output.skipped(reason=e.message, timeout_type=e.timeout_type)
-        import builtins
         builtins.print(f"Export skipped: {e.message}", file=sys.stderr)
         sys.exit(EXIT_TIMEOUT)
     except Exception as e:
