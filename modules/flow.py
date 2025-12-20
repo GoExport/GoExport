@@ -4,6 +4,7 @@ from modules.editor import Editor
 from modules.navigator import Interface
 from modules.capture import Capture
 from modules.server import Server
+from modules.exceptions import TimeoutError
 from rich.prompt import Prompt, IntPrompt, Confirm
 from rich import print
 from modules.logger import logger
@@ -379,7 +380,12 @@ class Controller:
             for script in self.afterloadscripts:
                 self.browser.inject_now(self.format(script))
 
-            if not self.browser.await_started():
+            # Get timeout values from parameters
+            load_timeout = helpers.get_param("load_timeout") or 30
+            video_timeout = helpers.get_param("video_timeout") or 0
+
+            # Wait for video to load with timeout
+            if not self.browser.await_started(timeout_minutes=load_timeout):
                 logger.error("Could not wait for start")
                 return False
             
@@ -394,7 +400,8 @@ class Controller:
             self.prestart_delay = self.capture.startup_delay  # Ensure delay is accounted for (ms)
             logger.debug(f"Prestart: {self.prestart} | Delay: {self.prestart_delay}")
 
-            if not self.browser.await_completed():
+            # Wait for video to complete with timeout
+            if not self.browser.await_completed(timeout_minutes=video_timeout):
                 logger.error("Could not wait for completion")
                 return False
 

@@ -6,6 +6,7 @@ import time
 import traceback
 from modules import parameters
 from rich.logging import RichHandler
+from rich.console import Console
 
 # --- Utility functions ---
 
@@ -27,12 +28,25 @@ os.makedirs(LOG_DIR, exist_ok=True)
 timestamp = f"{time.strftime('%H-%M-%S')}-{int(time.time() * 1000) % 1000}"
 log_file = os.path.join(LOG_DIR, f"{timestamp}.log")
 
+# Parse parameters to determine no_input mode
+_params = parameters.Parameters()
+_no_input_mode = getattr(_params, 'no_input', False)
+
+# When --no-input is enabled, use STDERR for all console output
+# This keeps STDOUT clean for structured JSON output
+if _no_input_mode:
+    # Create a console that writes to STDERR
+    _console = Console(file=sys.stderr, force_terminal=True)
+    _rich_handler = RichHandler(console=_console)
+else:
+    _rich_handler = RichHandler()
+
 logging.basicConfig(
-    level=logging.DEBUG if parameters.Parameters().verbose or config.DEBUG_MODE else logging.INFO,
+    level=logging.DEBUG if _params.verbose or config.DEBUG_MODE else logging.INFO,
     format="%(message)s",
     datefmt="[%X]",
     handlers=[
-        RichHandler(),
+        _rich_handler,
         logging.FileHandler(log_file, encoding="utf-8")
     ]
 )

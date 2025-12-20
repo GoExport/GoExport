@@ -24,6 +24,8 @@ class Parameters:
         parser.add_argument("--obs-no-overwrite", help="Prevent scene overwriting", action="store_true", dest="obs_no_overwrite")
         parser.add_argument("--obs-required", help="Require OBS connection", action="store_true", dest="obs_required")
         parser.add_argument("--output-path", help="Custom output path for the final rendered video", dest="output_path")
+        parser.add_argument("--load-timeout", help="Timeout in minutes to wait for video to load (default: 30, 0 to disable)", type=int, default=30, dest="load_timeout")
+        parser.add_argument("--video-timeout", help="Timeout in minutes to wait for video to finish after loading (default: 0/disabled)", type=int, default=0, dest="video_timeout")
 
         # New: accept a protocol URL passed through --protocol
         parser.add_argument("--protocol", help="Protocol URL e.g. goexport://?video_id=1&user_id=1&aspect_ratio=16:9&resolution=1920x1080&no_input=true", dest="protocol")
@@ -72,6 +74,8 @@ class Parameters:
             "obs_no_overwrite": "obs_no_overwrite",
             "obs_required": "obs_required",
             "output_path": "output_path",
+            "load_timeout": "load_timeout",
+            "video_timeout": "video_timeout",
         }
 
         result = {
@@ -90,6 +94,8 @@ class Parameters:
             "obs_no_overwrite": False,
             "obs_required": False,
             "output_path": None,
+            "load_timeout": 30,
+            "video_timeout": 0,
         }
 
         # action/service can be provided in netloc or path; prefer netloc (e.g., goexport://upload?...).
@@ -105,6 +111,12 @@ class Parameters:
                 # Convert all boolean parameters
                 if dest in ("no_input", "open_folder", "use_outro", "obs_no_overwrite", "obs_required"):
                     result[dest] = self._str_to_bool(val)
+                # Convert integer parameters
+                elif dest in ("load_timeout", "video_timeout"):
+                    try:
+                        result[dest] = int(val)
+                    except ValueError:
+                        pass  # Keep default if invalid
                 else:
                     result[dest] = val
 
