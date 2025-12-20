@@ -1,3 +1,4 @@
+import os
 import helpers
 from modules.editor import Editor
 from modules.navigator import Interface
@@ -290,8 +291,35 @@ class Controller:
         else:
             self.RECORDING = path
 
-        self.RECORDING_EDITED = helpers.get_path(helpers.get_path(helpers.get_app_folder(), helpers.get_config("DEFAULT_FOLDER_OUTPUT_FILENAME")), self.filename)
-        self.RECORDING_EDITED_PATH = helpers.get_path(helpers.get_app_folder(), helpers.get_config("DEFAULT_FOLDER_OUTPUT_FILENAME"))
+        # Check if custom output path is provided via command-line parameter
+        custom_output_path = helpers.get_param("output_path")
+        
+        if custom_output_path:
+            # Convert to absolute path for consistency
+            custom_output_path = os.path.abspath(custom_output_path)
+            
+            # Use custom output path for final rendered video
+            if os.path.isdir(custom_output_path):
+                # If it's an existing directory, append the filename
+                self.RECORDING_EDITED = os.path.join(custom_output_path, self.filename)
+                self.RECORDING_EDITED_PATH = custom_output_path
+            elif custom_output_path.endswith(os.sep) or (not os.path.splitext(custom_output_path)[1]):
+                # If path ends with separator or has no extension, treat as directory
+                # Create directory if it doesn't exist
+                os.makedirs(custom_output_path, exist_ok=True)
+                self.RECORDING_EDITED = os.path.join(custom_output_path, self.filename)
+                self.RECORDING_EDITED_PATH = custom_output_path
+            else:
+                # If it's a full file path, use it as-is
+                self.RECORDING_EDITED = custom_output_path
+                self.RECORDING_EDITED_PATH = os.path.dirname(custom_output_path)
+                # Ensure the directory exists
+                os.makedirs(self.RECORDING_EDITED_PATH, exist_ok=True)
+        else:
+            # Use default output path
+            self.RECORDING_EDITED = helpers.get_path(helpers.get_path(helpers.get_app_folder(), helpers.get_config("DEFAULT_FOLDER_OUTPUT_FILENAME")), self.filename)
+            self.RECORDING_EDITED_PATH = helpers.get_path(helpers.get_app_folder(), helpers.get_config("DEFAULT_FOLDER_OUTPUT_FILENAME"))
+        
         if self.PROJECT_FOLDER is None:
             self.PROJECT_FOLDER = helpers.get_path(helpers.get_config("DEFAULT_FOLDER_OUTPUT_FILENAME"), self.readable_filename)
 
@@ -449,6 +477,18 @@ class Controller:
                 self.editor.add_clip(helpers.get_path(helpers.get_app_folder(), helpers.get_config(f"OUTRO_WIDE_{self.width}x{self.height}")), len(self.editor.clips))
         except Exception as e:
             print(f"[bold yellow]Warning:[/bold yellow] Failed to add the outro: {e}")
+        
+        # Handle file conflicts for custom output path
+        output_path = self.RECORDING_EDITED
+        if os.path.exists(output_path):
+            # File already exists, append number suffix
+            base_name, ext = os.path.splitext(output_path)
+            counter = 1
+            while os.path.exists(f"{base_name}_{counter}{ext}"):
+                counter += 1
+            output_path = f"{base_name}_{counter}{ext}"
+            logger.info(f"Output file already exists, using: {output_path}")
+            self.RECORDING_EDITED = output_path
         
         # Render the video
         self.editor.render(self.RECORDING_EDITED, target_width=self.width, target_height=self.height, reencode=outro)
