@@ -1,3 +1,4 @@
+import os
 import helpers
 from modules.editor import Editor
 from modules.navigator import Interface
@@ -295,7 +296,6 @@ class Controller:
         
         if custom_output_path:
             # Use custom output path for final rendered video
-            import os
             if os.path.isdir(custom_output_path):
                 # If it's a directory, append the filename
                 self.RECORDING_EDITED = os.path.join(custom_output_path, self.filename)
@@ -303,7 +303,7 @@ class Controller:
             else:
                 # If it's a full file path, use it as-is
                 self.RECORDING_EDITED = custom_output_path
-                self.RECORDING_EDITED_PATH = os.path.dirname(custom_output_path) or os.getcwd()
+                self.RECORDING_EDITED_PATH = os.path.dirname(os.path.abspath(custom_output_path))
         else:
             # Use default output path
             self.RECORDING_EDITED = helpers.get_path(helpers.get_path(helpers.get_app_folder(), helpers.get_config("DEFAULT_FOLDER_OUTPUT_FILENAME")), self.filename)
@@ -468,7 +468,6 @@ class Controller:
             print(f"[bold yellow]Warning:[/bold yellow] Failed to add the outro: {e}")
         
         # Handle file conflicts for custom output path
-        import os
         output_path = self.RECORDING_EDITED
         if os.path.exists(output_path):
             # File already exists, append number suffix
