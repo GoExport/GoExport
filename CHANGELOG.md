@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2025-12-20
+
+### Added
+
+- Added the ability to choose custom output filename and directory via command line the argument:
+  - `--output-path "C:\Path\To\Dir\filename.mp4"`
+
 ## [1.0.0] - 2025-12-08
 
 This is the final release of GoExport beta. With this release, GoExport is now considered stable and ready for production use.
