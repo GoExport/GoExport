@@ -160,7 +160,7 @@ AVAILABLE_SERVICES = {
         ],
         "host": False,
         "legacy": False,
-        "template": True,
+        "template": True, # Used for when the website doesn't already have a built-in controller.
         "hidden": True,
         "window": "Video Player - Wrapper#3A Offline",
         "afterloadscripts": []
