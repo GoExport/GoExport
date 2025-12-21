@@ -1,11 +1,13 @@
 import helpers
 from modules.logger import logger
+from modules.exceptions import TimeoutError
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support.wait import WebDriverWait
+from selenium.common.exceptions import TimeoutException
 import urllib
 
 class Interface:
@@ -134,10 +136,26 @@ class Interface:
 
         return True
 
-    def await_started(self):
-        WebDriverWait(self.driver, float('inf')).until(
-            lambda driver: driver.execute_script("return window.startRecord !== undefined")
-        )
+    def await_started(self, timeout_minutes: int = 30):
+        """
+        Wait for the video to start loading/playing.
+        
+        :param timeout_minutes: Maximum minutes to wait (0 to disable timeout)
+        :raises TimeoutError: If timeout is reached
+        :return: True if started successfully
+        """
+        # Convert minutes to seconds, 0 means infinite wait
+        timeout_seconds = timeout_minutes * 60 if timeout_minutes > 0 else float('inf')
+        
+        try:
+            WebDriverWait(self.driver, timeout_seconds).until(
+                lambda driver: driver.execute_script("return window.startRecord !== undefined")
+            )
+        except TimeoutException:
+            raise TimeoutError(
+                f"Video failed to load within {timeout_minutes} minutes",
+                timeout_type="load"
+            )
 
         self.startedDelay = helpers.get_timestamp("Recording started")
         return True
@@ -152,10 +170,27 @@ class Interface:
         self.driver.execute_script('document.getElementById("obj").pause()')
         return True
 
-    def await_completed(self):
-        WebDriverWait(self.driver, float('inf')).until(
-            lambda driver: driver.execute_script("return window.stopRecord !== undefined")
-        )
+    def await_completed(self, timeout_minutes: int = 0):
+        """
+        Wait for the video to finish playing.
+        
+        :param timeout_minutes: Maximum minutes to wait (0 to disable timeout)
+        :raises TimeoutError: If timeout is reached
+        :return: True if completed successfully
+        """
+        # Convert minutes to seconds, 0 means infinite wait
+        timeout_seconds = timeout_minutes * 60 if timeout_minutes > 0 else float('inf')
+        
+        try:
+            WebDriverWait(self.driver, timeout_seconds).until(
+                lambda driver: driver.execute_script("return window.stopRecord !== undefined")
+            )
+        except TimeoutException:
+            raise TimeoutError(
+                f"Video did not finish within {timeout_minutes} minutes after loading",
+                timeout_type="video"
+            )
+        
         self.endedDelay = helpers.get_timestamp("Recording ended")
         return True
     

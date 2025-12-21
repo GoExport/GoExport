@@ -85,13 +85,16 @@ python main.py
 
 ```bash
 # Download AppImage
-wget https://github.com/GoExport/GoExport/releases/latest/download/GoExport-x86_64.AppImage
+wget https://github.com/GoExport/GoExport/releases/latest/download/goexport_linux_portable_amd64.tar.gz
+
+# Extract
+tar -xzf goexport_linux_portable_amd64.tar.gz
 
 # Make executable
-chmod +x GoExport-x86_64.AppImage
+chmod +x GoExport
 
 # Run
-./GoExport-x86_64.AppImage
+./GoExport
 ```
 
 ## Dependencies
