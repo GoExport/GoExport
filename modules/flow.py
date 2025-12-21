@@ -350,7 +350,7 @@ class Controller:
                 return False
 
             if self.template: # This is for if the website in question doesn't already have the controller embedded; so we inject it ourselves.
-                self.browser.inject_in_future('function obj_DoFSCommand(command, args) { switch (command) { case "start": startRecord = Date.now(); console.log("Video started " + startRecord); document.getElementById("obj").pause(); document.getElementById("obj").seek(0); break; case "stop": stopRecord = Date.now(); console.log("Video stopped " + stopRecord); break; } }')
+                self.browser.inject_in_future('function obj_DoFSCommand(command, args) { switch (command) { case "start": startRecord = Date.now(); console.log("Video started " + startRecord); document.getElementById("obj").pause(); try{document.getElementById("obj").seek(0)}catch(e){document.getElementById("obj").seek(0.1)} break; case "stop": stopRecord = Date.now(); console.log("Video stopped " + stopRecord); break; } }')
 
             if not self.capture.is_obs:
                 if not self.browser.warning(self.width, self.height):
