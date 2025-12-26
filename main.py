@@ -20,19 +20,22 @@ EXIT_FATAL_ERROR = 1
 EXIT_TIMEOUT = 2
 
 def welcome():
-    import art
-    Art = art.text2art(helpers.get_config("APP_NAME"), font="tarty1")
-    print(Art)
-    print(f"[green]{helpers.get_config('APP_NAME')} [bold]v{helpers.get_config('APP_VERSION')} {'[blue]BETA[/blue]' if helpers.get_config('APP_BETA') else ''}[/bold]")
-    print(f"[yellow]Created by [link=https://lexian.dev][blue]LexianDEV[/blue][/link] and the outro was created by [link=https://www.youtube.com/@AlexDirector][blue]Alex Director[/blue][/link]")
-    update_message()
-    print(f"[blue][link=https://discord.gg/ejwJYtQDrS]Join the Official GoExport Discord server[/link][/blue]")
+    if not helpers.get_param("json"):
+        import art
+        Art = art.text2art(helpers.get_config("APP_NAME"), font="tarty1")
+        print(f"[blue]{Art}")
+        print(f"[green]{helpers.get_config('APP_NAME')} [bold]v{helpers.get_config('APP_VERSION')} {'[blue]BETA[/blue]' if helpers.get_config('APP_BETA') else ''}[/bold]")
+        print(f"[yellow]Created by [link=https://lexian.dev][blue]LexianDEV[/blue][/link] and the outro was created by [link=https://www.youtube.com/@AlexDirector][blue]Alex Director[/blue][/link]")
+        print(f"[blue][link=https://discord.gg/ejwJYtQDrS]Join the Official GoExport Discord server[/link][/blue]")
+        update_message()
+    else:
+        print(f"[black on blue]{helpers.get_config('APP_NAME')} Server Mode (v{helpers.get_config('APP_VERSION')})[/black on blue]")
 
 def update_message():
     new_version = update.check()
     if not new_version:
         return
-    print(f"[green]New update available! [bold]v{new_version}")
+    print(f"[black on green]New update available! [bold]v{new_version}")
 
 def disclaimer():
     print("[orange]Warning: [bold]This application will create and store logs on your system, they will never leave your system unless you choose to share them, in which case the logs may contain personally identifiable information such as system information, file paths, and other data. It is recommended that you exercise caution when sharing these logs.")
