@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.2] - 2025-12-25
+
+Merry Christmas! This is a hotfix related to the --json flag added in 1.1.0
+
+### Fixed
+
+- Made it where --json flag also disables printing of non-unicode characters (ASCII, etc) to prevent charmap issues when parsing JSON output.
+
 ## [1.1.1] - 2025-12-21
 
 ### Fixed
