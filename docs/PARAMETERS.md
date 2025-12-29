@@ -244,6 +244,91 @@ GoExport.exe --obs-no-overwrite
 
 **Note:** By default, GoExport creates a temporary profile/scene. This flag prevents that behavior.
 
+#### `--obs-required`
+
+Require OBS connection for capture (fail if OBS is unavailable).
+
+**Type:** Boolean flag  
+**Default:** `false`  
+**Example:**
+
+```bash
+GoExport.exe --obs-required
+```
+
+**Note:** If OBS is not available and this flag is set, export will fail instead of falling back to native capture.
+
+---
+
+### Output Configuration
+
+#### `--output-path`
+
+Specify a custom output path for the final rendered video.
+
+**Type:** String (file path)  
+**Default:** `output/` directory  
+**Example:**
+
+```bash
+GoExport.exe --output-path "/path/to/my/video.mp4"
+```
+
+---
+
+### Timeout Configuration
+
+#### `--load-timeout`
+
+Timeout in minutes to wait for video to load.
+
+**Type:** Integer  
+**Default:** `30`  
+**Example:**
+
+```bash
+GoExport.exe --load-timeout 45
+```
+
+**Note:** Set to `0` to disable the timeout.
+
+#### `--video-timeout`
+
+Timeout in minutes to wait for video to finish after loading.
+
+**Type:** Integer  
+**Default:** `0` (disabled)  
+**Example:**
+
+```bash
+GoExport.exe --video-timeout 10
+```
+
+---
+
+### Linux-Specific Parameters
+
+#### `--x11grab-display`
+
+**Platform:** Linux only
+
+Set the X11 display for FFmpeg's x11grab input device when using native capture mode.
+
+**Type:** String  
+**Default:** `:0.0`  
+**Example:**
+
+```bash
+GoExport --x11grab-display ":1.0"
+```
+
+**Valid formats:**
+- `:0.0` - Display 0, screen 0 (default)
+- `:1.0` - Display 1, screen 0
+- `:0.1` - Display 0, screen 1
+
+**Note:** This parameter only affects Linux systems using native capture mode. It has no effect on Windows or when using OBS capture mode. Use this if you have multiple displays or X11 servers running.
+
 ---
 
 ### Protocol URL
@@ -283,16 +368,21 @@ goexport://[service]?key1=value1&key2=value2&...
 
 ### Query Parameters
 
-| Parameter      | Maps to CLI Flag | Type    | Description                         |
-| -------------- | ---------------- | ------- | ----------------------------------- |
-| `service`      | `--service`      | String  | Service identifier                  |
-| `video_id`     | `--movie-id`     | String  | Video/Movie ID                      |
-| `user_id`      | `--owner-id`     | String  | Owner/User ID                       |
-| `aspect_ratio` | `--aspect_ratio` | String  | Aspect ratio (e.g., `16:9`)         |
-| `resolution`   | `--resolution`   | String  | Resolution (e.g., `1080p`)          |
-| `no_input`     | `--no-input`     | Boolean | Skip user prompts                   |
-| `open_folder`  | `--open-file`    | Boolean | Open output folder after completion |
-| `use_outro`    | `--use-outro`    | Boolean | Add outro to video                  |
+| Parameter         | Maps to CLI Flag       | Type    | Description                              |
+| ----------------- | ---------------------- | ------- | ---------------------------------------- |
+| `service`         | `--service`            | String  | Service identifier                       |
+| `video_id`        | `--movie-id`           | String  | Video/Movie ID                           |
+| `user_id`         | `--owner-id`           | String  | Owner/User ID                            |
+| `aspect_ratio`    | `--aspect_ratio`       | String  | Aspect ratio (e.g., `16:9`)              |
+| `resolution`      | `--resolution`         | String  | Resolution (e.g., `1080p`)               |
+| `no_input`        | `--no-input`           | Boolean | Skip user prompts                        |
+| `open_folder`     | `--open-file`          | Boolean | Open output folder after completion      |
+| `use_outro`       | `--use-outro`          | Boolean | Add outro to video                       |
+| `output_path`     | `--output-path`        | String  | Custom output path                       |
+| `load_timeout`    | `--load-timeout`       | Integer | Video load timeout (minutes)             |
+| `video_timeout`   | `--video-timeout`      | Integer | Video completion timeout (minutes)       |
+| `x11grab_display` | `--x11grab-display`    | String  | X11 display (Linux only, e.g., `:0.0`)   |
+| OBS parameters    | See OBS section        | Various | OBS WebSocket configuration              |
 
 ### Boolean Values
 

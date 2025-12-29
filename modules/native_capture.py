@@ -102,11 +102,13 @@ class Capture:
             ]
         elif helpers.os_is_linux():
             # Linux: Use x11grab with minimal encoding
+            # Get the X11 display from parameters, default to :0.0
+            x11_display = helpers.get_param("x11grab_display") or ":0.0"
             command = [
                 helpers.get_path(helpers.get_app_folder(), helpers.get_config("PATH_FFMPEG_LINUX")), "-y",
                 "-f", "x11grab",
                 "-s", f"{width}x{height}",
-                "-i", ":0.0",
+                "-i", x11_display,
                 "-f", "pulse",
                 "-i", "alsa_output.pci-0000_00_1b.0.analog-stereo.monitor",
                 "-ac", "2",

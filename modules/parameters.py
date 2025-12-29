@@ -29,6 +29,7 @@ class Parameters:
         parser.add_argument("--output-path", help="Custom output path for the final rendered video", dest="output_path")
         parser.add_argument("--load-timeout", help="Timeout in minutes to wait for video to load (default: 30, 0 to disable)", type=int, default=30, dest="load_timeout")
         parser.add_argument("--video-timeout", help="Timeout in minutes to wait for video to finish after loading (default: 0/disabled)", type=int, default=0, dest="video_timeout")
+        parser.add_argument("--x11grab-display", help="X11 display for ffmpeg's x11grab input (Linux only, default: :0.0)", dest="x11grab_display")
 
         # New: accept a protocol URL passed through --protocol
         parser.add_argument("--protocol", help="Protocol URL e.g. goexport://?video_id=1&user_id=1&aspect_ratio=16:9&resolution=1920x1080&no_input=true", dest="protocol")
@@ -84,6 +85,7 @@ class Parameters:
             "output_path": "output_path",
             "load_timeout": "load_timeout",
             "video_timeout": "video_timeout",
+            "x11grab_display": "x11grab_display",
         }
 
         result = {
@@ -105,6 +107,7 @@ class Parameters:
             "output_path": None,
             "load_timeout": 30,
             "video_timeout": 0,
+            "x11grab_display": ":0.0",
         }
 
         # action/service can be provided in netloc or path; prefer netloc (e.g., goexport://upload?...).
