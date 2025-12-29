@@ -10,6 +10,7 @@ class Parameters:
         # CLI args (same as yours)
         parser.add_argument("-ni", "--no-input", help="Skip all user input", action="store_true", dest="no_input")
         parser.add_argument("-j", "--json", help="Enable structured JSON output to STDOUT (diagnostics go to STDERR)", action="store_true", dest="json")
+        parser.add_argument("-c", "--console", help="Force console mode (no GUI). NOT RECOMMENDED: May leave orphaned processes.", action="store_true", dest="console")
         parser.add_argument("-v", "--verbose", help="Enable verbose output", action="store_true", dest="verbose")
         parser.add_argument("-s", "--service", help="Set the service to use", dest="service")
         parser.add_argument("-r", "--resolution", help="Set the resolution to use", dest="resolution")

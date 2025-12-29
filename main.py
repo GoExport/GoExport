@@ -60,7 +60,7 @@ def main():
         welcome()
 
         # Check if no GUI is enabled
-        if not helpers.has_console():
+        if not helpers.has_console() or helpers.get_param("console"):
             # Set up Qt platform plugin debugging for Linux
             if helpers.os_is_linux():
                 os.environ['QT_DEBUG_PLUGINS'] = '1'
