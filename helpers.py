@@ -108,9 +108,14 @@ def os_is_mac():
     return result
 
 def has_console():
+    """Check whether the process has a console window attached or --console flag is set."""
+    # If --console flag is set, always return True to force console mode
+    if get_param("console"):
+        return True
+    
     if not is_frozen() and get_config("FORCE_WINDOW"):
         return False
-    """Check whether the process has a console window attached."""
+    
     if os_is_windows():
         try:
             return bool(ctypes.windll.kernel32.GetConsoleWindow())
