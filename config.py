@@ -1,7 +1,7 @@
 # Configuration
 APP_NAME = "GoExport"
 APP_REPO = "goexport/goexport"
-APP_VERSION = "1.1.2"
+APP_VERSION = "1.1.3"
 APP_BETA = False
 DEFAULT_DEPENDENCIES_FILENAME = "dependencies"
 DEFAULT_LIBS_FILENAME = "libs"

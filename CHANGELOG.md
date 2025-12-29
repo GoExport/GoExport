@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.3] - 2025-12-29
+
+### Added
+
+- Added the ability to forcefully enable console mode (useful for process spawning) you can use the argument:
+  - `--console` : Forces console mode even if there is no TTY attached. **Warning:** May cause orphaned processes if not used carefully.
+
 ## [1.1.2] - 2025-12-25
 
 Merry Christmas! This is a hotfix related to the --json flag added in 1.1.0
