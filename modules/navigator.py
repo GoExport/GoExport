@@ -63,7 +63,7 @@ class Interface:
         """Initializes and starts the Selenium WebDriver."""
         # On Linux, set DISPLAY environment variable to match x11grab_display parameter
         if helpers.os_is_linux():
-            display = helpers.get_param('x11grab_display')
+            display = helpers.get_param('x11grab_display') or ':0.0'
             os.environ['DISPLAY'] = display
             logger.info(f"Set DISPLAY environment variable to {display}")
             

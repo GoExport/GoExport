@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.8] - 2025-12-30
+
+Sorry for the pings for those reading in Discord; this is a small hotfix for the previous release.
+
+### Fixed
+
+- Fixed an issue where on Linux, if the `--x11grab-display` argument was not provided, GoExport would crash when trying to set the DISPLAY environment variable. Now, it defaults to `:0.0` if not specified. (Prior it would set it to `None`, causing issues)
+
 ## [1.1.7] - 2025-12-30
 
 ### Added
