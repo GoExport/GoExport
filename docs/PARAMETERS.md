@@ -49,6 +49,34 @@ GoExport.exe --verbose
 
 **Output:** Creates detailed logs in `logs/YYYY-MM-DD/` directory.
 
+#### `-j, --json`
+
+Enable structured JSON output to STDOUT (diagnostics go to STDERR).
+
+**Type:** Boolean flag  
+**Default:** `false`  
+**Example:**
+
+```bash
+GoExport.exe --json
+```
+
+**Note:** Useful for integrating GoExport with other tools or scripts that can parse JSON output.
+
+#### `-c, --console`
+
+Force console mode (no GUI).
+
+**Type:** Boolean flag  
+**Default:** `false`  
+**Example:**
+
+```bash
+GoExport.exe --console
+```
+
+**Warning:** NOT RECOMMENDED as it may leave orphaned processes. Use with caution.
+
 ---
 
 ### Service Configuration
