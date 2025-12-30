@@ -184,11 +184,15 @@ To prevent audio interference, GoExport mutes all audio sources during recording
 
 ### What is Native Mode?
 
-Native Mode uses screen-capture-recorder-to-video library to capture the screen directly. This is a fallback mode when OBS is unavailable.
+Native Mode uses FFmpeg's built-in capture devices to capture the screen directly. This is a fallback mode when OBS is unavailable.
 
-**Platform Support:** Windows only
+**Platform Support:**
+- **Windows:** DirectShow (`dshow`) with screen-capture-recorder
+- **Linux:** X11 screen capture (`x11grab`)
 
 ### Requirements
+
+#### Windows
 
 **Bundled with GoExport:**
 
@@ -198,7 +202,17 @@ Native Mode uses screen-capture-recorder-to-video library to capture the screen 
 
 **All included in GoExport distribution - no manual installation needed.**
 
+#### Linux
+
+**System Requirements:**
+
+1. X11 display server (Wayland not supported for native capture)
+2. PulseAudio for audio capture
+3. FFmpeg with x11grab support (bundled)
+
 ### How Native Mode Works
+
+#### Windows
 
 1. **Driver Registration** - Registers screen capture driver
 2. **Window Positioning** - Positions browser window precisely
@@ -206,7 +220,16 @@ Native Mode uses screen-capture-recorder-to-video library to capture the screen 
 4. **Audio Capture** - Captures system audio via virtual audio device
 5. **Encoding** - Real-time encoding to MP4
 
+#### Linux
+
+1. **Window Positioning** - Positions browser window precisely
+2. **X11 Capture** - Uses x11grab to capture screen region
+3. **Audio Capture** - Captures system audio via PulseAudio
+4. **Encoding** - Real-time encoding to MP4
+
 ### Native Mode Configuration
+
+#### Windows Configuration
 
 **Config File:** `ScreenCaptureRecorder.ini`
 
@@ -229,6 +252,35 @@ start_y=0
 - `capture_mouse` - Show mouse cursor (0=off, 1=on)
 - `hwnd_to_track` - Window handle to capture
 
+#### Linux Configuration
+
+**Command-line Parameters:**
+
+```bash
+--x11grab-display <display>   # Default: :0.0
+```
+
+**Display Format:**
+
+- `:0.0` - Display 0, screen 0 (default)
+- `:1.0` - Display 1, screen 0
+- `:0.1` - Display 0, screen 1
+
+**Example:**
+
+```bash
+# Capture from second X11 display
+GoExport --x11grab-display ":1.0" --service local --movie-id m-123
+```
+
+**Audio Configuration:**
+
+The PulseAudio device is currently hardcoded. Check available devices:
+
+```bash
+pactl list sources | grep "Name:"
+```
+
 ### Native Mode Limitations
 
 **Quality:**
@@ -245,15 +297,20 @@ start_y=0
 
 **Features:**
 
-- Windows only
-- Single monitor only
+- Limited to single display/monitor
 - No advanced filters
 
-**Compatibility:**
+**Platform-Specific:**
 
+**Windows:**
 - Requires Windows 7 or later
 - May conflict with other capture software
 - Requires Visual C++ runtime
+
+**Linux:**
+- X11 only (Wayland not supported)
+- Requires properly configured PulseAudio
+- May need display configuration for multi-monitor setups
 
 ### When Native Mode is Used
 
