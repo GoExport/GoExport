@@ -678,13 +678,22 @@ def flatten_list(input):
 def show_popup(title: str, message: str, type: int = 0):
     # Suppress the popup if no input is enabled
     if not get_param("no_input"):
+        # If running in console mode, output to console instead
+        if has_console():
+            logger.info(f"{title}: {message}")
+            return
+        
         if os_is_windows():
             logger.debug(f"show_popup() Windows: title={title}, message={message}, type={type}")
             ctypes.windll.user32.MessageBoxW(None, message, title, type)
         elif os_is_linux():
             logger.debug(f"show_popup() Linux: title={title}, message={message}")
-            create_logged_run(["zenity", "--info", "--title", title, "--text", message], 
+            result = create_logged_run(["zenity", "--info", "--title", title, "--text", message], 
                             process_name="zenity", log_output=False)
+            # If zenity fails, fall back to console output
+            if result.returncode != 0:
+                logger.debug(f"show_popup() zenity failed (return code {result.returncode}), falling back to console")
+                logger.info(f"{title}: {message}")
         else:
             logger.debug(f"show_popup() unsupported OS: title={title}, message={message}")
             logger.error("Unsupported OS")
