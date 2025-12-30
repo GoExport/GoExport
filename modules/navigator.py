@@ -9,6 +9,7 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.common.exceptions import TimeoutException
 import urllib
+import os
 
 class Interface:
     def __init__(self, obs: bool = False):
@@ -60,6 +61,12 @@ class Interface:
 
     def start(self):
         """Initializes and starts the Selenium WebDriver."""
+        # On Linux, set DISPLAY environment variable to match x11grab_display parameter
+        if helpers.os_is_linux():
+            display = helpers.get_param('x11grab_display')
+            os.environ['DISPLAY'] = display
+            logger.info(f"Set DISPLAY environment variable to {display}")
+            
         self.driver = webdriver.Chrome(options=self.options, service=self.service)
         self.driver.get(self.start_url)
         helpers.wait(2)
