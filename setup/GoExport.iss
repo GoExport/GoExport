@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "GoExport"
-#define MyAppVersion "1.1.5"
+#define MyAppVersion "1.1.6"
 #define MyAppPublisher "LexianDEV"
 #define MyAppURL "https://goexport.lexian.dev/"
 #define MyAppExeName "GoExport.exe"

@@ -104,13 +104,14 @@ class Capture:
             # Linux: Use x11grab with minimal encoding
             # Get the X11 display from parameters, default to :0.0
             x11_display = helpers.get_param("x11grab_display") or ":0.0"
+            pulse_audio = helpers.get_param("pulse_audio") or "alsa_output.pci-0000_00_1b.0.analog-stereo.monitor"
             command = [
                 helpers.get_path(helpers.get_app_folder(), helpers.get_config("PATH_FFMPEG_LINUX")), "-y",
                 "-f", "x11grab",
                 "-s", f"{width}x{height}",
                 "-i", x11_display,
                 "-f", "pulse",
-                "-i", "alsa_output.pci-0000_00_1b.0.analog-stereo.monitor",
+                "-i", pulse_audio,
                 "-ac", "2",
                 "-c:v", "libx264",
                 "-preset", "ultrafast",
