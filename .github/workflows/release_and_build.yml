@@ -167,7 +167,6 @@ jobs:
           tag="${GITHUB_REF_NAME}"
 
           payload=$(jq -n \
-            --arg role "<@&1346974681399427153>" \
             --arg repo "$repo_name" \
             --arg tag "$tag" \
             --arg channel "<#1347670260844855376>" \
@@ -175,7 +174,7 @@ jobs:
           ${{ needs.changelog.outputs.changelog }}
           EOF
           )" \
-            '{content: "\($role)\n\n# \($repo) - \($tag)\n\n\($changelog)\n\n\($channel)"}')
+            '{content: "\($repo) - \($tag)\n\n\($changelog)\n\n\($channel)"}')
 
           curl -H "Content-Type: application/json" \
             -X POST \
