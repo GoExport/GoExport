@@ -745,9 +745,9 @@ def post_request(url: str, data: dict):
     return response
 
 # Check if a resolution exceeds the monitor resolution
-def exceeds_monitor_resolution(width, height):
-    monitor_width, monitor_height = get_resolution()
-    logger.debug(f"exceeds_monitor_resolution() width={width}, height={height}, monitor_width={monitor_width}, monitor_height={monitor_height}")
+def exceeds_monitor_resolution(width, height, monitor_index: int = 0):
+    monitor_width, monitor_height = get_resolution(monitor_index)
+    logger.debug(f"exceeds_monitor_resolution() width={width}, height={height}, monitor_index={monitor_index}, monitor_width={monitor_width}, monitor_height={monitor_height}")
     if width > monitor_width or height > monitor_height:
         logger.debug("Resolution exceeds monitor size.")
         return True

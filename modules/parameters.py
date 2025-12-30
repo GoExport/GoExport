@@ -31,6 +31,8 @@ class Parameters:
         parser.add_argument("--video-timeout", help="Timeout in minutes to wait for video to finish after loading (default: 0/disabled)", type=int, default=0, dest="video_timeout")
         parser.add_argument("--x11grab-display", help="X11 display for ffmpeg's x11grab input (Linux only, default: :0.0)", dest="x11grab_display")
         parser.add_argument("--pulse-audio", help="PulseAudio source for ffmpeg input (Linux only)", dest="pulse_audio")
+        parser.add_argument("--skip-resolution-check", help="Skip the exceeds resolution check", action="store_true", dest="skip_resolution_check")
+        parser.add_argument("--monitor-index", help="Monitor index for get_resolution (default: 0)", type=int, default=0, dest="monitor_index")
         parser.add_argument("--protocol", help="Protocol URL e.g. goexport://?video_id=1&user_id=1&aspect_ratio=16:9&resolution=1920x1080&no_input=true", dest="protocol")
 
         args = parser.parse_args()
@@ -109,6 +111,8 @@ class Parameters:
             "video_timeout": 0,
             "x11grab_display": ":0.0",
             "pulse_audio": None,
+            "skip_resolution_check": False,
+            "monitor_index": 0,
         }
 
         # action/service can be provided in netloc or path; prefer netloc (e.g., goexport://upload?...).
@@ -122,10 +126,10 @@ class Parameters:
             val = _first(qname)
             if val is not None:
                 # Convert all boolean parameters
-                if dest in ("no_input", "json", "open_folder", "use_outro", "obs_no_overwrite", "obs_required"):
+                if dest in ("no_input", "json", "open_folder", "use_outro", "obs_no_overwrite", "obs_required", "skip_resolution_check"):
                     result[dest] = self._str_to_bool(val)
                 # Convert integer parameters
-                elif dest in ("load_timeout", "video_timeout"):
+                elif dest in ("load_timeout", "video_timeout", "monitor_index"):
                     try:
                         result[dest] = int(val)
                     except ValueError:

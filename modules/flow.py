@@ -137,9 +137,10 @@ class Controller:
         if self.width > 1280 and self.height > 720:
             print("[bold yellow]Warning: The resolution you have selected is higher than 720p. This may cause issues with the recording. Please ensure your system can handle this resolution.")
         
-        if helpers.exceeds_monitor_resolution(self.width, self.height):
-            logger.error("The selected resolution exceeds your monitor's resolution. Please select a lower resolution.")
-            return False
+        if not helpers.get_param("skip_resolution_check"):
+            if helpers.exceeds_monitor_resolution(self.width, self.height, helpers.get_param("monitor_index")):
+                logger.error("The selected resolution exceeds your monitor's resolution. Please select a lower resolution.")
+                return False
         
         return True
 
