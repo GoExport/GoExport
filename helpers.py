@@ -786,37 +786,59 @@ def encode_video(input_path: str, output_path: str, width: int = None, height: i
     try:
         logger.info(f"Starting video encoding: {input_path} -> {output_path}")
         
-        # Build FFmpeg command
-        if os_is_windows():
-            ffmpeg_path = get_path(get_app_folder(), get_config("PATH_FFMPEG_WINDOWS"))
-        elif os_is_linux():
-            ffmpeg_path = get_path(get_app_folder(), get_config("PATH_FFMPEG_LINUX"))
+        # Check for command override first
+        ffmpeg_encode_override = get_param("ffmpeg_encode_override")
+        
+        if ffmpeg_encode_override:
+            # User provided a complete override command
+            logger.info("Using FFmpeg encode override command")
+            # Parse the override string into a list, replacing placeholders if present
+            import shlex
+            command = shlex.split(ffmpeg_encode_override)
+            # Replace {input} and {output} placeholders with actual paths
+            command = [arg.replace("{input}", input_path).replace("{output}", output_path) for arg in command]
         else:
-            logger.error("Unsupported OS for video encoding")
-            return False
-        
-        command = [
-            ffmpeg_path, "-y",
-            "-i", input_path,
-        ]
-        
-        # Add video filters if dimensions are specified
-        if width and height:
-            command.extend(["-vf", f"crop={width}:{height}:0:0,format=yuv420p"])
-        else:
-            command.extend(["-vf", "format=yuv420p"])
-        
-        # Add encoding parameters
-        command.extend([
-            "-c:v", "libx264",
-            "-preset", preset,
-            "-crf", str(crf),
-            "-pix_fmt", "yuv420p",
-            "-c:a", "aac",
-            "-b:a", "128k",
-            "-ar", "44100",
-            output_path,
-        ])
+            # Build FFmpeg command
+            if os_is_windows():
+                ffmpeg_path = get_path(get_app_folder(), get_config("PATH_FFMPEG_WINDOWS"))
+            elif os_is_linux():
+                ffmpeg_path = get_path(get_app_folder(), get_config("PATH_FFMPEG_LINUX"))
+            else:
+                logger.error("Unsupported OS for video encoding")
+                return False
+            
+            command = [
+                ffmpeg_path, "-y",
+                "-i", input_path,
+            ]
+            
+            # Add video filters if dimensions are specified
+            if width and height:
+                command.extend(["-vf", f"crop={width}:{height}:0:0,format=yuv420p"])
+            else:
+                command.extend(["-vf", "format=yuv420p"])
+            
+            # Add encoding parameters
+            command.extend([
+                "-c:v", "libx264",
+                "-preset", preset,
+                "-crf", str(crf),
+                "-pix_fmt", "yuv420p",
+                "-c:a", "aac",
+                "-b:a", "128k",
+                "-ar", "44100",
+            ])
+            
+            # Add custom arguments if provided
+            ffmpeg_encode_args = get_param("ffmpeg_encode_args")
+            if ffmpeg_encode_args:
+                logger.info(f"Adding custom encode FFmpeg arguments: {ffmpeg_encode_args}")
+                import shlex
+                custom_args = shlex.split(ffmpeg_encode_args)
+                command.extend(custom_args)
+            
+            # Add output file at the end
+            command.append(output_path)
         
         logger.debug(f"encode_video() command: {' '.join(command)}")
         

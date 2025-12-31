@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.9] - 2025-12-31
+
+### Added
+
+- Added the ability to apply custom arguments to FFmpeg commands for advanced users:
+  - `--ffmpeg-linux-args "custom args"` : Append custom arguments to FFmpeg Linux recording commands. These arguments are added before the output file.
+  - `--ffmpeg-windows-args "custom args"` : Append custom arguments to FFmpeg Windows recording commands. These arguments are added before the output file.
+  - `--ffmpeg-encode-args "custom args"` : Append custom arguments to FFmpeg encoding commands. These arguments are added before the output file.
+- Added the ability to override FFmpeg commands entirely for maximum control (advanced users only):
+  - `--ffmpeg-linux-override "complete command"` : Override the entire FFmpeg Linux recording command. Use `{output}` as a placeholder for the output file path.
+  - `--ffmpeg-windows-override "complete command"` : Override the entire FFmpeg Windows recording command. Use `{output}` as a placeholder for the output file path.
+  - `--ffmpeg-encode-override "complete command"` : Override the entire FFmpeg encoding command. Use `{input}` and `{output}` as placeholders for input and output file paths.
+
+**Note:** The override options give you complete control but require knowledge of FFmpeg. Use with caution. Arguments should be properly quoted when containing spaces.
+
 ## [1.1.8] - 2025-12-30
 
 Sorry for the pings for those reading in Discord; this is a small hotfix for the previous release.

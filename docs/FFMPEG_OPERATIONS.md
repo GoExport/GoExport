@@ -28,6 +28,33 @@ GoExport uses **FFmpeg directly** (not MoviePy) for all video processing operati
 - More reliable across platforms
 - Direct control over encoding parameters
 
+### Custom FFmpeg Arguments (v1.1.9+)
+
+GoExport now supports custom FFmpeg arguments for advanced users who need fine-grained control:
+
+**Append Custom Arguments:**
+- `--ffmpeg-linux-args` - Add arguments to Linux recording commands
+- `--ffmpeg-windows-args` - Add arguments to Windows recording commands  
+- `--ffmpeg-encode-args` - Add arguments to encoding commands
+
+**Override Complete Commands:**
+- `--ffmpeg-linux-override` - Replace entire Linux recording command
+- `--ffmpeg-windows-override` - Replace entire Windows recording command
+- `--ffmpeg-encode-override` - Replace entire encoding command
+
+Use `{output}` placeholder for output files and `{input}` for input files when using override commands.
+
+**Example:**
+```bash
+# Add custom arguments
+GoExport --ffmpeg-encode-args "-maxrate 5M -bufsize 10M"
+
+# Override entire command
+GoExport --ffmpeg-encode-override "ffmpeg -i {input} -c:v libx265 -crf 28 {output}"
+```
+
+See [PARAMETERS.md](PARAMETERS.md) for detailed usage.
+
 ## Editor Architecture
 
 ### Editor Class (`modules/editor.py`)
