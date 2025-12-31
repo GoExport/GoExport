@@ -5,6 +5,8 @@ Complete reference for video processing pipeline, FFmpeg commands, and troublesh
 ## Table of Contents
 
 - [Overview](#overview)
+  - [Custom FFmpeg Arguments](#custom-ffmpeg-arguments-v119)
+  - [Built-in Default FFmpeg Commands](#built-in-default-ffmpeg-commands)
 - [Editor Architecture](#editor-architecture)
 - [FFmpeg Commands](#ffmpeg-commands)
 - [Video Processing Pipeline](#video-processing-pipeline)
@@ -54,6 +56,170 @@ GoExport --ffmpeg-encode-override "ffmpeg -i {input} -c:v libx265 -crf 28 {outpu
 ```
 
 See [PARAMETERS.md](PARAMETERS.md) for detailed usage.
+
+### Built-in Default FFmpeg Commands
+
+This section documents the exact FFmpeg commands GoExport uses by default. Understanding these helps you decide what custom arguments to add or override.
+
+#### Windows Screen Recording (Native Capture)
+
+**Default Command:**
+```bash
+ffmpeg -y -f dshow -rtbufsize 1500M \
+  -i video=screen-capture-recorder:audio=virtual-audio-capturer \
+  -vf crop={width}:{height}:0:0 \
+  -c:v libx264 -preset ultrafast -crf 0 -tune zerolatency \
+  -pix_fmt yuv420p -c:a pcm_s16le -ar 44100 \
+  {output}
+```
+
+**Parameter Breakdown:**
+- `-y` - Overwrite output file without asking
+- `-f dshow` - Use DirectShow input format (Windows)
+- `-rtbufsize 1500M` - Increase real-time buffer to prevent frame drops
+- `-i video=screen-capture-recorder:audio=virtual-audio-capturer` - Capture device names
+- `-vf crop={width}:{height}:0:0` - Crop to exact dimensions from top-left
+- `-c:v libx264` - Use H.264 video codec
+- `-preset ultrafast` - Fastest encoding to keep up with real-time capture
+- `-crf 0` - Lossless quality (CRF 0 = no compression loss)
+- `-tune zerolatency` - Optimize for real-time encoding
+- `-pix_fmt yuv420p` - Standard pixel format for compatibility
+- `-c:a pcm_s16le` - Uncompressed 16-bit PCM audio
+- `-ar 44100` - Audio sample rate (44.1kHz)
+
+**Why These Settings:**
+- `ultrafast` preset minimizes CPU load during capture
+- `crf 0` ensures no quality loss during recording
+- Raw audio (`pcm_s16le`) avoids encoding overhead
+- High buffer size prevents dropped frames
+
+**Common Customizations:**
+```bash
+# Increase framerate to 60fps
+--ffmpeg-windows-args "-framerate 60"
+
+# Add video filter for brightness
+--ffmpeg-windows-args "-vf 'eq=brightness=0.06'"
+```
+
+#### Linux Screen Recording (Native Capture)
+
+**Default Command:**
+```bash
+ffmpeg -y -f x11grab -s {width}x{height} -i {display} \
+  -f pulse -i {audio_source} -ac 2 \
+  -c:v libx264 -preset ultrafast -crf 0 -tune zerolatency \
+  -pix_fmt yuv420p -c:a pcm_s16le -ar 44100 \
+  {output}
+```
+
+**Parameter Breakdown:**
+- `-y` - Overwrite output file without asking
+- `-f x11grab` - Use X11 screen grabber (Linux)
+- `-s {width}x{height}` - Capture dimensions
+- `-i {display}` - X11 display to capture (default: `:0.0`)
+- `-f pulse` - Use PulseAudio for audio capture
+- `-i {audio_source}` - PulseAudio source (default: `alsa_output.pci-0000_00_1b.0.analog-stereo.monitor`)
+- `-ac 2` - Stereo audio (2 channels)
+- `-c:v libx264` - Use H.264 video codec
+- `-preset ultrafast` - Fastest encoding for real-time capture
+- `-crf 0` - Lossless quality
+- `-tune zerolatency` - Optimize for real-time encoding
+- `-pix_fmt yuv420p` - Standard pixel format
+- `-c:a pcm_s16le` - Uncompressed 16-bit PCM audio
+- `-ar 44100` - Audio sample rate (44.1kHz)
+
+**Why These Settings:**
+- X11grab directly captures from X server
+- PulseAudio monitor captures system audio
+- Same quality/performance philosophy as Windows
+
+**Common Customizations:**
+```bash
+# Capture from different display
+--x11grab-display ":1.0"
+
+# Use different audio source
+--pulse-audio "alsa_output.usb-0000_00_1d.0.analog-stereo.monitor"
+
+# Add custom threading
+--ffmpeg-linux-args "-threads 4"
+```
+
+#### Video Encoding (Post-Capture Processing)
+
+**Default Command:**
+```bash
+ffmpeg -y -i {input} \
+  -vf crop={width}:{height}:0:0,format=yuv420p \
+  -c:v libx264 -preset {preset} -crf {crf} -pix_fmt yuv420p \
+  -c:a aac -b:a 128k -ar 44100 \
+  {output}
+```
+
+**Parameter Breakdown:**
+- `-y` - Overwrite output file without asking
+- `-i {input}` - Input file (raw capture)
+- `-vf crop={width}:{height}:0:0,format=yuv420p` - Video filters for cropping and format
+- `-c:v libx264` - Use H.264 video codec
+- `-preset {preset}` - Encoding speed/quality trade-off (default: `medium`)
+- `-crf {crf}` - Constant Rate Factor quality (default: `23`, range: 0-51)
+- `-pix_fmt yuv420p` - Standard pixel format for maximum compatibility
+- `-c:a aac` - Use AAC audio codec
+- `-b:a 128k` - Audio bitrate (128 kbps)
+- `-ar 44100` - Audio sample rate (44.1kHz)
+
+**Preset Options (Speed vs Quality):**
+- `ultrafast` - Fastest, largest file size
+- `superfast`, `veryfast`, `faster`, `fast` - Speed/size trade-offs
+- `medium` - **Default** - Good balance
+- `slow`, `slower`, `veryslow` - Better compression, slower encoding
+
+**CRF Quality Scale:**
+- `0` - Lossless (huge file size)
+- `18-23` - Visually lossless to high quality
+- `23` - **Default** - Good quality, reasonable file size
+- `28-32` - Medium quality, smaller files
+- `51` - Worst quality (smallest files)
+
+**Why These Settings:**
+- Converts raw capture to compressed MP4
+- AAC audio is universally compatible
+- CRF 23 provides excellent quality at reasonable file size
+- `medium` preset balances speed and compression
+
+**Common Customizations:**
+```bash
+# Higher quality encoding
+--ffmpeg-encode-args "-crf 18 -preset slow"
+
+# Smaller file size
+--ffmpeg-encode-args "-crf 28 -preset faster"
+
+# Add bitrate limiting
+--ffmpeg-encode-args "-maxrate 5M -bufsize 10M"
+
+# Switch to HEVC/H.265 (smaller files, slower encoding)
+--ffmpeg-encode-override "ffmpeg -i {input} -c:v libx265 -crf 28 -preset medium -c:a aac -b:a 128k {output}"
+```
+
+#### Finding Available Audio Sources (Linux)
+
+To find PulseAudio sources on your system:
+
+```bash
+pactl list sources | grep -E '(Name:|Description:)'
+```
+
+Example output:
+```
+Name: alsa_output.pci-0000_00_1b.0.analog-stereo.monitor
+Description: Monitor of Built-in Audio Analog Stereo
+Name: alsa_input.pci-0000_00_1b.0.analog-stereo
+Description: Built-in Audio Analog Stereo
+```
+
+Use the `Name:` value with `--pulse-audio` parameter.
 
 ## Editor Architecture
 
