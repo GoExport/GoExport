@@ -33,6 +33,12 @@ class Parameters:
         parser.add_argument("--pulse-audio", help="PulseAudio source for ffmpeg input (Linux only)", dest="pulse_audio")
         parser.add_argument("--skip-resolution-check", help="Skip the exceeds resolution check", action="store_true", dest="skip_resolution_check")
         parser.add_argument("--monitor-index", help="Monitor index for get_resolution (default: 0)", type=int, default=0, dest="monitor_index")
+        parser.add_argument("--ffmpeg-linux-args", help="Custom arguments to append to FFmpeg Linux recording commands", dest="ffmpeg_linux_args")
+        parser.add_argument("--ffmpeg-windows-args", help="Custom arguments to append to FFmpeg Windows recording commands", dest="ffmpeg_windows_args")
+        parser.add_argument("--ffmpeg-encode-args", help="Custom arguments to append to FFmpeg encoding commands", dest="ffmpeg_encode_args")
+        parser.add_argument("--ffmpeg-linux-override", help="Override the entire FFmpeg Linux recording command (advanced users only)", dest="ffmpeg_linux_override")
+        parser.add_argument("--ffmpeg-windows-override", help="Override the entire FFmpeg Windows recording command (advanced users only)", dest="ffmpeg_windows_override")
+        parser.add_argument("--ffmpeg-encode-override", help="Override the entire FFmpeg encoding command (advanced users only)", dest="ffmpeg_encode_override")
         parser.add_argument("--protocol", help="Protocol URL e.g. goexport://?video_id=1&user_id=1&aspect_ratio=16:9&resolution=1920x1080&no_input=true", dest="protocol")
 
         args = parser.parse_args()
@@ -88,6 +94,12 @@ class Parameters:
             "video_timeout": "video_timeout",
             "x11grab_display": "x11grab_display",
             "pulse_audio": "pulse_audio",
+            "ffmpeg_linux_args": "ffmpeg_linux_args",
+            "ffmpeg_windows_args": "ffmpeg_windows_args",
+            "ffmpeg_encode_args": "ffmpeg_encode_args",
+            "ffmpeg_linux_override": "ffmpeg_linux_override",
+            "ffmpeg_windows_override": "ffmpeg_windows_override",
+            "ffmpeg_encode_override": "ffmpeg_encode_override",
         }
 
         result = {
@@ -113,6 +125,12 @@ class Parameters:
             "pulse_audio": None,
             "skip_resolution_check": False,
             "monitor_index": 0,
+            "ffmpeg_linux_args": None,
+            "ffmpeg_windows_args": None,
+            "ffmpeg_encode_args": None,
+            "ffmpeg_linux_override": None,
+            "ffmpeg_windows_override": None,
+            "ffmpeg_encode_override": None,
         }
 
         # action/service can be provided in netloc or path; prefer netloc (e.g., goexport://upload?...).

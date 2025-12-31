@@ -357,6 +357,159 @@ GoExport --x11grab-display ":1.0"
 
 **Note:** This parameter only affects Linux systems using native capture mode. It has no effect on Windows or when using OBS capture mode. Use this if you have multiple displays or X11 servers running.
 
+#### `--pulse-audio`
+
+**Platform:** Linux only
+
+Set the PulseAudio source for FFmpeg audio capture when using native capture mode.
+
+**Type:** String  
+**Default:** `alsa_output.pci-0000_00_1b.0.analog-stereo.monitor`  
+**Example:**
+
+```bash
+GoExport --pulse-audio "alsa_output.usb-0000_00_1d.0.analog-stereo.monitor"
+```
+
+**Note:** Use `pactl list sources` to find available PulseAudio sources on your system.
+
+---
+
+### Advanced FFmpeg Parameters
+
+These parameters provide advanced control over FFmpeg commands for users who need fine-tuned control over recording and encoding. Use with caution as incorrect values may cause failures.
+
+#### `--ffmpeg-linux-args`
+
+**Platform:** Linux only
+
+Append custom arguments to the FFmpeg command used for Linux screen recording (native capture mode only).
+
+**Type:** String  
+**Default:** None  
+**Example:**
+
+```bash
+GoExport --ffmpeg-linux-args "-threads 4 -filter:v 'eq=brightness=0.06:saturation=2'"
+```
+
+**Note:** Arguments are added before the output file. Ensure arguments are properly quoted if they contain spaces. This only affects native capture mode, not OBS mode.
+
+#### `--ffmpeg-windows-args`
+
+**Platform:** Windows only
+
+Append custom arguments to the FFmpeg command used for Windows screen recording (native capture mode only).
+
+**Type:** String  
+**Default:** None  
+**Example:**
+
+```bash
+GoExport.exe --ffmpeg-windows-args "-threads 4 -framerate 60"
+```
+
+**Note:** Arguments are added before the output file. Ensure arguments are properly quoted if they contain spaces. This only affects native capture mode, not OBS mode.
+
+#### `--ffmpeg-encode-args`
+
+**Platform:** All
+
+Append custom arguments to the FFmpeg command used for video encoding (re-encoding raw captures to final output).
+
+**Type:** String  
+**Default:** None  
+**Example:**
+
+```bash
+GoExport.exe --ffmpeg-encode-args "-maxrate 5M -bufsize 10M"
+```
+
+**Note:** Arguments are added before the output file. Ensure arguments are properly quoted if they contain spaces.
+
+#### `--ffmpeg-linux-override`
+
+**Platform:** Linux only  
+**Advanced users only**
+
+Completely override the FFmpeg command used for Linux screen recording. Use `{output}` as a placeholder for the output file path.
+
+**Type:** String  
+**Default:** None  
+**Example:**
+
+```bash
+GoExport --ffmpeg-linux-override "ffmpeg -f x11grab -video_size 1920x1080 -i :0.0 -c:v libx264 -preset ultrafast {output}"
+```
+
+**Warning:** This completely replaces the default command. You must ensure the command is valid and includes all necessary parameters. The `{output}` placeholder will be replaced with the actual output file path.
+
+#### `--ffmpeg-windows-override`
+
+**Platform:** Windows only  
+**Advanced users only**
+
+Completely override the FFmpeg command used for Windows screen recording. Use `{output}` as a placeholder for the output file path.
+
+**Type:** String  
+**Default:** None  
+**Example:**
+
+```bash
+GoExport.exe --ffmpeg-windows-override "ffmpeg -f dshow -i video=\"screen-capture-recorder\" -c:v libx264 {output}"
+```
+
+**Warning:** This completely replaces the default command. You must ensure the command is valid and includes all necessary parameters. The `{output}` placeholder will be replaced with the actual output file path.
+
+#### `--ffmpeg-encode-override`
+
+**Platform:** All  
+**Advanced users only**
+
+Completely override the FFmpeg command used for video encoding. Use `{input}` and `{output}` as placeholders for input and output file paths.
+
+**Type:** String  
+**Default:** None  
+**Example:**
+
+```bash
+GoExport.exe --ffmpeg-encode-override "ffmpeg -i {input} -c:v libx265 -crf 28 -preset fast {output}"
+```
+
+**Warning:** This completely replaces the default command. You must ensure the command is valid and includes all necessary parameters. The `{input}` and `{output}` placeholders will be replaced with the actual file paths.
+
+---
+
+### Monitor Configuration
+
+#### `--skip-resolution-check`
+
+Skip the resolution check that validates the selected resolution doesn't exceed monitor resolution.
+
+**Type:** Boolean flag  
+**Default:** `false`  
+**Example:**
+
+```bash
+GoExport.exe --skip-resolution-check
+```
+
+**Note:** Useful for multi-monitor setups or virtual displays where resolution validation may fail incorrectly.
+
+#### `--monitor-index`
+
+Select which monitor to use for resolution checking in multi-monitor setups.
+
+**Type:** Integer  
+**Default:** `0`  
+**Example:**
+
+```bash
+GoExport.exe --monitor-index 1
+```
+
+**Note:** Uses 0-based indexing (0 = first monitor, 1 = second monitor, etc.).
+
 ---
 
 ### Protocol URL
@@ -396,21 +549,28 @@ goexport://[service]?key1=value1&key2=value2&...
 
 ### Query Parameters
 
-| Parameter         | Maps to CLI Flag       | Type    | Description                              |
-| ----------------- | ---------------------- | ------- | ---------------------------------------- |
-| `service`         | `--service`            | String  | Service identifier                       |
-| `video_id`        | `--movie-id`           | String  | Video/Movie ID                           |
-| `user_id`         | `--owner-id`           | String  | Owner/User ID                            |
-| `aspect_ratio`    | `--aspect_ratio`       | String  | Aspect ratio (e.g., `16:9`)              |
-| `resolution`      | `--resolution`         | String  | Resolution (e.g., `1080p`)               |
-| `no_input`        | `--no-input`           | Boolean | Skip user prompts                        |
-| `open_folder`     | `--open-file`          | Boolean | Open output folder after completion      |
-| `use_outro`       | `--use-outro`          | Boolean | Add outro to video                       |
-| `output_path`     | `--output-path`        | String  | Custom output path                       |
-| `load_timeout`    | `--load-timeout`       | Integer | Video load timeout (minutes)             |
-| `video_timeout`   | `--video-timeout`      | Integer | Video completion timeout (minutes)       |
-| `x11grab_display` | `--x11grab-display`    | String  | X11 display (Linux only, e.g., `:0.0`)   |
-| OBS parameters    | See OBS section        | Various | OBS WebSocket configuration              |
+| Parameter                | Maps to CLI Flag               | Type    | Description                                    |
+| ------------------------ | ------------------------------ | ------- | ---------------------------------------------- |
+| `service`                | `--service`                    | String  | Service identifier                             |
+| `video_id`               | `--movie-id`                   | String  | Video/Movie ID                                 |
+| `user_id`                | `--owner-id`                   | String  | Owner/User ID                                  |
+| `aspect_ratio`           | `--aspect_ratio`               | String  | Aspect ratio (e.g., `16:9`)                    |
+| `resolution`             | `--resolution`                 | String  | Resolution (e.g., `1080p`)                     |
+| `no_input`               | `--no-input`                   | Boolean | Skip user prompts                              |
+| `open_folder`            | `--open-file`                  | Boolean | Open output folder after completion            |
+| `use_outro`              | `--use-outro`                  | Boolean | Add outro to video                             |
+| `output_path`            | `--output-path`                | String  | Custom output path                             |
+| `load_timeout`           | `--load-timeout`               | Integer | Video load timeout (minutes)                   |
+| `video_timeout`          | `--video-timeout`              | Integer | Video completion timeout (minutes)             |
+| `x11grab_display`        | `--x11grab-display`            | String  | X11 display (Linux only, e.g., `:0.0`)         |
+| `pulse_audio`            | `--pulse-audio`                | String  | PulseAudio source (Linux only)                 |
+| `ffmpeg_linux_args`      | `--ffmpeg-linux-args`          | String  | Custom FFmpeg args for Linux recording         |
+| `ffmpeg_windows_args`    | `--ffmpeg-windows-args`        | String  | Custom FFmpeg args for Windows recording       |
+| `ffmpeg_encode_args`     | `--ffmpeg-encode-args`         | String  | Custom FFmpeg args for encoding                |
+| `ffmpeg_linux_override`  | `--ffmpeg-linux-override`      | String  | Override FFmpeg Linux recording command        |
+| `ffmpeg_windows_override`| `--ffmpeg-windows-override`    | String  | Override FFmpeg Windows recording command      |
+| `ffmpeg_encode_override` | `--ffmpeg-encode-override`     | String  | Override FFmpeg encoding command               |
+| OBS parameters           | See OBS section                | Various | OBS WebSocket configuration                    |
 
 ### Boolean Values
 

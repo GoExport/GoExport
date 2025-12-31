@@ -5,6 +5,7 @@ import signal
 import os
 import tempfile
 import threading
+import shlex
 from modules.logger import logger
 
 class Capture:
@@ -82,46 +83,81 @@ class Capture:
         
         logger.info(f"Starting raw video capture to: {self.raw_filename}")
         
+        # Check for command overrides first
+        ffmpeg_windows_override = helpers.get_param("ffmpeg_windows_override")
+        ffmpeg_linux_override = helpers.get_param("ffmpeg_linux_override")
+        
         if helpers.os_is_windows():
-            # Windows: Use dshow with minimal encoding
-            # Use ultrafast preset and nut/mkv container for minimal overhead
-            command = [
-                helpers.get_path(helpers.get_app_folder(), helpers.get_config("PATH_FFMPEG_WINDOWS")), "-y",
-                "-f", "dshow",
-                "-rtbufsize", "1500M",  # Increase buffer size to prevent overflow
-                "-i", "video=screen-capture-recorder:audio=virtual-audio-capturer",
-                "-vf", f"crop={width}:{height}:0:0",  # Crop to exact dimensions
-                "-c:v", "libx264",  # Use H.264 for raw capture
-                "-preset", "ultrafast",  # Fastest encoding to keep up with capture
-                "-crf", "0",  # Lossless quality for raw capture
-                "-tune", "zerolatency",  # Optimize for real-time encoding
-                "-pix_fmt", "yuv420p",  # Standard pixel format
-                "-c:a", "pcm_s16le",  # Uncompressed audio for raw capture
-                "-ar", "44100",  # Standard audio sample rate
-                self.raw_filename,
-            ]
+            if ffmpeg_windows_override:
+                # User provided a complete override command
+                logger.info("Using FFmpeg Windows override command")
+                # Parse the override string into a list, replacing output placeholder if present
+                command = shlex.split(ffmpeg_windows_override)
+                # Replace {output} placeholder with actual raw filename
+                command = [arg.replace("{output}", self.raw_filename) for arg in command]
+            else:
+                # Windows: Use dshow with minimal encoding
+                # Use ultrafast preset and nut/mkv container for minimal overhead
+                command = [
+                    helpers.get_path(helpers.get_app_folder(), helpers.get_config("PATH_FFMPEG_WINDOWS")), "-y",
+                    "-f", "dshow",
+                    "-rtbufsize", "1500M",  # Increase buffer size to prevent overflow
+                    "-i", "video=screen-capture-recorder:audio=virtual-audio-capturer",
+                    "-vf", f"crop={width}:{height}:0:0",  # Crop to exact dimensions
+                    "-c:v", "libx264",  # Use H.264 for raw capture
+                    "-preset", "ultrafast",  # Fastest encoding to keep up with capture
+                    "-crf", "0",  # Lossless quality for raw capture
+                    "-tune", "zerolatency",  # Optimize for real-time encoding
+                    "-pix_fmt", "yuv420p",  # Standard pixel format
+                    "-c:a", "pcm_s16le",  # Uncompressed audio for raw capture
+                    "-ar", "44100",  # Standard audio sample rate
+                ]
+                # Add custom arguments if provided
+                ffmpeg_windows_args = helpers.get_param("ffmpeg_windows_args")
+                if ffmpeg_windows_args:
+                    logger.info(f"Adding custom Windows FFmpeg arguments: {ffmpeg_windows_args}")
+                    custom_args = shlex.split(ffmpeg_windows_args)
+                    command.extend(custom_args)
+                # Add output file at the end
+                command.append(self.raw_filename)
+                
         elif helpers.os_is_linux():
-            # Linux: Use x11grab with minimal encoding
-            # Get the X11 display from parameters, default to :0.0
-            x11_display = helpers.get_param("x11grab_display") or ":0.0"
-            pulse_audio = helpers.get_param("pulse_audio") or "alsa_output.pci-0000_00_1b.0.analog-stereo.monitor"
-            command = [
-                helpers.get_path(helpers.get_app_folder(), helpers.get_config("PATH_FFMPEG_LINUX")), "-y",
-                "-f", "x11grab",
-                "-s", f"{width}x{height}",
-                "-i", x11_display,
-                "-f", "pulse",
-                "-i", pulse_audio,
-                "-ac", "2",
-                "-c:v", "libx264",
-                "-preset", "ultrafast",
-                "-crf", "0",
-                "-tune", "zerolatency",
-                "-pix_fmt", "yuv420p",
-                "-c:a", "pcm_s16le",
-                "-ar", "44100",
-                self.raw_filename,
-            ]
+            if ffmpeg_linux_override:
+                # User provided a complete override command
+                logger.info("Using FFmpeg Linux override command")
+                # Parse the override string into a list, replacing output placeholder if present
+                command = shlex.split(ffmpeg_linux_override)
+                # Replace {output} placeholder with actual raw filename
+                command = [arg.replace("{output}", self.raw_filename) for arg in command]
+            else:
+                # Linux: Use x11grab with minimal encoding
+                # Get the X11 display from parameters, default to :0.0
+                x11_display = helpers.get_param("x11grab_display") or ":0.0"
+                pulse_audio = helpers.get_param("pulse_audio") or "alsa_output.pci-0000_00_1b.0.analog-stereo.monitor"
+                command = [
+                    helpers.get_path(helpers.get_app_folder(), helpers.get_config("PATH_FFMPEG_LINUX")), "-y",
+                    "-f", "x11grab",
+                    "-s", f"{width}x{height}",
+                    "-i", x11_display,
+                    "-f", "pulse",
+                    "-i", pulse_audio,
+                    "-ac", "2",
+                    "-c:v", "libx264",
+                    "-preset", "ultrafast",
+                    "-crf", "0",
+                    "-tune", "zerolatency",
+                    "-pix_fmt", "yuv420p",
+                    "-c:a", "pcm_s16le",
+                    "-ar", "44100",
+                ]
+                # Add custom arguments if provided
+                ffmpeg_linux_args = helpers.get_param("ffmpeg_linux_args")
+                if ffmpeg_linux_args:
+                    logger.info(f"Adding custom Linux FFmpeg arguments: {ffmpeg_linux_args}")
+                    custom_args = shlex.split(ffmpeg_linux_args)
+                    command.extend(custom_args)
+                # Add output file at the end
+                command.append(self.raw_filename)
         else:
             logger.error("Unsupported OS for native capture")
             return False
