@@ -5,6 +5,7 @@ import signal
 import os
 import tempfile
 import threading
+import shlex
 from modules.logger import logger
 
 class Capture:
@@ -91,7 +92,6 @@ class Capture:
                 # User provided a complete override command
                 logger.info("Using FFmpeg Windows override command")
                 # Parse the override string into a list, replacing output placeholder if present
-                import shlex
                 command = shlex.split(ffmpeg_windows_override)
                 # Replace {output} placeholder with actual raw filename
                 command = [arg.replace("{output}", self.raw_filename) for arg in command]
@@ -116,7 +116,6 @@ class Capture:
                 ffmpeg_windows_args = helpers.get_param("ffmpeg_windows_args")
                 if ffmpeg_windows_args:
                     logger.info(f"Adding custom Windows FFmpeg arguments: {ffmpeg_windows_args}")
-                    import shlex
                     custom_args = shlex.split(ffmpeg_windows_args)
                     command.extend(custom_args)
                 # Add output file at the end
@@ -127,7 +126,6 @@ class Capture:
                 # User provided a complete override command
                 logger.info("Using FFmpeg Linux override command")
                 # Parse the override string into a list, replacing output placeholder if present
-                import shlex
                 command = shlex.split(ffmpeg_linux_override)
                 # Replace {output} placeholder with actual raw filename
                 command = [arg.replace("{output}", self.raw_filename) for arg in command]
@@ -156,7 +154,6 @@ class Capture:
                 ffmpeg_linux_args = helpers.get_param("ffmpeg_linux_args")
                 if ffmpeg_linux_args:
                     logger.info(f"Adding custom Linux FFmpeg arguments: {ffmpeg_linux_args}")
-                    import shlex
                     custom_args = shlex.split(ffmpeg_linux_args)
                     command.extend(custom_args)
                 # Add output file at the end

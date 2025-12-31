@@ -11,6 +11,7 @@ import urllib
 import subprocess
 import time
 import requests
+import shlex
 from rich import print
 from typing import Any, Callable
 from modules.logger import logger
@@ -793,7 +794,6 @@ def encode_video(input_path: str, output_path: str, width: int = None, height: i
             # User provided a complete override command
             logger.info("Using FFmpeg encode override command")
             # Parse the override string into a list, replacing placeholders if present
-            import shlex
             command = shlex.split(ffmpeg_encode_override)
             # Replace {input} and {output} placeholders with actual paths
             command = [arg.replace("{input}", input_path).replace("{output}", output_path) for arg in command]
@@ -833,7 +833,6 @@ def encode_video(input_path: str, output_path: str, width: int = None, height: i
             ffmpeg_encode_args = get_param("ffmpeg_encode_args")
             if ffmpeg_encode_args:
                 logger.info(f"Adding custom encode FFmpeg arguments: {ffmpeg_encode_args}")
-                import shlex
                 custom_args = shlex.split(ffmpeg_encode_args)
                 command.extend(custom_args)
             
