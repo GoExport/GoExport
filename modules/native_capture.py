@@ -93,8 +93,16 @@ class Capture:
                 logger.info("Using FFmpeg Windows override command")
                 # Parse the override string into a list, replacing output placeholder if present
                 command = shlex.split(ffmpeg_windows_override)
-                # Replace {output} placeholder with actual raw filename
-                command = [arg.replace("{output}", self.raw_filename) for arg in command]
+                # Get FFmpeg path for placeholder replacement
+                ffmpeg_path = helpers.get_path(helpers.get_app_folder(), helpers.get_config("PATH_FFMPEG_WINDOWS"))
+                # Replace placeholders with actual values
+                command = [
+                    arg.replace("{output}", self.raw_filename)
+                       .replace("{ffmpeg}", ffmpeg_path)
+                       .replace("{width}", str(width))
+                       .replace("{height}", str(height))
+                    for arg in command
+                ]
             else:
                 # Windows: Use dshow with minimal encoding
                 # Use ultrafast preset and nut/mkv container for minimal overhead
@@ -127,8 +135,16 @@ class Capture:
                 logger.info("Using FFmpeg Linux override command")
                 # Parse the override string into a list, replacing output placeholder if present
                 command = shlex.split(ffmpeg_linux_override)
-                # Replace {output} placeholder with actual raw filename
-                command = [arg.replace("{output}", self.raw_filename) for arg in command]
+                # Get FFmpeg path for placeholder replacement
+                ffmpeg_path = helpers.get_path(helpers.get_app_folder(), helpers.get_config("PATH_FFMPEG_LINUX"))
+                # Replace placeholders with actual values
+                command = [
+                    arg.replace("{output}", self.raw_filename)
+                       .replace("{ffmpeg}", ffmpeg_path)
+                       .replace("{width}", str(width))
+                       .replace("{height}", str(height))
+                    for arg in command
+                ]
             else:
                 # Linux: Use x11grab with minimal encoding
                 # Get the X11 display from parameters, default to :0.0
