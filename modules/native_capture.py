@@ -97,10 +97,19 @@ class Capture:
                 ffmpeg_path = helpers.get_path(helpers.get_app_folder(), helpers.get_config("PATH_FFMPEG_WINDOWS"))
                 # Replace placeholders with actual values
                 command = [
-                    arg.replace("{output}", self.raw_filename)
-                       .replace("{ffmpeg}", ffmpeg_path)
+                    arg.replace("{ffmpeg}", ffmpeg_path)
+                       .replace("{output}", self.raw_filename)
                        .replace("{width}", str(width))
                        .replace("{height}", str(height))
+                       .replace("{rtbufsize}", "1500M")
+                       .replace("{crop}", f"{width}:{height}:0:0")
+                       .replace("{vcodec}", "libx264")
+                       .replace("{acodec}", "pcm_s16le")
+                       .replace("{preset}", "ultrafast")
+                       .replace("{crf}", "0")
+                       .replace("{tune}", "zerolatency")
+                       .replace("{pix_fmt}", "yuv420p")
+                       .replace("{ar}", "44100")
                     for arg in command
                 ]
             else:
@@ -137,12 +146,27 @@ class Capture:
                 command = shlex.split(ffmpeg_linux_override)
                 # Get FFmpeg path for placeholder replacement
                 ffmpeg_path = helpers.get_path(helpers.get_app_folder(), helpers.get_config("PATH_FFMPEG_LINUX"))
+                # Get X11 and audio settings
+                x11_display = helpers.get_param("x11grab_display") or ":0.0"
+                pulse_audio = helpers.get_param("pulse_audio") or "alsa_output.pci-0000_00_1b.0.analog-stereo.monitor"
                 # Replace placeholders with actual values
                 command = [
-                    arg.replace("{output}", self.raw_filename)
-                       .replace("{ffmpeg}", ffmpeg_path)
+                    arg.replace("{ffmpeg}", ffmpeg_path)
+                       .replace("{output}", self.raw_filename)
                        .replace("{width}", str(width))
                        .replace("{height}", str(height))
+                       .replace("{display}", x11_display)
+                       .replace("{pulse_audio}", pulse_audio)
+                       .replace("{rtbufsize}", "1500M")
+                       .replace("{crop}", f"{width}:{height}:0:0")
+                       .replace("{vcodec}", "libx264")
+                       .replace("{acodec}", "pcm_s16le")
+                       .replace("{preset}", "ultrafast")
+                       .replace("{crf}", "0")
+                       .replace("{tune}", "zerolatency")
+                       .replace("{pix_fmt}", "yuv420p")
+                       .replace("{ac}", "2")
+                       .replace("{ar}", "44100")
                     for arg in command
                 ]
             else:
