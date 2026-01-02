@@ -793,10 +793,22 @@ def encode_video(input_path: str, output_path: str, width: int = None, height: i
         if ffmpeg_encode_override:
             # User provided a complete override command
             logger.info("Using FFmpeg encode override command")
-            # Parse the override string into a list, replacing placeholders if present
-            command = shlex.split(ffmpeg_encode_override)
-            # Replace {input} and {output} placeholders with actual paths
-            command = [arg.replace("{input}", input_path).replace("{output}", output_path) for arg in command]
+            
+            # Handle both string and list overrides
+            if isinstance(ffmpeg_encode_override, str):
+                # Replace {input} and {output} placeholders with actual paths FIRST using str.format()
+                override_string = ffmpeg_encode_override.format(
+                    input=input_path,
+                    output=output_path
+                )
+                # Parse the override string into a list AFTER replacement
+                command = shlex.split(override_string)
+            else:
+                # Already a list, format each element
+                command = [
+                    arg.format(input=input_path, output=output_path)
+                    for arg in ffmpeg_encode_override
+                ]
         else:
             # Build FFmpeg command
             if os_is_windows():
