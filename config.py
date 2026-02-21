@@ -31,6 +31,7 @@ OBS_FPS = 60
 # Wrapper Server
 WRAPPER_SERVER_HOST = "127.0.0.1"
 WRAPPER_SERVER_PORT = 4343
+WRAPPER_RESOURCE_PORT = 4664
 WRAPPER_SERVER_PROTOCOL = "http"
 
 AVAILABLE_ASPECT_RATIOS = [
@@ -87,6 +88,36 @@ AVAILABLE_SIZES = {
 }
 
 AVAILABLE_SERVICES = {
+    "local2": {
+        "name": "Wrapper: Offline (2.1+)",
+        "requires": {
+            "movieId",
+        },
+        "domain": [
+            f"{WRAPPER_SERVER_PROTOCOL}://{WRAPPER_SERVER_HOST}:{WRAPPER_SERVER_PORT}",
+        ],
+        "player": [
+            f"{SERVER_PROTOCOL}://{SERVER_HOST}:{SERVER_PORT}",
+            (
+                "index.html?"
+                "environment=local"
+                "&movieId={movie_id}"
+                "&playerWidth={width}"
+                "&playerHeight={height}"
+                "&isWide={wide}"
+                "&isVideoRecord=1"
+                "&storePath=http://localhost:{resource_port}/store/3a981f5cb2739137/<store>"
+                "&clientThemePath=http://localhost:{resource_port}/static/ad44370a650793d9/<client_theme>"
+            ),
+        ],
+        "host": True,
+        "hostable": True,
+        "legacy": False,
+        "testing": False,
+        "hidden": False,
+        "window": "GoExport Viewer",
+        "afterloadscripts": []
+    },
     "local": {
         "name": "Wrapper: Offline",
         "requires": {
