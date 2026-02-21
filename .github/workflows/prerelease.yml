@@ -2,7 +2,7 @@ name: Pre-release Build
 on:
   push:
     branches:
-      - beta
+      - wrapper2
 
 jobs:
   build:
