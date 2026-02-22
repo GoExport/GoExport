@@ -341,7 +341,8 @@ class Controller:
             owner_id=self.ownerid,
             width=self.width,
             height=self.height,
-            wide=int(self.widescreen)
+            wide=int(self.widescreen),
+            resource_port=helpers.get_config("WRAPPER_RESOURCE_PORT"),
         )
 
     def export(self):
