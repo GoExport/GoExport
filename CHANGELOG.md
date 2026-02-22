@@ -5,11 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-02-22
+
+### Added
+
+- Added support for Wrapper Offline v2.1 onwards. Thanks @octanuary for supplying the watermark fix! Your help is greatly appreciated.
+
 ## [1.1.10] - 2026-01-02
 
 ### Changed
 
-- Fixed an issue with custom FFmpeg ovrrides not being parsed correctly.
+- Fixed an issue with custom FFmpeg overrides not being parsed correctly.
 - Fixed an issue where `{output}` placeholder in FFmpeg override commands would break if the output path contained spaces.
 
 ## [1.1.9] - 2025-12-31
