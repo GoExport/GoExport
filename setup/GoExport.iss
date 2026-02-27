@@ -41,7 +41,7 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 [Files]
 ;VCRedist
 
-Source: "..\redist\vcredist_x64.exe"; DestDir: "{app}\vendor"
+Source: "..\redist\vcredist_x64.exe"; DestDir: "{app}\vendor"; AfterInstall: InstallVCRedist
 
 ;Main files
 Source: "..\dist\GoExport.exe"; DestDir: "{app}"; Flags: ignoreversion
@@ -81,7 +81,6 @@ Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}"
 Name: "{commondesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
 
 [Run]
-Filename: {app}\vendor\vcredist_x64.exe; Parameters: "/passive /Q:a /c:""msiexec /qb /i vcredist.msi"" "; StatusMsg: Installing MSVC 2010 64 bit RunTime...; MinVersion: 0,6.0.6000; Check: IsWin64; Flags: waituntilterminated
 Filename: regsvr32; WorkingDir: {app}; Parameters: /s vendor\screen-capture-recorder-x64.dll; Check: IsWin64
 Filename: regsvr32; WorkingDir: {app}; Parameters: /s vendor\audio_sniffer-x64.dll; MinVersion: 0,6.0.6000; Check: IsWin64
 Filename: "{app}\{#MyAppExeName}"; Flags: nowait postinstall skipifsilent; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"
@@ -95,6 +94,17 @@ var
   DocsPage: TWizardPage;
   InstallDocsCheckBox: TNewCheckBox;
   DocsLabel: TNewStaticText;
+
+procedure InstallVCRedist;
+var
+  ResultCode: Integer;
+begin
+  if IsWin64 then
+  begin
+    if not Exec(ExpandConstant('{app}\vendor\vcredist_x64.exe'), '/passive /Q:a /c:"msiexec /qb /i vcredist.msi"', '', SW_SHOW, ewWaitUntilTerminated, ResultCode) then
+      MsgBox('Failed to install MSVC 2010 64 bit RunTime. Error code: ' + IntToStr(ResultCode), mbError, MB_OK);
+  end;
+end;
 
 procedure InitializeWizard;
 begin
