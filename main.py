@@ -52,6 +52,14 @@ def main():
         structured_output.progress("Verifying dependencies", stage="compatibility")
         if not compatibility.test():
             logger.fatal("You did not pass the compatibility check")
+            if compatibility.issues and not helpers.get_param("json"):
+                print("[red bold]Compatibility issues found:[/red bold]")
+                for issue in compatibility.issues:
+                    print(f"[red]  • {issue}[/red]")
+            report_path = compatibility.generate_diagnostic_report()
+            if report_path and not helpers.get_param("json"):
+                print(f"[yellow]A diagnostic report has been saved to: [bold]{report_path}[/bold]")
+                print("[yellow]Please share this file when seeking support at [link=https://discord.gg/ejwJYtQDrS]discord.gg/ejwJYtQDrS[/link]")
             structured_output.error("Failed compatibility check")
             return False
         logger.info("You passed the compatibility check")

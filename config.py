@@ -232,6 +232,9 @@ PATH_CHROMEDRIVER_WINDOWS = [DEFAULT_DEPENDENCIES_FILENAME, "chromedriver", "chr
 PATH_OBS_WINDOWS = ["C:\\Program Files", "obs-studio", "bin", "64bit", "obs64.exe"]
 PATH_FLASH_WINDOWS = [DEFAULT_DEPENDENCIES_FILENAME, "ungoogled-chromium", 'extensions', "pepflashplayer.dll"]
 PATH_FLASH_VERSION_WINDOWS = "34.0.0.330"
+PATH_LIBS_SCREEN_CAPTURE_WINDOWS = [DEFAULT_LIBS_FILENAME, "screen-capture-recorder-x64.dll"]
+PATH_LIBS_AUDIO_SNIFFER_WINDOWS = [DEFAULT_LIBS_FILENAME, "audio_sniffer-x64.dll"]
+PATH_VCREDIST_WINDOWS = ["redist", "vcredist_x64.exe"]
 
 # Dependencies for Linux
 PATH_FFMPEG_LINUX  = [DEFAULT_DEPENDENCIES_FILENAME, "ffmpeg", "bin", "ffmpeg"]
