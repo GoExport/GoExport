@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Fixed an issue where GoExport would fail to record the screen, with an error saying "You may not be compatible" this issue **should now be fixed.** This was caused by the incorrect VC++ redistributable being included in the vendor folder.
+- Fixed an issue where GoExport would fail to record the screen, with an error saying "You may not be compatible" this issue **should now be fixed.** This was caused by a missing dependency.
 
 ## [1.2.0] - 2026-02-22
 
