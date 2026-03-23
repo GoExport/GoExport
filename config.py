@@ -1,7 +1,7 @@
 # Configuration
 APP_NAME = "GoExport"
 APP_REPO = "goexport/goexport"
-APP_VERSION = "1.2.1"
+APP_VERSION = "1.2.2"
 APP_BETA = False
 DEFAULT_DEPENDENCIES_FILENAME = "dependencies"
 DEFAULT_LIBS_FILENAME = "libs"
@@ -251,4 +251,4 @@ BROWSER_NAME = "Chromium"
 # Development Settings
 DEBUG_MODE = False
 SKIP_COMPAT = False
-FORCE_WINDOW = False
+FORCE_WINDOW = True
