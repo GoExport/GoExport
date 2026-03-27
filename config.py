@@ -251,4 +251,4 @@ BROWSER_NAME = "Chromium"
 # Development Settings
 DEBUG_MODE = False
 SKIP_COMPAT = False
-FORCE_WINDOW = True
+FORCE_WINDOW = False
