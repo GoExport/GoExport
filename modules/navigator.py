@@ -53,6 +53,9 @@ class Interface:
             self.options.add_argument(f"--ppapi-flash-version={flash_ver}")
 
         # Common options for both OSes
+        self.options.add_argument("--disable-backgrounding-occluded-windows")
+        self.options.add_argument("--disable-renderer-backgrounding")
+        self.options.add_argument("--disable-background-timer-throttling")
         self.options.add_argument(f"--user-data-dir={helpers.get_path(None, helpers.get_config("DEFAULT_OUTPUT_FILENAME"), f"{helpers.get_timestamp()}_chrome_profile_temp")}")
         self.options.add_experimental_option("excludeSwitches", ["enable-automation"])
         self.options.binary_location = chromium
