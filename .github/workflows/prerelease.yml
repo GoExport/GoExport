@@ -2,7 +2,7 @@ name: Pre-release Build
 on:
   push:
     branches:
-      - wrapper2
+      - new-recorder
 
 jobs:
   build:
