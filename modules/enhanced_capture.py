@@ -21,6 +21,14 @@ class Capture:
                 helpers.get_app_folder(),
                 helpers.get_config("PATH_FFMPEG_WINDOWS")
             )
+        elif helpers.os_is_linux():
+            ffmpeg_path = helpers.get_path(
+                helpers.get_app_folder(),
+                helpers.get_config("PATH_FFMPEG_LINUX")
+            )
+        else:
+            logger.error("Unsupported operating system for recap capture.")
+            return False
 
         config = RecordingConfig(
             output=self.filename,
