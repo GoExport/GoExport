@@ -34,7 +34,7 @@ class Capture:
             self.end_time = self.obs.end_time
             self.startup_delay = self.obs.startup_delay
             self.ended_delay = self.obs.ended_delay
-        elif not self.is_obs and helpers.os_is_windows():
+        elif not self.is_obs:
             self.filename = self.enhanced.filename
             self.start_time = self.enhanced.start_time
             self.end_time = self.enhanced.end_time
@@ -50,7 +50,7 @@ class Capture:
     def start(self, output: str, width: int, height: int, window: str):
         if self.is_obs:
             object = self.obs.start(width, height, window)
-        elif not self.is_obs and helpers.os_is_windows():
+        elif not self.is_obs:
             object = self.enhanced.start(output, window, width, height)
         else:
             object = self.native.start(output, width, height)
@@ -61,7 +61,7 @@ class Capture:
         self.retrieve()
         if self.is_obs:
             return self.obs.stop()
-        elif not self.is_obs and helpers.os_is_windows():
+        elif not self.is_obs:
             return self.enhanced.stop()
         else:
             return self.native.stop()
