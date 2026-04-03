@@ -43,21 +43,22 @@ Complete guide for setting up GoExport on Linux, including dependencies, PATH co
 ### Method 1: Extract Pre-built Binary
 
 ```bash
-# Download latest release
-wget https://github.com/GoExport/GoExport/releases/latest/download/goexport_linux_portable_amd64.tar.gz
+# Create folder in your home directory
+mkdir -p ~/GoExport
 
-# Extract to /opt
-sudo mkdir -p /opt/GoExport
-sudo tar -xzf goexport_linux_portable_amd64.tar.gz -C /opt/GoExport
+# Extract GoExport there
+tar -xzf goexport_linux_portable_amd64.tar.gz -C ~/GoExport
 
 # Make executable
-sudo chmod +x /opt/GoExport/GoExport
+chmod +x ~/GoExport/GoExport
+chmod +x ~/GoExport/GoExport_CLI
 
-# Create symbolic link
-sudo ln -s /opt/GoExport/GoExport /usr/local/bin/goexport
+# Optional: add to PATH for convenience
+echo 'export PATH="$HOME/GoExport:$PATH"' >> ~/.bashrc
+source ~/.bashrc
 
-# Verify installation
-goexport --version
+# Test
+goexport --help
 ```
 
 ### Method 2: Build from Source
