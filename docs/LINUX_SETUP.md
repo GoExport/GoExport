@@ -61,7 +61,7 @@ echo 'export PATH="$HOME/GoExport:$PATH"' >> ~/.bashrc
 source ~/.bashrc
 
 # Test
-goexport --help
+GoExport --help
 ```
 
 ### Method 2: Build from Source
