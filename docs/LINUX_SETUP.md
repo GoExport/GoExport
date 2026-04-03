@@ -44,11 +44,11 @@ Complete guide for setting up GoExport on Linux, including dependencies, PATH co
 
 ```bash
 # Download latest release
-wget https://github.com/GoExport/GoExport/releases/latest/download/GoExport-Linux-x64.tar.gz
+wget https://github.com/GoExport/GoExport/releases/latest/download/goexport_linux_portable_amd64.tar.gz
 
 # Extract to /opt
 sudo mkdir -p /opt/GoExport
-sudo tar -xzf GoExport-Linux-x64.tar.gz -C /opt/GoExport
+sudo tar -xzf goexport_linux_portable_amd64.tar.gz -C /opt/GoExport
 
 # Make executable
 sudo chmod +x /opt/GoExport/GoExport
@@ -79,22 +79,6 @@ pip install -r requirements.txt
 
 # Run from source
 python main.py
-```
-
-### Method 3: AppImage (Coming Soon)
-
-```bash
-# Download AppImage
-wget https://github.com/GoExport/GoExport/releases/latest/download/goexport_linux_portable_amd64.tar.gz
-
-# Extract
-tar -xzf goexport_linux_portable_amd64.tar.gz
-
-# Make executable
-chmod +x GoExport
-
-# Run
-./GoExport
 ```
 
 ## Dependencies
