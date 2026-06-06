@@ -29,6 +29,8 @@ class Capture:
         helpers.show_popup(helpers.get_config("APP_NAME"), message, 16)
 
     def _is_websocket_closed_error(self, error: Exception) -> bool:
+        if isinstance(error, (BrokenPipeError, ConnectionAbortedError, ConnectionResetError)):
+            return True
         text = str(error).lower()
         return (
             ("websocket" in text and "closed" in text)
@@ -39,13 +41,31 @@ class Capture:
         )
 
     def _create_linux_input(self, scene_name: str, input_name: str, window: str) -> bool:
-        capture_windows = [
-            window,
-            f"{window}\r\nchromium",
-            f"{window}\r\nchrome",
-            f"{window}\r\nChromium",
-            f"{window}\r\nGoogle-chrome",
-        ]
+        browser_name = helpers.get_config("BROWSER_NAME")
+        lower_browser_name = browser_name.lower() if browser_name else ""
+
+        browser_tokens = []
+        if browser_name:
+            browser_tokens.append(browser_name)
+        if lower_browser_name:
+            browser_tokens.append(lower_browser_name)
+        browser_tokens.append("chromium")
+        if "chromium" in lower_browser_name:
+            browser_tokens.append("chrome")
+
+        capture_windows = [window]
+        for token in browser_tokens:
+            if token:
+                capture_windows.append(f"{window}\r\n{token}")
+
+        unique_windows = []
+        seen = set()
+        for capture_window in capture_windows:
+            if capture_window in seen:
+                continue
+            seen.add(capture_window)
+            unique_windows.append(capture_window)
+        capture_windows = unique_windows
         for capture_window in capture_windows:
             try:
                 self.ws.create_input(
@@ -189,10 +209,18 @@ class Capture:
                     source_created = self._create_linux_input(scene_name, input_name, window)
 
                 if not source_created:
+                    source_error = "GoExport could not create an OBS capture source for the target window."
+                    if helpers.os_is_linux():
+                        source_error += " Please verify OBS is running and window capture can detect the browser window."
+                    elif helpers.os_is_windows():
+                        source_error += " Please verify OBS window capture is enabled and the browser window is visible."
                     self._show_obs_error(
-                        "GoExport could not create an OBS capture source for the target window. "
-                        "Please verify OBS is running and window capture can see your X11 window."
+                        source_error
                     )
+                    try:
+                        self.unprep()
+                    except Exception as cleanup_error:
+                        logger.warning(f"Failed to cleanup OBS scene/profile after source creation failure: {cleanup_error}")
                     self.prepared = False
                     return
             helpers.wait(2, "Waiting for OBS to set up the scene and sources...")

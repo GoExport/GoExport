@@ -7,7 +7,7 @@ class Compatibility:
         pass
 
     def _get_linux_session(self) -> str:
-        """Detect Linux desktop session type."""
+        """Detect Linux desktop session type and return 'x11', 'wayland', or 'unknown'."""
         session_type = (os.environ.get("XDG_SESSION_TYPE") or "").strip().lower()
         if session_type:
             return session_type
