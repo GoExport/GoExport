@@ -24,6 +24,46 @@ class Capture:
         signal.signal(signal.SIGINT, self._signal_handler)
         signal.signal(signal.SIGTERM, self._signal_handler)
 
+    def _show_obs_error(self, message: str):
+        logger.error(message)
+        helpers.show_popup(helpers.get_config("APP_NAME"), message, 16)
+
+    def _is_websocket_closed_error(self, error: Exception) -> bool:
+        text = str(error).lower()
+        return (
+            ("websocket" in text and "closed" in text)
+            or "connectionclosed" in text
+            or "close frame" in text
+            or "connection is closed" in text
+            or "broken pipe" in text
+        )
+
+    def _create_linux_input(self, scene_name: str, input_name: str, window: str) -> bool:
+        capture_windows = [
+            window,
+            f"{window}\r\nchromium",
+            f"{window}\r\nchrome",
+            f"{window}\r\nChromium",
+            f"{window}\r\nGoogle-chrome",
+        ]
+        for capture_window in capture_windows:
+            try:
+                self.ws.create_input(
+                    sceneName=scene_name,
+                    inputName=input_name,
+                    inputKind="xcomposite_input",
+                    inputSettings={
+                        "capture_window": capture_window,
+                        "cursor": False,
+                    },
+                    sceneItemEnabled=True
+                )
+                logger.info(f"Created Linux OBS input using capture_window='{capture_window}'")
+                return True
+            except Exception as e:
+                logger.warning(f"Failed Linux OBS input attempt '{capture_window}': {e}")
+        return False
+
     def connect(self):
         try:
             self.ws = obs.ReqClient(
@@ -43,7 +83,10 @@ class Capture:
             helpers.save("obs_websocket_password", helpers.get_param("obs_websocket_password") or helpers.load("obs_websocket_password") or helpers.get_config("OBS_SERVER_PASSWORD"))
             logger.info("Connected to OBS WebSocket server.")
         except Exception as e:
-            logger.error(f"Failed to connect to OBS WebSocket server: {e}")
+            if self._is_websocket_closed_error(e):
+                self._show_obs_error("Failed to connect to OBS. OBS may have crashed or closed the websocket connection.")
+            else:
+                logger.error(f"Failed to connect to OBS WebSocket server: {e}")
             raise e
 
     def set(self, width: int, height: int):
@@ -121,12 +164,15 @@ class Capture:
 
             # Try to create input/source (optional)
             if not helpers.get_param("obs_no_overwrite"):
-                try:
-                    # Output a list of inputs
-                    if helpers.os_is_windows():
+                scene_name = f"{helpers.get_config('APP_NAME')} - Scene"
+                input_name = f"{helpers.get_config('APP_NAME')} - Capture ({self.random})"
+                source_created = False
+
+                if helpers.os_is_windows():
+                    try:
                         self.ws.create_input(
-                            sceneName=f"{helpers.get_config('APP_NAME')} - Scene",
-                            inputName=f"{helpers.get_config('APP_NAME')} - Capture ({self.random})",
+                            sceneName=scene_name,
+                            inputName=input_name,
                             inputKind="window_capture",
                             inputSettings={
                                 "window": f"{window}:Chrome_WidgetWin_1:chrome.exe",
@@ -136,23 +182,26 @@ class Capture:
                             },
                             sceneItemEnabled=True
                         )
-                    elif helpers.os_is_linux():
-                        self.ws.create_input(
-                            sceneName=f"{helpers.get_config('APP_NAME')} - Scene",
-                            inputName=f"{helpers.get_config('APP_NAME')} - Capture ({self.random})",
-                            inputKind="xcomposite_input",
-                            inputSettings={
-                                "capture_window": f"{window}\r\nchrome",
-                                "cursor": False
-                            },
-                            sceneItemEnabled=True
-                        )
-                except Exception as e:
-                    logger.warning(f"Could not create input/source: {e}")
+                        source_created = True
+                    except Exception as e:
+                        logger.warning(f"Could not create input/source: {e}")
+                elif helpers.os_is_linux():
+                    source_created = self._create_linux_input(scene_name, input_name, window)
+
+                if not source_created:
+                    self._show_obs_error(
+                        "GoExport could not create an OBS capture source for the target window. "
+                        "Please verify OBS is running and window capture can see your X11 window."
+                    )
+                    self.prepared = False
+                    return
             helpers.wait(2, "Waiting for OBS to set up the scene and sources...")
             self.prepared = True
         except Exception as e:
-            logger.error(f"Failed to prepare OBS: {e}")
+            if self._is_websocket_closed_error(e):
+                self._show_obs_error("OBS websocket connection was closed during setup. OBS may have crashed.")
+            else:
+                logger.error(f"Failed to prepare OBS: {e}")
             self.prepared = False
 
     def unprep(self):
@@ -185,7 +234,10 @@ class Capture:
 
             return True
         except Exception as e:
-            logger.error(f"Failed to start recording: {e}")
+            if self._is_websocket_closed_error(e):
+                self._show_obs_error("OBS websocket connection was closed while starting recording. OBS may have crashed.")
+            else:
+                logger.error(f"Failed to start recording: {e}")
             self._cleanup()
             return False
 
@@ -200,7 +252,10 @@ class Capture:
             self.ended_delay = self.end_time - offset
             logger.info("OBS: Stopped recording")
         except Exception as e:
-            logger.error(f"Failed to stop recording: {e}")
+            if self._is_websocket_closed_error(e):
+                self._show_obs_error("OBS websocket connection was closed while stopping recording. OBS may have crashed.")
+            else:
+                logger.error(f"Failed to stop recording: {e}")
             self._cleanup()
             return False
         return True

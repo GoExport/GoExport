@@ -1,10 +1,21 @@
-from time import time
+import os
 import helpers
 from modules.logger import logger
 
 class Compatibility:
     def __init__(self):
         pass
+
+    def _get_linux_session(self) -> str:
+        """Detect Linux desktop session type."""
+        session_type = (os.environ.get("XDG_SESSION_TYPE") or "").strip().lower()
+        if session_type:
+            return session_type
+        if os.environ.get("WAYLAND_DISPLAY"):
+            return "wayland"
+        if os.environ.get("DISPLAY"):
+            return "x11"
+        return "unknown"
 
     def test(self) -> bool:
         # Skip compatibility test
@@ -22,6 +33,16 @@ class Compatibility:
             logger.info("OS: Windows")
         elif helpers.os_is_linux():
             logger.info("OS: Linux")
+            session = self._get_linux_session()
+            logger.info(f"Linux session type: {session}")
+            if session != "x11":
+                msg = (
+                    "GoExport cannot run in Wayland or unknown Linux sessions. "
+                    "Please sign in with an X11/Xorg session and try again."
+                )
+                logger.error(msg)
+                helpers.show_popup(helpers.get_config("APP_NAME"), msg, 16)
+                return False
         else:
             logger.error("OS: Unsupported")
             return False
