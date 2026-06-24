@@ -1,0 +1,41 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Video player - WeAnimate</title>
+
+    <script>
+        function player_DoFSCommand(command, args) {
+            switch (command) {
+                case "start":
+                    startRecord = 1;
+                    break;
+                case "stop":
+                    stopRecord = 1;
+                    break;
+            }
+        }
+    </script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <object
+        id="player"
+        src="{{PLAYER_SWF_URL}}"
+        type="application/x-shockwave-flash"
+        style="width: 100%; height: 100%;"
+    >
+        <param name="flashvars" value="autostart=1&amp;isWide={{IS_WIDE}}&amp;apiserver={{API_SERVER}}&amp;storePath={{STORE_PATH}}&amp;clientThemePath={{CLIENT_THEME_PATH}}&amp;movieId={{MOVIE_ID}}&amp;isVideoRecord=1&amp;playerWidth={{PLAYER_WIDTH}}&amp;playerHeight={{PLAYER_HEIGHT}}">
+
+        <param name="allowScriptAccess" value="always">
+        <param name="allowFullScreen" value="true">
+        <param name="movie" value="{{PLAYER_SWF_URL}}">
+    </object>
+</body>
+</html>

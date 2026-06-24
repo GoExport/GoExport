@@ -8,3 +8,4 @@ class ExportSettings:
     fps: int = 24
     output_format: str = "mp4"
     is_wide: bool = True
+    url: str = "http://localhost:4343/"
