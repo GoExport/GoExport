@@ -1,6 +1,8 @@
 import argparse
 from math import gcd
 
+from goexport.models.export import ExportSettings
+from goexport.config import SUPPORTED_FORMATS
 
 def register(subparsers: argparse._SubParsersAction) -> None:
     parser = subparsers.add_parser(
@@ -12,17 +14,15 @@ def register(subparsers: argparse._SubParsersAction) -> None:
     parser.add_argument(
         "-f",
         "--format",
-        choices=["mp4", "gif", "avi", "mkv"],
-        default="mp4",
-        help="Format of the exported video.",
+        choices=sorted(SUPPORTED_FORMATS),
+        default=ExportSettings.output_format,
     )
 
     parser.add_argument(
         "-r",
         "--resolution",
         type=parse_resolution,
-        default=parse_resolution("1920x1080"),
-        help="Resolution of the exported video (e.g., 1920x1080).",
+        default=(ExportSettings.width, ExportSettings.height),
     )
 
     parser.add_argument(
@@ -64,13 +64,14 @@ def calculate_aspect_ratio(width: int, height: int) -> tuple[int, int]:
 
 def entry(args: argparse.Namespace) -> int:
     width, height = args.resolution
-    aspect_width, aspect_height = calculate_aspect_ratio(width, height)
 
-    print(
-        f"Exporting as {args.format} "
-        f"with resolution {width}x{height} "
-        f"and aspect ratio {aspect_width}:{aspect_height} "
-        f"(wide={args.is_wide})"
+    settings = ExportSettings(
+        width=width,
+        height=height,
+        output_format=args.format,
+        is_wide=args.is_wide,
     )
+
+    # return export_video(settings) Not implemented
 
     return 0
