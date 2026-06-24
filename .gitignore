@@ -1,0 +1,86 @@
+# ============================================================
+# Python
+# ============================================================
+
+# Bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+venv-wsl/
+
+# Environment files
+.env
+.env.*
+
+# Testing / coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# Type checking
+.mypy_cache/
+.pyre/
+.pytype/
+
+# Ruff
+.ruff_cache/
+
+# ============================================================
+# Node.js
+# ============================================================
+
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ============================================================
+# IDEs / Editors
+# ============================================================
+
+.vscode/
+.idea/
+
+*.sublime-project
+*.sublime-workspace
+
+# ============================================================
+# Operating Systems
+# ============================================================
+
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ============================================================
+# Temporary files
+# ============================================================
+
+*.swp
+*.swo
+*.tmp
+*.bak
+
+# ============================================================
+# Project-specific
+# ============================================================
+
+# Exported videos
+exports/
+
+# FFmpeg logs
+*.log
