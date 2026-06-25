@@ -21,5 +21,3 @@ def await_started(driver, timeout_minutes=30):
         raise TimeoutError(
             "Video failed to load"
         )
-
-    return int(time.time() * 1000)

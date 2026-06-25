@@ -38,6 +38,8 @@ def main() -> int:
 
     setup_logging(args.verbose)
 
+    args = build_parser().parse_args()
+
     try:
         return args.func(args)
     except KeyboardInterrupt:
