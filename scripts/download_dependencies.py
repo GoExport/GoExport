@@ -156,7 +156,7 @@ def download_file(url: str, destination: Path) -> None:
                         advance=len(chunk),
                     )
 
-    console.print("[green]✓ Download complete[/green]")
+    console.print("[green]Download complete[/green]")
 
 def extract_zip(
     archive: Path,
@@ -264,7 +264,7 @@ def install_chromium(temp_dir: Path) -> None:
         finally:
             unmount_dmg(mount)
 
-        console.print("[green]✓ Chromium installed[/green]")
+        console.print("[green]Chromium installed[/green]")
         return
 
     else:
@@ -289,7 +289,7 @@ def install_chromium(temp_dir: Path) -> None:
         dirs_exist_ok=True,
     )
 
-    console.print("[green]✓ Chromium installed[/green]")
+    console.print("[green]Chromium installed[/green]")
 
 def install_chromedriver(temp_dir: Path) -> None:
     """Downloads and installs ChromeDriver."""
@@ -326,7 +326,7 @@ def install_chromedriver(temp_dir: Path) -> None:
     )
 
     console.print(
-        "[green]✓ ChromeDriver installed[/green]"
+        "[green]ChromeDriver installed[/green]"
     )
 
 def install_ffmpeg(temp_dir: Path) -> None:
@@ -363,7 +363,7 @@ def install_ffmpeg(temp_dir: Path) -> None:
 
     shutil.copy2(ffmpeg, bin_dir / ffmpeg.name)
 
-    console.print("[green]✓ FFmpeg installed[/green]")
+    console.print("[green]FFmpeg installed[/green]")
 
 def install_flash(temp_dir: Path) -> None:
     """Downloads and installs Pepper Flash."""
@@ -423,7 +423,7 @@ def install_flash(temp_dir: Path) -> None:
             f"Unsupported Flash archive: {archive.name}"
         )
 
-    console.print("[green]✓ Pepper Flash installed[/green]")
+    console.print("[green]Pepper Flash installed[/green]")
 
 def verify_installation() -> None:
     """Verifies that all required runtime files exist."""
@@ -468,7 +468,7 @@ def verify_installation() -> None:
 
         raise SystemExit(1)
 
-    console.print("[green]✓ Installation verified[/green]")
+    console.print("[green]Installation verified[/green]")
 
 def main() -> int:
     console.rule("[bold green]GoExport Dependency Installer")
