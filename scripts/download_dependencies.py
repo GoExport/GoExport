@@ -383,6 +383,10 @@ def install_flash(temp_dir: Path) -> None:
 
     if archive.suffix == ".7z":
         extract_7z(archive, temp_dir)
+        print("Extracted files:")
+
+        for path in temp_dir.rglob("*"):
+            print(path.relative_to(temp_dir))
 
         plugin = next(
             temp_dir.rglob("pepflashplayer.dll")
