@@ -74,7 +74,7 @@ DOWNLOADS = {
             "https://github.com/kramred/ungoogled-chromium-macos/releases/download/87.0.4280.141-1.1/ungoogled-chromium_87.0.4280.141-1.1_macos.dmg",
 
         "ffmpeg":
-            "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-macos64-gpl.zip",
+            "https://evermeet.cx/ffmpeg/getrelease/zip",
 
         "flash":
             "https://github.com/darktohka/clean-flash-builds/releases/download/v1.54/ChineseFlash-PPAPI-PepperFlashPlayer.zip",
@@ -297,23 +297,21 @@ def install_ffmpeg(temp_dir: Path) -> None:
 
     if archive.suffix == ".zip":
         extract_zip(archive, temp_dir)
-
     else:
         extract_tar(archive, temp_dir)
 
-    if SYSTEM == "Windows":
-        ffmpeg = find_file(temp_dir, "ffmpeg.exe")
-        ffprobe = find_file(temp_dir, "ffprobe.exe")
+    executable = (
+        "ffmpeg.exe"
+        if SYSTEM == "Windows"
+        else "ffmpeg"
+    )
 
-    else:
-        ffmpeg = find_file(temp_dir, "ffmpeg")
-        ffprobe = find_file(temp_dir, "ffprobe")
+    ffmpeg = find_file(temp_dir, executable)
 
     bin_dir = FFMPEG_DIR / "bin"
     bin_dir.mkdir(parents=True, exist_ok=True)
 
     shutil.copy2(ffmpeg, bin_dir / ffmpeg.name)
-    shutil.copy2(ffprobe, bin_dir / ffprobe.name)
 
     console.print("[green]✓ FFmpeg installed[/green]")
 
