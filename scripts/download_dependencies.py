@@ -289,7 +289,11 @@ def install_ffmpeg(temp_dir: Path) -> None:
     console.rule("[bold cyan]FFmpeg")
 
     url = URLS["ffmpeg"]
-    archive = temp_dir / Path(url).name
+
+    if url.endswith(".zip") or url.endswith("/zip"):
+        archive = temp_dir / "ffmpeg.zip"
+    else:
+        archive = temp_dir / "ffmpeg.tar.xz"
 
     download_file(url, archive)
 
