@@ -394,7 +394,7 @@ def install_flash(temp_dir: Path) -> None:
 
         shutil.copy2(
             plugin,
-            extensions / plugin.name,
+            extensions / "pepflashplayer.dll",
         )
 
     elif archive.suffixes[-2:] == [".tar", ".gz"]:
