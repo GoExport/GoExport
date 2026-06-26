@@ -1,6 +1,6 @@
 from pathlib import Path
 import platform
-
+import sys
 
 APP_NAME = "GoExport"
 VERSION = "2.0.0"
@@ -13,7 +13,12 @@ SUPPORTED_FORMATS = {
     "gif",
 }
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+if getattr(sys, "frozen", False):
+    # dist/GoExport
+    BASE_DIR = Path(sys.executable).resolve().parent
+else:
+    # Project root
+    BASE_DIR = Path(__file__).resolve().parent.parent
 
 SYSTEM = platform.system()
 
