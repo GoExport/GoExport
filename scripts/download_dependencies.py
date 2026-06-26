@@ -66,7 +66,7 @@ DOWNLOADS = {
             "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-linux64-gpl.tar.xz",
 
         "flash":
-            "https://github.com/darktohka/clean-flash-builds/releases/download/v1.53/ChineseFlash-PPAPI-PepperFlashPlayer.zip",
+            "https://github.com/darktohka/clean-flash-builds/releases/download/v1.7/flash_player_patched_ppapi_linux.x86_64.tar.gz",
     },
 
     "Darwin": {
@@ -77,7 +77,7 @@ DOWNLOADS = {
             "https://evermeet.cx/ffmpeg/getrelease/zip",
 
         "flash":
-            "https://github.com/darktohka/clean-flash-builds/releases/download/v1.54/ChineseFlash-PPAPI-PepperFlashPlayer.zip",
+            "https://github.com/darktohka/clean-flash-builds/releases/download/v1.53/ChineseFlash-PPAPI-PepperFlashPlayer.zip",
     },
 }
 
