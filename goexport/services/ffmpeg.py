@@ -59,6 +59,7 @@ class FFmpegAudioEncoder:
         self,
         clips: list[AudioClip],
         output_file: Path,
+        frame_count: int,
     ) -> None:
         command = [
             str(self.ffmpeg_path),
@@ -67,6 +68,7 @@ class FFmpegAudioEncoder:
 
         filters = []
         mix_inputs = []
+        movie_duration = frame_count / self.fps
 
         offset_ms = round(
             self.audio_offset_frames * 1000 / self.fps
@@ -105,13 +107,13 @@ class FFmpegAudioEncoder:
                     f"[a{index}]"
                 )
             else:
-                duration = (
+                clip_duration = (
                     clip.duration_frames / self.fps
                 )
 
                 filter_chain = (
                     f"[{index}:a]"
-                    f"atrim=end={duration:.6f},"
+                    f"atrim=end={clip_duration:.6f},"
                     f"adelay={delay}|{delay}"
                     f"[a{index}]"
                 )
@@ -123,7 +125,8 @@ class FFmpegAudioEncoder:
             "".join(mix_inputs)
             + (
                 f"amix=inputs={len(clips)}:normalize=0,"
-                f"adelay={offset_ms}|{offset_ms}"
+                f"adelay={offset_ms}|{offset_ms},"
+                f"atrim=end={movie_duration:.6f}"
             )
         )
 

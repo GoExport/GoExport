@@ -232,7 +232,7 @@ def export_video(args: argparse.Namespace) -> int:
     # Render the video and process audio
     renderer.render()
     timeline = timeline_builder.build()
-    audio = audio_processor.process(timeline)
+    audio = audio_processor.process(timeline, renderer.duration_frames)
     muxer.mux(
         video_file=f"output.{args.format}",
         audio_file=audio,

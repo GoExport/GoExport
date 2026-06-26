@@ -17,6 +17,7 @@ class AudioProcessor:
     def process(
         self,
         timeline: list[AudioClip],
+        frame_count: int,
     ) -> Path:
         logger.info(
             "Processing %d audio clips",
@@ -43,6 +44,7 @@ class AudioProcessor:
         self.encoder.encode(
             timeline,
             output_file,
+            frame_count,
         )
 
         return output_file

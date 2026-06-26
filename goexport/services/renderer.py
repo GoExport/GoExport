@@ -12,6 +12,7 @@ class Renderer:
     ):
         self.driver = driver
         self.encoder = encoder
+        self.duration_frames = 0
 
     def render(self):
         player = self.driver.find_element(
@@ -33,6 +34,8 @@ class Renderer:
                     0
                 );
         """, config.FPS)
+
+        self.duration_frames = frame_count
 
         result = self.driver.execute_script("""
             const fps = arguments[0];
