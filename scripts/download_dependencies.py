@@ -363,7 +363,7 @@ def install_flash(temp_dir: Path) -> None:
         extract_zip(archive, temp_dir)
 
         plugin = next(
-            temp_dir.rglob("PepperFlashPlayer.plugin")
+            temp_dir.rglob("*.plugin")
         )
 
         shutil.copytree(
