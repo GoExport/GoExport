@@ -50,6 +50,9 @@ DOWNLOADS = {
     "Windows": {
         "chromium":
             "https://github.com/tangalbert919/ungoogled-chromium-binaries/releases/download/87.0.4280.141-1/ungoogled-chromium_87.0.4280.141-1.1_windows-x64.zip",
+    
+        "chromedriver":
+            "https://chromedriver.storage.googleapis.com/87.0.4280.88/chromedriver_win32.zip",
 
         "ffmpeg":
             "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip",
@@ -72,6 +75,9 @@ DOWNLOADS = {
     "Darwin": {
         "chromium":
             "https://github.com/kramred/ungoogled-chromium-macos/releases/download/87.0.4280.141-1.1/ungoogled-chromium_87.0.4280.141-1.1_macos.dmg",
+
+        "chromedriver":
+            "https://chromedriver.storage.googleapis.com/87.0.4280.88/chromedriver_mac64.zip",
 
         "ffmpeg":
             "https://evermeet.cx/ffmpeg/getrelease/zip",
@@ -165,7 +171,9 @@ def extract_7z(
     archive: Path,
     destination: Path,
 ) -> None:
-    console.print(f"[cyan]Extracting[/cyan] {archive.name}")
+    console.print(
+        f"[cyan]Extracting[/cyan] {archive.name}"
+    )
 
     with py7zr.SevenZipFile(archive) as seven_zip:
         seven_zip.extractall(destination)
@@ -283,6 +291,44 @@ def install_chromium(temp_dir: Path) -> None:
 
     console.print("[green]✓ Chromium installed[/green]")
 
+def install_chromedriver(temp_dir: Path) -> None:
+    """Downloads and installs ChromeDriver."""
+
+    if SYSTEM == "Linux":
+        console.print(
+            "[cyan]ChromeDriver bundled with Chromium[/cyan]"
+        )
+        return
+
+    console.rule("[bold cyan]ChromeDriver")
+
+    url = URLS["chromedriver"]
+    archive = temp_dir / "chromedriver.zip"
+
+    download_file(url, archive)
+
+    extract_zip(archive, temp_dir)
+
+    executable = (
+        "chromedriver.exe"
+        if SYSTEM == "Windows"
+        else "chromedriver"
+    )
+
+    chromedriver = find_file(
+        temp_dir,
+        executable,
+    )
+
+    shutil.copy2(
+        chromedriver,
+        CHROMIUM_DIR / chromedriver.name,
+    )
+
+    console.print(
+        "[green]✓ ChromeDriver installed[/green]"
+    )
+
 def install_ffmpeg(temp_dir: Path) -> None:
     """Downloads and installs FFmpeg."""
 
@@ -362,13 +408,11 @@ def install_flash(temp_dir: Path) -> None:
     elif archive.suffix == ".zip":
         extract_zip(archive, temp_dir)
 
-        plugin = next(
-            temp_dir.rglob("*.plugin")
-        )
+        plugin = find_file(temp_dir, ".plugin")
 
         shutil.copytree(
             plugin,
-            extensions / plugin.name,
+            extensions / "PepperFlashPlayer.plugin",
             dirs_exist_ok=True,
         )
 
@@ -431,6 +475,7 @@ def main() -> int:
         temp_dir = Path(temp)
 
         install_chromium(temp_dir)
+        install_chromedriver(temp_dir)
         install_ffmpeg(temp_dir)
         install_flash(temp_dir)
 
