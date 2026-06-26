@@ -16,6 +16,7 @@ Supported platforms:
 
 from __future__ import annotations
 
+import plistlib
 import platform
 import shutil
 import subprocess
@@ -186,26 +187,23 @@ def mount_dmg(dmg: Path) -> Path:
             "hdiutil",
             "attach",
             str(dmg),
+            "-plist",
             "-nobrowse",
-            "-quiet",
         ],
         capture_output=True,
-        text=True,
         check=True,
     )
 
-    mount_point = None
+    plist = plistlib.loads(result.stdout)
 
-    for line in result.stdout.splitlines():
-        if "/Volumes/" in line:
-            mount_point = Path(line.split("\t")[-1])
+    for entity in plist.get("system-entities", []):
+        mount_point = entity.get("mount-point")
+        if mount_point:
+            return Path(mount_point)
 
-    if mount_point is None:
-        raise RuntimeError(
-            "Unable to determine DMG mount point."
-        )
-
-    return mount_point
+    raise RuntimeError(
+        "Unable to determine DMG mount point."
+    )
 
 def unmount_dmg(
     mount_point: Path,
