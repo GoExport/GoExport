@@ -408,7 +408,9 @@ def install_flash(temp_dir: Path) -> None:
     elif archive.suffix == ".zip":
         extract_zip(archive, temp_dir)
 
-        plugin = find_file(temp_dir, ".plugin")
+        plugin = next(
+            temp_dir.rglob("*.plugin")
+        )
 
         shutil.copytree(
             plugin,
