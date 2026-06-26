@@ -24,7 +24,7 @@ jobs:
             runner: windows-latest
 
           - os: Linux
-            runner: ubuntu-20.04
+            runner: ubuntu-22.04
 
           - os: macOS
             runner: macos-latest
