@@ -389,7 +389,7 @@ def install_flash(temp_dir: Path) -> None:
             print(path.relative_to(temp_dir))
 
         plugin = next(
-            temp_dir.rglob("pepflashplayer.dll")
+            temp_dir.rglob("pepflashplayer*.dll")
         )
 
         shutil.copy2(
