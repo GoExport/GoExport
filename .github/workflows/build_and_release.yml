@@ -1,0 +1,155 @@
+name: Build & Release
+
+on:
+  workflow_dispatch:
+
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build (${{ matrix.os }})
+    runs-on: ${{ matrix.runner }}
+
+    strategy:
+      fail-fast: false
+
+      matrix:
+        include:
+          - os: Windows
+            runner: windows-latest
+
+          - os: Linux
+            runner: ubuntu-latest
+
+          - os: macOS
+            runner: macos-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Download runtime dependencies
+        run: |
+          python scripts/download_dependencies.py
+
+      - name: Build GoExport
+        run: |
+          pyinstaller GoExport.spec
+
+      - name: Prepare distribution (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Copy-Item -Recurse bin dist/GoExport/
+          Copy-Item -Recurse resources dist/GoExport/
+          Copy-Item README.md dist/GoExport/
+          Copy-Item LICENSE dist/GoExport/
+
+      - name: Prepare distribution (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: |
+          cp -r bin dist/GoExport/
+          cp -r resources dist/GoExport/
+          cp README.md dist/GoExport/
+          cp LICENSE dist/GoExport/
+
+      - name: Package Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Compress-Archive `
+            -Path dist/GoExport `
+            -DestinationPath GoExport-windows-x64.zip
+
+      - name: Package Linux
+        if: runner.os == 'Linux'
+        run: |
+          tar \
+            -czf GoExport-linux-x64.tar.gz \
+            -C dist \
+            GoExport
+
+      - name: Package macOS
+        if: runner.os == 'macOS'
+        run: |
+          tar \
+            -czf GoExport-macos-x64.tar.gz \
+            -C dist \
+            GoExport
+
+      - name: Upload Windows Artifact
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: GoExport-windows-x64
+          path: GoExport-windows-x64.zip
+
+      - name: Upload Linux Artifact
+        if: runner.os == 'Linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: GoExport-linux-x64
+          path: GoExport-linux-x64.tar.gz
+
+      - name: Upload macOS Artifact
+        if: runner.os == 'macOS'
+        uses: actions/upload-artifact@v4
+        with:
+          name: GoExport-macos-x64
+          path: GoExport-macos-x64.tar.gz
+
+  release:
+    name: Create GitHub Release
+    needs: build
+
+    runs-on: ubuntu-latest
+
+    if: startsWith(github.ref, 'refs/tags/')
+
+    steps:
+      - name: Download Windows artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: GoExport-windows-x64
+
+      - name: Download Linux artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: GoExport-linux-x64
+
+      - name: Download macOS artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: GoExport-macos-x64
+
+      - name: Move release archives
+        run: |
+          mv GoExport-windows-x64/GoExport-windows-x64.zip .
+          mv GoExport-linux-x64/GoExport-linux-x64.tar.gz .
+          mv GoExport-macos-x64/GoExport-macos-x64.tar.gz .
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+
+          files: |
+            GoExport-windows-x64.zip
+            GoExport-linux-x64.tar.gz
+            GoExport-macos-x64.tar.gz
