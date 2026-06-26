@@ -1,12 +1,12 @@
 from xml.etree import ElementTree as ET
+from pathlib import Path
 import logging
-
 from goexport.models.audio_clip import AudioClip
 
 logger = logging.getLogger(__name__)
 
 class TimelineBuilder:
-    def __init__(self, movie_xml: str):
+    def __init__(self, movie_xml: Path):
         self.movie_xml = movie_xml
 
         if not self.movie_xml.is_file():

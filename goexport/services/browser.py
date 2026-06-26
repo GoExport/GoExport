@@ -8,6 +8,8 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
 
+from goexport import config
+
 
 class BrowserService:
     def __init__(
@@ -33,6 +35,9 @@ class BrowserService:
         options.add_argument("--allow-running-insecure-content")
         options.add_argument("--disable-infobars")
         options.add_argument("--disable-bookmarks-bar")
+
+        if config.SYSTEM == "Linux":
+            options.add_argument("--no-sandbox")
 
         options.add_argument(
             f"--ppapi-flash-path={self.flash_path}"

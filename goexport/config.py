@@ -38,14 +38,14 @@ elif SYSTEM == "Linux":
     CHROMEDRIVER_PATH = CHROMIUM_DIR / "chromedriver"
     FFMPEG_PATH = FFMPEG_DIR / "bin" / "ffmpeg"
     FLASH_PLUGIN_PATH = CHROMIUM_DIR / "extensions" / "libpepflashplayer.so"
-    FLASH_PLUGIN_VERSION = "32.0.0.xxx"  # Whatever version you're shipping
+    FLASH_PLUGIN_VERSION = "34.0.0.376"
 
 elif SYSTEM == "Darwin":
     CHROME_PATH = CHROMIUM_DIR / "Chromium.app" / "Contents" / "MacOS" / "Chromium"
     CHROMEDRIVER_PATH = CHROMIUM_DIR / "chromedriver"
     FFMPEG_PATH = FFMPEG_DIR / "bin" / "ffmpeg"
     FLASH_PLUGIN_PATH = CHROMIUM_DIR / "extensions" / "PepperFlashPlayer.plugin"
-    FLASH_PLUGIN_VERSION = "..."
+    FLASH_PLUGIN_VERSION = "34.0.0.376"
 
 else:
     raise RuntimeError(f"Unsupported operating system: {SYSTEM}")

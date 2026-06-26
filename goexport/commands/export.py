@@ -188,6 +188,9 @@ def export_video(args: argparse.Namespace) -> int:
         audio_encoder,
     )
 
+    if args.movie_xml is None:
+        raise FileNotFoundError("No movie XML file was provided.")
+
     # Start the timeline builder
     timeline_builder = TimelineBuilder(args.movie_xml)
 
@@ -196,7 +199,7 @@ def export_video(args: argparse.Namespace) -> int:
         chrome_path=config.CHROME_PATH,
         chromedriver_path=config.CHROMEDRIVER_PATH,
         flash_path=config.FLASH_PLUGIN_PATH,
-        flash_version=config.PATH_FLASH_VERSION_WINDOWS,
+        flash_version=config.FLASH_PLUGIN_VERSION,
     )
 
     driver = browser_service.create_driver()
