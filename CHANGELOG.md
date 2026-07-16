@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.3] - 2026-06-06
+
+### Changed
+
+- Linux compatibility checks now detect session type and require X11/Xorg. GoExport refuses to run in Wayland sessions.
+
+### Fixed
+
+- Improved Linux OBS source creation by trying multiple window match formats instead of a single hardcoded one.
+- Added clearer OBS error handling and user-facing errors when OBS websocket closes unexpectedly (such as OBS crashes).
+
 ## [1.2.2] - 2026-03-22
 
 ### Added

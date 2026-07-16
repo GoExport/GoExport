@@ -20,7 +20,7 @@ Complete guide for setting up GoExport on Linux, including dependencies, PATH co
 - Linux kernel 4.15+
 - 4GB RAM
 - 2GB free disk space
-- X11 or Wayland display server
+- X11/Xorg display server (Wayland sessions are not supported)
 
 **Recommended:**
 
@@ -348,6 +348,7 @@ xdg-open 'goexport://local?video_id=test&resolution=720p'
 ## OBS Setup
 
 OBS Studio is required for capture on Linux (native capture is Windows-only).
+GoExport requires an X11/Xorg session and will refuse to run in Wayland sessions.
 
 ### Install OBS Studio
 
