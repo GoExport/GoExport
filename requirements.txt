@@ -28,6 +28,8 @@ pycryptodomex==3.23.0
 Pygments==2.20.0
 pyinstaller==6.21.0
 pyinstaller-hooks-contrib==2026.6
+pyvirtualdisplay==3.0
+PyScap @ git+https://github.com/Lexian-droid/pyscap.git@f645b26ec851358d04f11ebaf8ecf29663e5f145
 pyppmd==1.3.1
 PySocks==1.7.1
 requests==2.34.2

@@ -35,10 +35,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main() -> int:
     args = build_parser().parse_args()
-
     setup_logging(args.verbose)
-
-    args = build_parser().parse_args()
 
     try:
         return args.func(args)

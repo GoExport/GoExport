@@ -27,7 +27,7 @@ jobs:
             runner: ubuntu-22.04
 
           - os: macOS
-            runner: macos-latest
+            runner: macos-13 # Intel runner; artifacts are genuinely x64.
 
     steps:
       - name: Checkout repository
@@ -51,6 +51,19 @@ jobs:
       - name: Build GoExport
         run: |
           pyinstaller GoExport.spec
+
+      - name: Packaged PyScap smoke test (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          dist/GoExport/GoExport.exe --help
+          python -c "import scap; print('PyScap import OK')"
+
+      - name: Packaged PyScap smoke test (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          ./dist/GoExport/GoExport --help
+          python -c "import scap; print('PyScap import OK')"
 
       - name: Prepare distribution (Windows)
         if: runner.os == 'Windows'

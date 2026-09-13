@@ -226,7 +226,7 @@ def export_video(args: argparse.Namespace) -> int:
     # Render video
     encoder = FFmpegVideoEncoder(
         ffmpeg_path=config.FFMPEG_PATH,
-        output_file=f"output.{args.format}",
+        output_file="output.mkv",
         width=args.resolution[0],
         height=args.resolution[1],
         fps=config.FPS,
@@ -243,7 +243,7 @@ def export_video(args: argparse.Namespace) -> int:
     timeline = timeline_builder.build()
     audio = audio_processor.process(timeline, renderer.duration_frames)
     muxer.mux(
-        video_file=f"output.{args.format}",
+        video_file="output.mkv",
         audio_file=audio,
         output_file=f"final_output.{args.format}",
     )

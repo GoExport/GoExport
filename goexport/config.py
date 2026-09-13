@@ -7,10 +7,8 @@ VERSION = "1.0.0"
 
 SUPPORTED_FORMATS = {
     "mp4",
-    "avi",
     "mov",
     "mkv",
-    "gif",
 }
 
 if getattr(sys, "frozen", False):

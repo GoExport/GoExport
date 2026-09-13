@@ -1,12 +1,15 @@
 # -*- mode: python ; coding: utf-8 -*-
+from PyInstaller.utils.hooks import collect_dynamic_libs
+
+scap_binaries = collect_dynamic_libs('scap')
 
 
 a = Analysis(
     ['main.py'],
     pathex=[],
-    binaries=[],
+    binaries=scap_binaries,
     datas=[],
-    hiddenimports=[],
+    hiddenimports=['scap'],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
