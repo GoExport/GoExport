@@ -3,7 +3,7 @@ import platform
 import sys
 
 APP_NAME = "GoExport"
-VERSION = "2.0.0"
+VERSION = "1.0.0"
 
 SUPPORTED_FORMATS = {
     "mp4",
@@ -31,14 +31,14 @@ if SYSTEM == "Windows":
     CHROMEDRIVER_PATH = CHROMIUM_DIR / "chromedriver.exe"
     FFMPEG_PATH = FFMPEG_DIR / "bin" / "ffmpeg.exe"
     FLASH_PLUGIN_PATH = CHROMIUM_DIR / "extensions" / "pepflashplayer.dll"
-    FLASH_PLUGIN_VERSION = "34.0.0.330"
+    FLASH_PLUGIN_VERSION = "34.0.0.376"
 
 elif SYSTEM == "Linux":
     CHROME_PATH = CHROMIUM_DIR / "chrome"
     CHROMEDRIVER_PATH = CHROMIUM_DIR / "chromedriver"
     FFMPEG_PATH = FFMPEG_DIR / "bin" / "ffmpeg"
     FLASH_PLUGIN_PATH = CHROMIUM_DIR / "extensions" / "libpepflashplayer.so"
-    FLASH_PLUGIN_VERSION = "34.0.0.376"
+    FLASH_PLUGIN_VERSION = "34.0.0.137"
 
 elif SYSTEM == "Darwin":
     CHROME_PATH = CHROMIUM_DIR / "Chromium.app" / "Contents" / "MacOS" / "Chromium"
@@ -51,6 +51,8 @@ else:
     raise RuntimeError(f"Unsupported operating system: {SYSTEM}")
 
 TEMPLATE_HTML_PATH = RESOURCES_DIR / "template.html"
+
+OUTRO_PATH = RESOURCES_DIR / "outro.mp4"
 
 OUTPUT_FORMAT = "mp4"
 

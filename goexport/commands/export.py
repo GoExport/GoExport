@@ -101,6 +101,7 @@ def register(subparsers: argparse._SubParsersAction) -> None:
         "-ugc",
         "--ugc-path",
         type=existing_directory,
+        required=True,
         help="The path to the folder containing UGC assets.",
     )
 
@@ -108,6 +109,7 @@ def register(subparsers: argparse._SubParsersAction) -> None:
         "-as",
         "--assets",
         type=existing_directory,
+        required=True,
         help="The path to the folder containing theme assets (The files located inside of 3a981f5cb2739137).",
     )
 
@@ -163,13 +165,6 @@ def entry(args: argparse.Namespace) -> int:
 
 
 def export_video(args: argparse.Namespace) -> int:
-    # Start the video encoder
-    encoder = FFmpegVideoEncoder(
-        ffmpeg_path=config.FFMPEG_PATH,
-        output_file=f"output.{args.format}",
-        fps=config.FPS,
-    )
-
     # Start the audio processor
     resolver = AssetResolver(
         args.ugc_path,
@@ -200,15 +195,17 @@ def export_video(args: argparse.Namespace) -> int:
         chromedriver_path=config.CHROMEDRIVER_PATH,
         flash_path=config.FLASH_PLUGIN_PATH,
         flash_version=config.FLASH_PLUGIN_VERSION,
+        width=args.resolution[0],
+        height=args.resolution[1],
     )
 
     driver = browser_service.create_driver()
 
     driver.get(args.url)
 
-    browser_service.set_viewport_size(
-        driver, config.WIDTH, config.HEIGHT
-    )
+    browser_service.enter_fullscreen(driver)
+    browser_service.validate_screen_resolution(driver)
+    browser_service.assert_full_resolution()
 
     browser_service.enable_flash(driver)
 
@@ -227,9 +224,18 @@ def export_video(args: argparse.Namespace) -> int:
     await_started(driver)
 
     # Render video
+    encoder = FFmpegVideoEncoder(
+        ffmpeg_path=config.FFMPEG_PATH,
+        output_file=f"output.{args.format}",
+        width=args.resolution[0],
+        height=args.resolution[1],
+        fps=config.FPS,
+    )
+
     renderer = Renderer(
         driver=driver,
         encoder=encoder,
+        resolution_guard=browser_service.assert_full_resolution,
     )
 
     # Render the video and process audio

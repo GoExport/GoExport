@@ -85,8 +85,15 @@ desktop.ini
 # Project-specific
 # ============================================================
 
+# Audio related
+*.wav
+
 # Exported videos
-exports/
+*.mp4
+*.avi
+*.mov
+*.mkv
+*.gif
 
 # FFmpeg logs
 *.log
