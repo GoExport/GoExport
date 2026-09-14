@@ -27,7 +27,7 @@ jobs:
             runner: ubuntu-22.04
 
           - os: macOS
-            runner: macos-13 # Intel runner; artifacts are genuinely x64.
+            runner: macos-15-intel # Intel runner; artifacts are genuinely x64.
 
     steps:
       - name: Checkout repository
