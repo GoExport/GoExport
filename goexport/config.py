@@ -3,7 +3,7 @@ import platform
 import sys
 
 APP_NAME = "GoExport"
-VERSION = "1.0.0"
+VERSION = "2.0.0"
 
 SUPPORTED_FORMATS = {
     "mp4",
