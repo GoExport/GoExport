@@ -37,6 +37,14 @@ class CliTests(unittest.TestCase):
             self.assertEqual(cli.main(), 0)
         self.assertEqual(parser.parse_args.call_count, 1)
 
+    def test_recording_page_title_is_unique_for_capture_target_lookup(self):
+        from goexport.services.recorder import RecordingService
+        args = Namespace(output="out", format="mp4", resolution=(1280, 720), swf_url="swf", is_wide=True,
+                         api_url="api", store_path="store", client_theme_path="theme", movie_id="movie", user_id="user")
+        first, second = RecordingService(args), RecordingService(args)
+        self.assertNotEqual(first._capture_window_title, second._capture_window_title)
+        self.assertEqual(first._build_replacements()["WINDOW_TITLE"], first._capture_window_title)
+
 
 if __name__ == "__main__":
     unittest.main()

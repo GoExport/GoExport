@@ -140,6 +140,12 @@ class BrowserService:
         ]
 
         if len(targets) != 1:
+            logger.error(
+                "Capture-target lookup for %r matched %d window(s): %s",
+                window_title,
+                len(targets),
+                [getattr(target, "title", repr(target)) for target in targets],
+            )
             raise RuntimeError(
                 "Could not identify the Selenium window for capture. "
                 f"Expected one window titled {window_title!r}, found "

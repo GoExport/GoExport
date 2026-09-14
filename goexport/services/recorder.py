@@ -1,6 +1,7 @@
 import argparse
 import logging
 import threading
+import uuid
 from pathlib import Path
 
 from goexport import config
@@ -15,7 +16,11 @@ _AUDIO = {"int8": ("s8", 1), "int16": ("s16le", 2), "int32": ("s32le", 4), "int6
 
 
 class RecordingService:
-    def __init__(self, args: argparse.Namespace): self.args = args
+    def __init__(self, args: argparse.Namespace):
+        self.args = args
+        # PyScap identifies browser windows by title. A per-run title prevents
+        # stale Chromium windows from matching this recording's capture target.
+        self._capture_window_title = f"GoExport Recorder {uuid.uuid4().hex}"
     def _create_output_path(self): return resolve_output_path(Path(self.args.output), self.args.format)
     def _create_capturer(self, target): return create_capturer(target)
 
@@ -97,7 +102,7 @@ class RecordingService:
         else: video.replace(output)
         if not self.args.no_outro: muxer.append_outro(output, Path(self.args.use_outro), output, *self.args.resolution, config.FPS)
     def _create_browser_service(self): return BrowserService(config.CHROME_PATH, config.CHROMEDRIVER_PATH, config.FLASH_PLUGIN_PATH, config.FLASH_PLUGIN_VERSION, *self.args.resolution)
-    def _build_replacements(self): return {"PLAYER_WIDTH": self.args.resolution[0], "PLAYER_HEIGHT": self.args.resolution[1], "PLAYER_SWF_URL": self.args.swf_url, "IS_WIDE": int(self.args.is_wide), "API_SERVER": self.args.api_url, "STORE_PATH": self.args.store_path, "CLIENT_THEME_PATH": self.args.client_theme_path, "MOVIE_ID": self.args.movie_id, "USER_ID": self.args.user_id}
+    def _build_replacements(self): return {"WINDOW_TITLE": self._capture_window_title, "PLAYER_WIDTH": self.args.resolution[0], "PLAYER_HEIGHT": self.args.resolution[1], "PLAYER_SWF_URL": self.args.swf_url, "IS_WIDE": int(self.args.is_wide), "API_SERVER": self.args.api_url, "STORE_PATH": self.args.store_path, "CLIENT_THEME_PATH": self.args.client_theme_path, "MOVIE_ID": self.args.movie_id, "USER_ID": self.args.user_id}
     def run(self):
         import scap
         if not scap.is_supported(): raise RuntimeError("This platform does not support screen capture")
