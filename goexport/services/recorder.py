@@ -46,8 +46,8 @@ class RecordingService:
     def _create_output_path(self):
         return resolve_output_path(Path(self.args.output), self.args.format)
 
-    def _create_capturer(self, target):
-        return create_capturer(target)
+    def _create_capturer(self, target, crop_area=None):
+        return create_capturer(target, crop_area)
 
     def _capture_streams(self, capturer, video_path, audio_path, started, stopped):
         import scap
@@ -196,10 +196,16 @@ class RecordingService:
         finally:
             stopped.set()
 
-    def _record_playback(self, driver, video_path, audio_path):
+    def _record_playback(self, driver, video_path, audio_path, service=None):
         driver.execute_script("player.pause();")
         await_started(driver)
-        capturer = self._create_capturer(BrowserService.get_capture_target(driver))
+        if service is None:
+            target = BrowserService.get_capture_target(driver)
+            crop_area = None
+        else:
+            target = service.get_capture_target(driver)
+            crop_area = service.get_capture_crop_area(driver)
+        capturer = self._create_capturer(target, crop_area)
         started = threading.Event()
         stopped = threading.Event()
         errors = []
@@ -276,7 +282,7 @@ class RecordingService:
         complete = False
         try:
             service, driver = self._prepare_browser()
-            self._record_playback(driver, video, audio)
+            self._record_playback(driver, video, audio, service)
             self._finish_recording(output, video, audio)
             complete = True
         finally:

@@ -72,21 +72,23 @@ class CliTests(unittest.TestCase):
 
 
 class BrowserCaptureTargetTests(unittest.TestCase):
-    def test_linux_uses_x11_root_display_without_enumerating_windows(self):
+    @staticmethod
+    def _service():
         from goexport.services.browser import BrowserService
 
+        return BrowserService(Mock(), Mock(), Mock(), "1", width=1280, height=720)
+
+    def test_linux_uses_x11_root_display_without_enumerating_windows(self):
         scap = Mock()
         with (
             patch.object(config, "SYSTEM", "Linux"),
             patch.dict(sys.modules, {"scap": scap}),
         ):
-            self.assertIsNone(BrowserService.get_capture_target(Mock()))
+            self.assertIsNone(self._service().get_capture_target(Mock()))
 
         scap.targets.assert_not_called()
 
     def test_non_linux_retains_title_based_window_selection(self):
-        from goexport.services.browser import BrowserService
-
         expected = SimpleNamespace(kind="window", title="Recorder - Chromium")
         scap = Mock()
         scap.targets.return_value = [expected]
@@ -95,7 +97,7 @@ class BrowserCaptureTargetTests(unittest.TestCase):
             patch.object(config, "SYSTEM", "Windows"),
             patch.dict(sys.modules, {"scap": scap}),
         ):
-            self.assertIs(BrowserService.get_capture_target(driver), expected)
+            self.assertIs(self._service().get_capture_target(driver), expected)
 
     def test_linux_display_forces_x11_backend(self):
         from goexport.services.browser import BrowserService
@@ -113,6 +115,62 @@ class BrowserCaptureTargetTests(unittest.TestCase):
             self.assertEqual(os.environ["SCAP_BACKEND"], "x11")
 
         display.start.assert_called_once_with()
+
+    def test_virtual_display_includes_browser_frame_margin(self):
+        service = self._service()
+        with (
+            patch("goexport.services.browser.Display") as display,
+            patch.dict(os.environ, {}, clear=False),
+        ):
+            os.environ.pop("SCAP_BACKEND", None)
+            with patch.object(config, "SYSTEM", "Linux"):
+                service.start_display()
+                self.assertEqual(os.environ["SCAP_BACKEND"], "x11")
+                service.stop_display()
+            self.assertNotIn("SCAP_BACKEND", os.environ)
+        display.assert_called_once_with(visible=False, size=(1536, 976), color_depth=24)
+
+    def test_xvfb_window_is_grown_to_requested_viewport(self):
+        service = self._service()
+        service.display = Mock()
+        driver = Mock()
+        driver.execute_script.side_effect = [
+            {"width": 1050, "height": 700},
+            {"width": 1280, "height": 720},
+        ]
+        driver.get_window_rect.return_value = {"width": 1280, "height": 720}
+
+        service.enter_fullscreen(driver)
+
+        driver.set_window_rect.assert_any_call(x=0, y=0, width=1510, height=740)
+        driver.fullscreen_window.assert_not_called()
+
+    def test_xvfb_capture_uses_root_display_and_viewport_crop(self):
+        service = self._service()
+        service.display = Mock()
+        driver = Mock(title="GoExport Recorder id")
+        driver.get_window_rect.return_value = {
+            "x": 0,
+            "y": 0,
+            "width": 1510,
+            "height": 740,
+        }
+        driver.execute_script.return_value = {"innerHeight": 720, "outerHeight": 790}
+
+        self.assertIsNone(service.get_capture_target(driver))
+        self.assertEqual(service.get_capture_crop_area(driver), (0, 70, 1280, 720))
+
+    def test_existing_scap_backend_is_restored(self):
+        service = self._service()
+        with (
+            patch.object(config, "SYSTEM", "Linux"),
+            patch("goexport.services.browser.Display"),
+            patch.dict(os.environ, {"SCAP_BACKEND": "pipewire"}),
+        ):
+            service.start_display()
+            self.assertEqual(os.environ["SCAP_BACKEND"], "x11")
+            service.stop_display()
+            self.assertEqual(os.environ["SCAP_BACKEND"], "pipewire")
 
 
 if __name__ == "__main__":

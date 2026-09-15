@@ -21,6 +21,9 @@ WIDE_TABS = 19
 
 
 class BrowserService:
+    # The requested dimensions are for the page viewport. Chromium needs extra
+    # framebuffer space for its own frame when it runs under Xvfb.
+    VIRTUAL_DISPLAY_MARGIN = 256
     VIRTUAL_RENDERER_KEYWORDS = (
         "virtual",
         "vmware",
@@ -56,6 +59,8 @@ class BrowserService:
         self.check_screen_resolution = check_screen_resolution
         self.check_frame_resolution = check_frame_resolution
         self._virtual_display_logged = False
+        self._previous_scap_backend = None
+        self._scap_backend_overridden = False
 
     def create_driver(self):
         self.start_display()
@@ -67,6 +72,8 @@ class BrowserService:
         options.add_argument("--force-device-scale-factor=1")
         options.add_argument("--allow-running-insecure-content")
         options.add_argument("--kiosk")
+        options.add_argument("--window-position=0,0")
+        options.add_argument(f"--window-size={self.width},{self.height}")
 
         options.add_argument("--disable-infobars")
         options.add_argument("--disable-bookmarks-bar")
@@ -97,12 +104,17 @@ class BrowserService:
 
         # PyScap's Linux X11 backend captures the root window of DISPLAY and
         # does not expose individual windows through scap.targets().
+        self._previous_scap_backend = os.environ.get("SCAP_BACKEND")
+        self._scap_backend_overridden = True
         os.environ["SCAP_BACKEND"] = "x11"
 
         try:
             self.display = Display(
                 visible=False,
-                size=(self.width, self.height),
+                size=(
+                    self.width + self.VIRTUAL_DISPLAY_MARGIN,
+                    self.height + self.VIRTUAL_DISPLAY_MARGIN,
+                ),
                 color_depth=24,
             )
             self.display.start()
@@ -118,9 +130,18 @@ class BrowserService:
             )
 
     def stop_display(self):
-        if self.display is not None:
-            self.display.stop()
-            self.display = None
+        try:
+            if self.display is not None:
+                self.display.stop()
+                self.display = None
+        finally:
+            if self._scap_backend_overridden:
+                if self._previous_scap_backend is None:
+                    os.environ.pop("SCAP_BACKEND", None)
+                else:
+                    os.environ["SCAP_BACKEND"] = self._previous_scap_backend
+                self._previous_scap_backend = None
+                self._scap_backend_overridden = False
 
     def close(self):
         """Release the display even if Chromium fails to shut down."""
@@ -131,9 +152,8 @@ class BrowserService:
             self.driver = None
             self.stop_display()
 
-    @staticmethod
-    def get_capture_target(driver):
-        if config.SYSTEM == "Linux":
+    def get_capture_target(self, driver):
+        if self.display is not None or config.SYSTEM == "Linux":
             # The X11 capturer uses the current DISPLAY when target is None.
             # Window enumeration is unavailable on this backend.
             return None
@@ -166,9 +186,48 @@ class BrowserService:
 
         return targets[0]
 
-    @staticmethod
-    def enter_fullscreen(driver):
-        driver.fullscreen_window()
+    def get_capture_crop_area(self, driver):
+        if self.display is None:
+            return None
+
+        window = driver.get_window_rect()
+        viewport = driver.execute_script("""
+            return {
+                innerHeight: window.innerHeight,
+                outerHeight: window.outerHeight
+            };
+        """)
+        height_inset = max(
+            0, int(viewport["outerHeight"]) - int(viewport["innerHeight"])
+        )
+        return (
+            int(window["x"]),
+            int(window["y"]) + height_inset,
+            self.width,
+            self.height,
+        )
+
+    def enter_fullscreen(self, driver):
+        if self.display is None:
+            driver.fullscreen_window()
+            return
+
+        # Xvfb commonly has no window manager, so fullscreen_window() does not
+        # reliably grow Chromium to the requested viewport.
+        driver.set_window_rect(x=0, y=0, width=self.width, height=self.height)
+        for _ in range(3):
+            viewport = self._get_viewport_size(driver)
+            missing_width = max(0, self.width - int(viewport["width"]))
+            missing_height = max(0, self.height - int(viewport["height"]))
+            if missing_width == 0 and missing_height == 0:
+                return
+            window = driver.get_window_rect()
+            driver.set_window_rect(
+                x=0,
+                y=0,
+                width=int(window["width"]) + missing_width,
+                height=int(window["height"]) + missing_height,
+            )
 
     @staticmethod
     def _get_viewport_size(driver):
