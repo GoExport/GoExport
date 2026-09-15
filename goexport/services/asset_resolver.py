@@ -9,21 +9,14 @@ class AssetResolver:
     ):
         self.asset_path = Path(asset_path)
         self.store_path = Path(store_path)
-        
+
     def _resolve_theme(self, filename: str) -> Path:
         theme, asset = filename.split(".", 1)
 
-        path = (
-            self.store_path /
-            theme /
-            "sound" /
-            asset
-        )
+        path = self.store_path / theme / "sound" / asset
 
         if not path.is_file():
-            raise FileNotFoundError(
-                f"Theme asset not found: {filename}"
-            )
+            raise FileNotFoundError(f"Theme asset not found: {filename}")
 
         return path
 
@@ -33,9 +26,7 @@ class AssetResolver:
         path = self.asset_path / asset
 
         if not path.is_file():
-            raise FileNotFoundError(
-                f"UGC asset not found: {filename}"
-            )
+            raise FileNotFoundError(f"UGC asset not found: {filename}")
 
         return path
 

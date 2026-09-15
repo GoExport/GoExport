@@ -16,19 +16,17 @@ Supported platforms:
 
 from __future__ import annotations
 
-import plistlib
 import platform
+import plistlib
 import shutil
 import subprocess
 import tarfile
 import tempfile
 import zipfile
-
 from pathlib import Path
 
 import httpx
 import py7zr
-
 from rich.console import Console
 from rich.progress import (
     BarColumn,
@@ -48,42 +46,21 @@ console = Console()
 
 DOWNLOADS = {
     "Windows": {
-        "chromium":
-            "https://github.com/tangalbert919/ungoogled-chromium-binaries/releases/download/87.0.4280.141-1/ungoogled-chromium_87.0.4280.141-1.1_windows-x64.zip",
-    
-        "chromedriver":
-            "https://chromedriver.storage.googleapis.com/87.0.4280.88/chromedriver_win32.zip",
-
-        "ffmpeg":
-            "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip",
-
-        "flash":
-            "https://github.com/darktohka/clean-flash-builds/releases/download/v1.54/ChineseFlash-Patched-Win-34.0.0.376.7z",
+        "chromium": "https://github.com/tangalbert919/ungoogled-chromium-binaries/releases/download/87.0.4280.141-1/ungoogled-chromium_87.0.4280.141-1.1_windows-x64.zip",
+        "chromedriver": "https://chromedriver.storage.googleapis.com/87.0.4280.88/chromedriver_win32.zip",
+        "ffmpeg": "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip",
+        "flash": "https://github.com/darktohka/clean-flash-builds/releases/download/v1.54/ChineseFlash-Patched-Win-34.0.0.376.7z",
     },
-
     "Linux": {
-        "chromium":
-            "https://github.com/LordTwix/ungoogled-chromium-binaries/releases/download/87.0.4280.141-1.1/ungoogled-chromium_87.0.4280.141-1.1_linux.tar.xz",
-
-        "ffmpeg":
-            "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-linux64-gpl.tar.xz",
-
-        "flash":
-            "https://github.com/darktohka/clean-flash-builds/releases/download/v1.7/flash_player_patched_ppapi_linux.x86_64.tar.gz",
+        "chromium": "https://github.com/LordTwix/ungoogled-chromium-binaries/releases/download/87.0.4280.141-1.1/ungoogled-chromium_87.0.4280.141-1.1_linux.tar.xz",
+        "ffmpeg": "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-linux64-gpl.tar.xz",
+        "flash": "https://github.com/darktohka/clean-flash-builds/releases/download/v1.7/flash_player_patched_ppapi_linux.x86_64.tar.gz",
     },
-
     "Darwin": {
-        "chromium":
-            "https://github.com/kramred/ungoogled-chromium-macos/releases/download/87.0.4280.141-1.1/ungoogled-chromium_87.0.4280.141-1.1_macos.dmg",
-
-        "chromedriver":
-            "https://chromedriver.storage.googleapis.com/87.0.4280.88/chromedriver_mac64.zip",
-
-        "ffmpeg":
-            "https://evermeet.cx/ffmpeg/getrelease/zip",
-
-        "flash":
-            "https://github.com/darktohka/clean-flash-builds/releases/download/v1.53/ChineseFlash-PPAPI-PepperFlashPlayer.zip",
+        "chromium": "https://github.com/kramred/ungoogled-chromium-macos/releases/download/87.0.4280.141-1.1/ungoogled-chromium_87.0.4280.141-1.1_macos.dmg",
+        "chromedriver": "https://chromedriver.storage.googleapis.com/87.0.4280.88/chromedriver_mac64.zip",
+        "ffmpeg": "https://evermeet.cx/ffmpeg/getrelease/zip",
+        "flash": "https://github.com/darktohka/clean-flash-builds/releases/download/v1.53/ChineseFlash-PPAPI-PepperFlashPlayer.zip",
     },
 }
 
@@ -100,6 +77,7 @@ if SYSTEM not in DOWNLOADS:
 
 URLS = DOWNLOADS[SYSTEM]
 
+
 def recreate_directory(path: Path) -> None:
     """Deletes and recreates a directory."""
 
@@ -108,6 +86,7 @@ def recreate_directory(path: Path) -> None:
 
     path.mkdir(parents=True, exist_ok=True)
 
+
 def find_file(parent: Path, filename: str) -> Path:
     """Recursively finds a file by name."""
 
@@ -115,9 +94,8 @@ def find_file(parent: Path, filename: str) -> Path:
         if path.is_file():
             return path
 
-    raise FileNotFoundError(
-        f"Unable to find '{filename}' in '{parent}'"
-    )
+    raise FileNotFoundError(f"Unable to find '{filename}' in '{parent}'")
+
 
 def download_file(url: str, destination: Path) -> None:
     """Downloads a file with a progress bar."""
@@ -142,7 +120,6 @@ def download_file(url: str, destination: Path) -> None:
             TimeRemainingColumn(),
             console=console,
         ) as progress:
-
             task = progress.add_task(
                 destination.name,
                 total=total,
@@ -158,6 +135,7 @@ def download_file(url: str, destination: Path) -> None:
 
     console.print("[green]Download complete[/green]")
 
+
 def extract_zip(
     archive: Path,
     destination: Path,
@@ -167,16 +145,16 @@ def extract_zip(
     with zipfile.ZipFile(archive) as zip_file:
         zip_file.extractall(destination)
 
+
 def extract_7z(
     archive: Path,
     destination: Path,
 ) -> None:
-    console.print(
-        f"[cyan]Extracting[/cyan] {archive.name}"
-    )
+    console.print(f"[cyan]Extracting[/cyan] {archive.name}")
 
     with py7zr.SevenZipFile(archive) as seven_zip:
         seven_zip.extractall(destination)
+
 
 def extract_tar(
     archive: Path,
@@ -186,6 +164,7 @@ def extract_tar(
 
     with tarfile.open(archive) as tar:
         tar.extractall(destination)
+
 
 def mount_dmg(dmg: Path) -> Path:
     """Mounts a macOS DMG and returns the mount point."""
@@ -209,9 +188,8 @@ def mount_dmg(dmg: Path) -> Path:
         if mount_point:
             return Path(mount_point)
 
-    raise RuntimeError(
-        "Unable to determine DMG mount point."
-    )
+    raise RuntimeError("Unable to determine DMG mount point.")
+
 
 def unmount_dmg(
     mount_point: Path,
@@ -226,10 +204,6 @@ def unmount_dmg(
         check=True,
     )
 
-def temporary_directory():
-    return tempfile.TemporaryDirectory(
-        prefix="goexport_",
-    )
 
 def install_chromium(temp_dir: Path) -> None:
     """Downloads and installs Chromium."""
@@ -268,9 +242,7 @@ def install_chromium(temp_dir: Path) -> None:
         return
 
     else:
-        raise RuntimeError(
-            f"Unsupported Chromium archive: {archive.name}"
-        )
+        raise RuntimeError(f"Unsupported Chromium archive: {archive.name}")
 
     if SYSTEM == "Windows":
         chrome = find_file(temp_dir, "chrome.exe")
@@ -279,9 +251,7 @@ def install_chromium(temp_dir: Path) -> None:
         chrome = find_file(temp_dir, "chrome")
 
     else:
-        raise RuntimeError(
-            f"Unsupported operating system: {SYSTEM}"
-        )
+        raise RuntimeError(f"Unsupported operating system: {SYSTEM}")
 
     shutil.copytree(
         chrome.parent,
@@ -291,13 +261,12 @@ def install_chromium(temp_dir: Path) -> None:
 
     console.print("[green]Chromium installed[/green]")
 
+
 def install_chromedriver(temp_dir: Path) -> None:
     """Downloads and installs ChromeDriver."""
 
     if SYSTEM == "Linux":
-        console.print(
-            "[cyan]ChromeDriver bundled with Chromium[/cyan]"
-        )
+        console.print("[cyan]ChromeDriver bundled with Chromium[/cyan]")
         return
 
     console.rule("[bold cyan]ChromeDriver")
@@ -309,11 +278,7 @@ def install_chromedriver(temp_dir: Path) -> None:
 
     extract_zip(archive, temp_dir)
 
-    executable = (
-        "chromedriver.exe"
-        if SYSTEM == "Windows"
-        else "chromedriver"
-    )
+    executable = "chromedriver.exe" if SYSTEM == "Windows" else "chromedriver"
 
     chromedriver = find_file(
         temp_dir,
@@ -325,9 +290,8 @@ def install_chromedriver(temp_dir: Path) -> None:
         CHROMIUM_DIR / chromedriver.name,
     )
 
-    console.print(
-        "[green]ChromeDriver installed[/green]"
-    )
+    console.print("[green]ChromeDriver installed[/green]")
+
 
 def install_ffmpeg(temp_dir: Path) -> None:
     """Downloads and installs FFmpeg."""
@@ -336,7 +300,7 @@ def install_ffmpeg(temp_dir: Path) -> None:
 
     url = URLS["ffmpeg"]
 
-    if url.endswith(".zip") or url.endswith("/zip"):
+    if url.endswith((".zip", "/zip")):
         archive = temp_dir / "ffmpeg.zip"
     else:
         archive = temp_dir / "ffmpeg.tar.xz"
@@ -350,11 +314,7 @@ def install_ffmpeg(temp_dir: Path) -> None:
     else:
         extract_tar(archive, temp_dir)
 
-    executable = (
-        "ffmpeg.exe"
-        if SYSTEM == "Windows"
-        else "ffmpeg"
-    )
+    executable = "ffmpeg.exe" if SYSTEM == "Windows" else "ffmpeg"
 
     ffmpeg = find_file(temp_dir, executable)
 
@@ -364,6 +324,7 @@ def install_ffmpeg(temp_dir: Path) -> None:
     shutil.copy2(ffmpeg, bin_dir / ffmpeg.name)
 
     console.print("[green]FFmpeg installed[/green]")
+
 
 def install_flash(temp_dir: Path) -> None:
     """Downloads and installs Pepper Flash."""
@@ -383,14 +344,7 @@ def install_flash(temp_dir: Path) -> None:
 
     if archive.suffix == ".7z":
         extract_7z(archive, temp_dir)
-        print("Extracted files:")
-
-        for path in temp_dir.rglob("*"):
-            print(path.relative_to(temp_dir))
-
-        plugin = next(
-            temp_dir.rglob("pepflashplayer*.dll")
-        )
+        plugin = next(temp_dir.rglob("pepflashplayer*.dll"))
 
         shutil.copy2(
             plugin,
@@ -400,9 +354,7 @@ def install_flash(temp_dir: Path) -> None:
     elif archive.suffixes[-2:] == [".tar", ".gz"]:
         extract_tar(archive, temp_dir)
 
-        plugin = next(
-            temp_dir.rglob("libpepflashplayer.so")
-        )
+        plugin = next(temp_dir.rglob("libpepflashplayer.so"))
 
         shutil.copy2(
             plugin,
@@ -412,9 +364,7 @@ def install_flash(temp_dir: Path) -> None:
     elif archive.suffix == ".zip":
         extract_zip(archive, temp_dir)
 
-        plugin = next(
-            temp_dir.rglob("*.plugin")
-        )
+        plugin = next(temp_dir.rglob("*.plugin"))
 
         shutil.copytree(
             plugin,
@@ -423,11 +373,10 @@ def install_flash(temp_dir: Path) -> None:
         )
 
     else:
-        raise RuntimeError(
-            f"Unsupported Flash archive: {archive.name}"
-        )
+        raise RuntimeError(f"Unsupported Flash archive: {archive.name}")
 
     console.print("[green]Pepper Flash installed[/green]")
+
 
 def verify_installation() -> None:
     """Verifies that all required runtime files exist."""
@@ -458,11 +407,7 @@ def verify_installation() -> None:
             FFMPEG_DIR / "bin" / "ffmpeg",
         ]
 
-    missing = [
-        path
-        for path in required
-        if not path.exists()
-    ]
+    missing = [path for path in required if not path.exists()]
 
     if missing:
         console.print("[red]Installation failed.[/red]\n")
@@ -474,10 +419,11 @@ def verify_installation() -> None:
 
     console.print("[green]Installation verified[/green]")
 
+
 def main() -> int:
     console.rule("[bold green]GoExport Dependency Installer")
 
-    with temporary_directory() as temp:
+    with tempfile.TemporaryDirectory(prefix="goexport_") as temp:
         temp_dir = Path(temp)
 
         install_chromium(temp_dir)
@@ -488,11 +434,10 @@ def main() -> int:
     verify_installation()
 
     console.print()
-    console.print(
-        "[bold green]All dependencies installed successfully![/bold green]"
-    )
+    console.print("[bold green]All dependencies installed successfully![/bold green]")
 
     return 0
+
 
 if __name__ == "__main__":
     raise SystemExit(main())

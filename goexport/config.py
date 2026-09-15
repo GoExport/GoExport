@@ -1,6 +1,6 @@
-from pathlib import Path
 import platform
 import sys
+from pathlib import Path
 
 APP_NAME = "GoExport"
 VERSION = "2.0.0"

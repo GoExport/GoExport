@@ -1,16 +1,17 @@
 import argparse
 import logging
-from math import gcd
 from pathlib import Path
 
 from goexport import config
-
+from goexport.helpers import add_player_arguments, existing_directory, existing_file
+from goexport.helpers import calculate_aspect_ratio as calculate_aspect_ratio
+from goexport.helpers import parse_resolution as parse_resolution
 from goexport.services.asset_resolver import AssetResolver
-from goexport.services.browser import BrowserService
-from goexport.services.flash import await_started
-from goexport.services.ffmpeg import FFmpegAudioEncoder, FFmpegMuxer, FFmpegVideoEncoder
-from goexport.services.renderer import Renderer
 from goexport.services.audio import AudioProcessor
+from goexport.services.browser import BrowserService
+from goexport.services.ffmpeg import FFmpegAudioEncoder, FFmpegMuxer, FFmpegVideoEncoder
+from goexport.services.flash import await_started
+from goexport.services.renderer import Renderer
 from goexport.services.timeline_builder import TimelineBuilder
 
 logger = logging.getLogger(__name__)
@@ -31,58 +32,7 @@ def register(subparsers: argparse._SubParsersAction) -> None:
         help="Format of the exported video.",
     )
 
-    parser.add_argument(
-        "-r",
-        "--resolution",
-        type=parse_resolution,
-        default=(
-            config.WIDTH,
-            config.HEIGHT,
-        ),
-        help="Resolution of the exported video (e.g., 1920x1080).",
-    )
-
-    parser.add_argument(
-        "--no-wide",
-        action="store_false",
-        dest="is_wide",
-        help="Disable GoAnimate widescreen mode.",
-    )
-
-    parser.add_argument(
-        "-u",
-        "--url",
-        default=config.URL,
-        help="The URL of the Wrapper: Offline instance.",
-    )
-
-    parser.add_argument(
-        "-api",
-        "--api-url",
-        default=config.API_URL,
-        help="The URL of the Wrapper: Offline API instance.",
-    )
-
-    parser.add_argument(
-        "-swf",
-        "--swf-url",
-        default=config.SWF_URL,
-        help="The URL of the SWF file to be used in the export.",
-    )
-
-    parser.add_argument(
-        "-store",
-        "--store-path",
-        default=config.STORE_PATH,
-        help="The URL of the store path to be used in the export.",
-    )
-
-    parser.add_argument(
-        "-theme",
-        "--client-theme-path",
-        default=config.CLIENT_THEME_PATH,
-        help="The URL of the client theme path to be used in the export.",
-    )
+    add_player_arguments(parser)
 
     parser.add_argument(
         "-id",
@@ -118,54 +68,12 @@ def register(subparsers: argparse._SubParsersAction) -> None:
         is_wide=True,
     )
 
-def parse_resolution(value: str) -> tuple[int, int]:
-    try:
-        width, height = map(int, value.lower().split("x"))
-
-        if width <= 0 or height <= 0:
-            raise ValueError
-
-        return width, height
-
-    except ValueError:
-        raise argparse.ArgumentTypeError(
-            f"Resolution must be in the format WIDTHxHEIGHT "
-            f"(e.g., 1920x1080), got '{value}'."
-        )
-
-def existing_file(path: str) -> Path:
-    file_path = Path(path)
-
-    if not file_path.is_file():
-        raise argparse.ArgumentTypeError(f"'{path}' does not exist or is not a file.")
-
-    return file_path
-
-def existing_directory(path: str) -> Path:
-    dir_path = Path(path)
-
-    if not dir_path.is_dir():
-        raise argparse.ArgumentTypeError(f"'{path}' does not exist or is not a directory.")
-
-    return dir_path
-
-def calculate_aspect_ratio(width: int, height: int) -> tuple[int, int]:
-    common_divisor = gcd(width, height)
-
-    return (
-        width // common_divisor,
-        height // common_divisor,
-    )
-
 
 def entry(args: argparse.Namespace) -> int:
-    width, height = args.resolution
-
     return export_video(args)
 
 
 def export_video(args: argparse.Namespace) -> int:
-    # Start the audio processor
     resolver = AssetResolver(
         args.ugc_path,
         args.assets,
@@ -186,10 +94,8 @@ def export_video(args: argparse.Namespace) -> int:
     if args.movie_xml is None:
         raise FileNotFoundError("No movie XML file was provided.")
 
-    # Start the timeline builder
     timeline_builder = TimelineBuilder(args.movie_xml)
 
-    # Open web browser
     browser_service = BrowserService(
         chrome_path=config.CHROME_PATH,
         chromedriver_path=config.CHROMEDRIVER_PATH,
@@ -199,53 +105,60 @@ def export_video(args: argparse.Namespace) -> int:
         height=args.resolution[1],
     )
 
-    driver = browser_service.create_driver()
+    try:
+        driver = browser_service.create_driver()
 
-    driver.get(args.url)
+        driver.get(args.url)
 
-    browser_service.enter_fullscreen(driver)
-    browser_service.validate_screen_resolution(driver)
-    browser_service.assert_full_resolution()
+        browser_service.enter_fullscreen(driver)
+        browser_service.validate_screen_resolution(driver)
+        browser_service.assert_full_resolution()
 
-    browser_service.enable_flash(driver)
+        browser_service.enable_flash(driver)
 
-    browser_service.inject_dom(driver, config.TEMPLATE_HTML_PATH, {
-        "PLAYER_WIDTH": args.resolution[0],
-        "PLAYER_HEIGHT": args.resolution[1],
-        "PLAYER_SWF_URL": args.swf_url,
-        "IS_WIDE": str(args.is_wide).lower(),
-        "API_SERVER": args.api_url,
-        "STORE_PATH": args.store_path,
-        "CLIENT_THEME_PATH": args.client_theme_path,
-        "MOVIE_ID": args.movie_id,
-        "MOVIE_XML": str(args.movie_xml),
-    })
-    
-    await_started(driver)
+        browser_service.inject_dom(
+            driver,
+            config.TEMPLATE_HTML_PATH,
+            {
+                "WINDOW_TITLE": "GoExport Export",
+                "PLAYER_WIDTH": args.resolution[0],
+                "PLAYER_HEIGHT": args.resolution[1],
+                "PLAYER_SWF_URL": args.swf_url,
+                "IS_WIDE": str(args.is_wide).lower(),
+                "API_SERVER": args.api_url,
+                "STORE_PATH": args.store_path,
+                "CLIENT_THEME_PATH": args.client_theme_path,
+                "MOVIE_ID": args.movie_id,
+                "MOVIE_XML": str(args.movie_xml),
+            },
+        )
 
-    # Render video
-    encoder = FFmpegVideoEncoder(
-        ffmpeg_path=config.FFMPEG_PATH,
-        output_file="output.mkv",
-        width=args.resolution[0],
-        height=args.resolution[1],
-        fps=config.FPS,
-    )
+        await_started(driver)
 
-    renderer = Renderer(
-        driver=driver,
-        encoder=encoder,
-        resolution_guard=browser_service.assert_full_resolution,
-    )
+        encoder = FFmpegVideoEncoder(
+            ffmpeg_path=config.FFMPEG_PATH,
+            output_file="output.mkv",
+            width=args.resolution[0],
+            height=args.resolution[1],
+            fps=config.FPS,
+        )
 
-    # Render the video and process audio
-    renderer.render()
-    timeline = timeline_builder.build()
-    audio = audio_processor.process(timeline, renderer.duration_frames)
-    muxer.mux(
-        video_file="output.mkv",
-        audio_file=audio,
-        output_file=f"final_output.{args.format}",
-    )
+        renderer = Renderer(
+            driver=driver,
+            encoder=encoder,
+            resolution_guard=browser_service.assert_full_resolution,
+        )
+
+        renderer.render()
+        timeline = timeline_builder.build()
+        audio = audio_processor.process(timeline, renderer.duration_frames)
+        muxer.mux(
+            video_file=Path("output.mkv"),
+            audio_file=audio,
+            output_file=Path(f"final_output.{args.format}"),
+        )
+
+    finally:
+        browser_service.close()
 
     return 0

@@ -13,11 +13,8 @@ class AudioClip:
 
     @property
     def has_trim(self) -> bool:
-        return (
-            self.trim_start_frame > 0
-            and self.trim_end_frame > 0
-        )
-    
+        return self.trim_start_frame > 0 and self.trim_end_frame > 0
+
     @property
     def duration_frames(self) -> int:
         return self.end_frame - self.start_frame

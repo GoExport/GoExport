@@ -1,6 +1,4 @@
-
-from ..commands import export
-from ..commands import record
+from ..commands import export, record
 
 COMMANDS = [
     export,

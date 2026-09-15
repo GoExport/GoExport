@@ -3,14 +3,14 @@
 PyScap timestamps are converted to integer nanoseconds as soon as they enter
 GoExport.  The recorder deliberately never compares them with Python clocks.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import ROUND_HALF_UP, Decimal
 from typing import Any
 
 from goexport import config
-
 
 NANOSECONDS = 1_000_000_000
 
@@ -64,6 +64,7 @@ def audio_frame_duration_ns(sample_count: int, rate: int) -> int:
 @dataclass
 class VideoSelector:
     """CFR selection state; callers flush it at the playback stop boundary."""
+
     fps: int
     origin_ns: int | None = None
     next_index: int = 0
@@ -80,16 +81,27 @@ class VideoSelector:
         distance = abs(timestamp - ideal)
         emitted: list[bytes] = []
         if self.candidate_index is None:
-            self.candidate_index, self.candidate, self.candidate_distance = index, data, distance
+            self.candidate_index, self.candidate, self.candidate_distance = (
+                index,
+                data,
+                distance,
+            )
             return emitted
         if index == self.candidate_index:
-            if distance < self.candidate_distance:  # nearest capture wins; stable on ties
+            if (
+                self.candidate_distance is not None
+                and distance < self.candidate_distance
+            ):  # nearest capture wins; stable on ties
                 self.candidate, self.candidate_distance = data, distance
             return emitted
         if index < self.candidate_index:
             return emitted  # late duplicate cannot replace an already settled slot
         emitted.extend(self._emit_through(index - 1))
-        self.candidate_index, self.candidate, self.candidate_distance = index, data, distance
+        self.candidate_index, self.candidate, self.candidate_distance = (
+            index,
+            data,
+            distance,
+        )
         return emitted
 
     def _emit_through(self, last: int) -> list[bytes]:

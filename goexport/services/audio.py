@@ -1,5 +1,5 @@
-from pathlib import Path
 import logging
+from pathlib import Path
 
 from goexport.models.audio_clip import AudioClip
 from goexport.services.ffmpeg import FFmpegAudioEncoder
@@ -26,14 +26,9 @@ class AudioProcessor:
 
         output_file = Path("audio.wav")
 
-
         for clip in timeline:
             logger.info(
-                (
-                    "Clip: asset=%s "
-                    "timeline=%d-%d "
-                    "trim=%d-%d"
-                ),
+                ("Clip: asset=%s timeline=%d-%d trim=%d-%d"),
                 clip.asset_id,
                 clip.start_frame,
                 clip.end_frame,

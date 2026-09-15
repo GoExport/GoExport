@@ -7,10 +7,9 @@ from goexport.log import setup_logging
 
 logger = logging.getLogger(__name__)
 
+
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
-        description=f"{APP_NAME} {VERSION}"
-    )
+    parser = argparse.ArgumentParser(description=f"{APP_NAME} {VERSION}")
 
     parser.add_argument(
         "-v",

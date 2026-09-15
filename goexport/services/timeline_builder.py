@@ -1,18 +1,18 @@
-from xml.etree import ElementTree as ET
-from pathlib import Path
 import logging
+from pathlib import Path
+from xml.etree import ElementTree as ET
+
 from goexport.models.audio_clip import AudioClip
 
 logger = logging.getLogger(__name__)
+
 
 class TimelineBuilder:
     def __init__(self, movie_xml: Path):
         self.movie_xml = movie_xml
 
         if not self.movie_xml.is_file():
-            raise FileNotFoundError(
-                f"Movie XML file does not exist: {self.movie_xml}"
-            )
+            raise FileNotFoundError(f"Movie XML file does not exist: {self.movie_xml}")
 
     def load(self) -> ET.Element:
         logger.info(
@@ -34,9 +34,12 @@ class TimelineBuilder:
         timeline = []
 
         for sound in root.findall("sound"):
+            asset_id = sound.findtext("sfile")
+            if not asset_id:
+                raise ValueError("Movie sound is missing its sfile asset ID")
             timeline.append(
                 AudioClip(
-                    asset_id=sound.findtext("sfile"),
+                    asset_id=asset_id,
                     start_frame=int(sound.findtext("start", "0")),
                     end_frame=int(sound.findtext("stop", "0")),
                     trim_start_frame=int(sound.findtext("trimStart", "0")),
@@ -44,14 +47,9 @@ class TimelineBuilder:
                 )
             )
 
-            print(ET.tostring(sound, encoding="unicode"))
-
         logger.info(
             "Discovered %d audio clips",
             len(timeline),
         )
-        
-        for clip in timeline:
-            print(clip)
 
         return timeline

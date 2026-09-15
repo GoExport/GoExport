@@ -1,23 +1,24 @@
 import logging
-from pathlib import Path
-import urllib.parse
+import os
 import time
+import urllib.parse
+from pathlib import Path
 
 from pyvirtualdisplay import Display
-
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
 
-logger = logging.getLogger(__name__)
-
 from goexport import config
+
+logger = logging.getLogger(__name__)
 
 THRESHOLD_WIDTH = 980
 NARROW_TABS = 11
 WIDE_TABS = 19
+
 
 class BrowserService:
     VIRTUAL_RENDERER_KEYWORDS = (
@@ -74,21 +75,14 @@ class BrowserService:
         options.add_argument("--disable-backgrounding-occluded-windows")
         options.add_argument("--disable-features=CalculateNativeWinOcclusion")
 
-        options.add_argument(
-            f"--ppapi-flash-path={str(self.flash_path)}"
-        )
+        options.add_argument(f"--ppapi-flash-path={str(self.flash_path)}")
 
-        options.add_argument(
-            f"--ppapi-flash-version={self.flash_version}"
-        )
+        options.add_argument(f"--ppapi-flash-version={self.flash_version}")
 
         if config.SYSTEM == "Linux":
             options.add_argument("--no-sandbox")
 
-        options.add_experimental_option(
-            "excludeSwitches",
-            ["enable-automation"]
-        )
+        options.add_experimental_option("excludeSwitches", ["enable-automation"])
 
         self.driver = webdriver.Chrome(
             service=Service(str(self.chromedriver_path)),
@@ -100,6 +94,10 @@ class BrowserService:
     def start_display(self):
         if config.SYSTEM != "Linux":
             return
+
+        # PyScap's Linux X11 backend captures the root window of DISPLAY and
+        # does not expose individual windows through scap.targets().
+        os.environ["SCAP_BACKEND"] = "x11"
 
         try:
             self.display = Display(
@@ -124,8 +122,22 @@ class BrowserService:
             self.display.stop()
             self.display = None
 
+    def close(self):
+        """Release the display even if Chromium fails to shut down."""
+        try:
+            if self.driver is not None:
+                self.driver.quit()
+        finally:
+            self.driver = None
+            self.stop_display()
+
     @staticmethod
     def get_capture_target(driver):
+        if config.SYSTEM == "Linux":
+            # The X11 capturer uses the current DISPLAY when target is None.
+            # Window enumeration is unavailable on this backend.
+            return None
+
         import scap
 
         window_title = driver.title
@@ -270,10 +282,7 @@ class BrowserService:
 
         viewport = self._get_viewport_size(self.driver)
 
-        if (
-            int(viewport["width"]) < self.width
-            or int(viewport["height"]) < self.height
-        ):
+        if int(viewport["width"]) < self.width or int(viewport["height"]) < self.height:
             raise RuntimeError(
                 "Fullscreen browser is smaller than the configured crop resolution. "
                 f"Required at least {self.width}x{self.height}, got "
@@ -284,12 +293,10 @@ class BrowserService:
     @staticmethod
     def inject_dom(
         driver,
-        html_file: str,
-        replacements: dict[str, str] | None = None,
+        html_file: str | Path,
+        replacements: dict[str, object] | None = None,
     ) -> None:
-        html = Path(html_file).read_text(
-            encoding="utf-8"
-        )
+        html = Path(html_file).read_text(encoding="utf-8")
 
         if replacements:
             for key, value in replacements.items():
@@ -298,12 +305,15 @@ class BrowserService:
                     str(value),
                 )
 
-        driver.execute_script("""
+        driver.execute_script(
+            """
             document.open();
             document.write(arguments[0]);
             document.close();
-        """, html)
-        
+        """,
+            html,
+        )
+
     @staticmethod
     def enable_flash(driver):
         current_url = driver.current_url

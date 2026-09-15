@@ -1,0 +1,3 @@
+interface:
+  display_name: "GoExport Media Pipeline"
+  short_description: "Safely change GoExport capture and media output"
