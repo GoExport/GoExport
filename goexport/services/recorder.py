@@ -22,7 +22,7 @@ class RecordingService:
         # stale Chromium windows from matching this recording's capture target.
         self._capture_window_title = f"GoExport Recorder {uuid.uuid4().hex}"
     def _create_output_path(self): return resolve_output_path(Path(self.args.output), self.args.format)
-    def _create_capturer(self, target): return create_capturer(target)
+    def _create_capturer(self, target, crop_area=None): return create_capturer(target, crop_area)
 
     def _capture_streams(self, capturer, video_path, audio_path, started, stopped):
         import scap
@@ -84,8 +84,8 @@ class RecordingService:
         try: await_stopped(driver)
         except BaseException as exc: errors.append(exc)
         finally: stopped.set()
-    def _record_playback(self, driver, video_path, audio_path):
-        driver.execute_script("player.pause();"); await_started(driver); capturer = self._create_capturer(BrowserService.get_capture_target(driver)); started = threading.Event(); stopped = threading.Event(); errors = []
+    def _record_playback(self, service, driver, video_path, audio_path):
+        driver.execute_script("player.pause();"); await_started(driver); capturer = self._create_capturer(service.get_capture_target(driver), service.get_capture_crop_area(driver)); started = threading.Event(); stopped = threading.Event(); errors = []
         watcher = threading.Thread(target=self._watch, args=(driver, stopped, errors), daemon=True)
         try:
             capturer.start(); watcher.start(); driver.execute_script("player.play();"); started.set(); self._capture_streams(capturer, video_path, audio_path, started, stopped); watcher.join(30)
@@ -109,7 +109,7 @@ class RecordingService:
         if not scap.has_permission() and not scap.request_permission(): raise PermissionError("Screen-capture permission was denied")
         output = self._create_output_path(); video = output.with_name(f"{output.stem}.video.mkv"); audio = output.with_name(f"{output.stem}.audio.wav"); service = driver = None; complete = False
         try:
-            service, driver = self._prepare_browser(); self._record_playback(driver, video, audio); self._finish_recording(output, video, audio); complete = True
+            service, driver = self._prepare_browser(); self._record_playback(service, driver, video, audio); self._finish_recording(output, video, audio); complete = True
         finally:
             if driver is not None: driver.quit()
             if service is not None: service.stop_display()

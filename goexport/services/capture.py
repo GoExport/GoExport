@@ -20,7 +20,7 @@ def timestamp_ns(timestamp: Any) -> int:
     return int((Decimal(str(timestamp)) * NANOSECONDS).to_integral_value(ROUND_HALF_UP))
 
 
-def create_capturer(target: Any):
+def create_capturer(target: Any, crop_area: tuple[int, int, int, int] | None = None):
     """Create the sole production PyScap capturer (imported lazily for export)."""
     import scap
 
@@ -28,6 +28,7 @@ def create_capturer(target: Any):
         scap.CaptureOptions(
             fps=config.FPS,
             target=target,
+            crop_area=crop_area,
             show_cursor=False,
             show_highlight=False,
             output_type="bgra",

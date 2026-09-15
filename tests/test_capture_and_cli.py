@@ -1,3 +1,4 @@
+import os
 import unittest
 from argparse import Namespace
 from unittest.mock import Mock, patch
@@ -44,6 +45,73 @@ class CliTests(unittest.TestCase):
         first, second = RecordingService(args), RecordingService(args)
         self.assertNotEqual(first._capture_window_title, second._capture_window_title)
         self.assertEqual(first._build_replacements()["WINDOW_TITLE"], first._capture_window_title)
+
+
+class BrowserServiceTests(unittest.TestCase):
+    @staticmethod
+    def _service():
+        from goexport.services.browser import BrowserService
+        return BrowserService(Mock(), Mock(), Mock(), "1", width=1280, height=720)
+
+    def test_virtual_display_includes_browser_frame_margin(self):
+        service = self._service()
+        with patch("goexport.services.browser.Display") as display, patch.dict(os.environ, {}, clear=False):
+            os.environ.pop("SCAP_BACKEND", None)
+            service.start_display()
+            self.assertEqual(os.environ["SCAP_BACKEND"], "x11")
+            service.stop_display()
+            self.assertNotIn("SCAP_BACKEND", os.environ)
+        display.assert_called_once_with(
+            visible=False,
+            size=(1536, 976),
+            color_depth=24,
+        )
+
+    def test_xvfb_window_is_grown_to_requested_viewport(self):
+        service = self._service()
+        service.display = Mock()
+        driver = Mock()
+        driver.execute_script.side_effect = [
+            {"width": 1050, "height": 700},
+            {"width": 1280, "height": 720},
+        ]
+        driver.get_window_rect.return_value = {"width": 1280, "height": 720}
+
+        service.enter_fullscreen(driver)
+
+        driver.set_window_rect.assert_any_call(
+            x=0, y=0, width=1510, height=740
+        )
+        driver.fullscreen_window.assert_not_called()
+
+    def test_xvfb_capture_uses_root_display(self):
+        service = self._service()
+        service.display = Mock()
+        driver = Mock(title="GoExport Recorder id")
+        driver.get_window_rect.return_value = {
+            "x": 0,
+            "y": 0,
+            "width": 1510,
+            "height": 740,
+        }
+        driver.execute_script.return_value = {
+            "innerHeight": 720,
+            "outerHeight": 790,
+        }
+
+        self.assertIsNone(service.get_capture_target(driver))
+        self.assertEqual(
+            service.get_capture_crop_area(driver),
+            (0, 70, 1280, 720),
+        )
+
+    def test_existing_scap_backend_is_restored(self):
+        service = self._service()
+        with patch("goexport.services.browser.Display"), patch.dict(os.environ, {"SCAP_BACKEND": "pipewire"}):
+            service.start_display()
+            self.assertEqual(os.environ["SCAP_BACKEND"], "x11")
+            service.stop_display()
+            self.assertEqual(os.environ["SCAP_BACKEND"], "pipewire")
 
 
 if __name__ == "__main__":
