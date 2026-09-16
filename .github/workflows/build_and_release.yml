@@ -182,8 +182,15 @@ jobs:
         id: changelog
         shell: bash
         run: |
+          if [[ "$GITHUB_REF_NAME" == *b* ]]; then
+            is_prerelease=true
+          else
+            is_prerelease=false
+          fi
+
           version="${GITHUB_REF_NAME#v}"
           version="${version#b}"
+          version="${version%%b*}"
           section=$(awk '/^## \['"$version"'\]/{flag=1; next} /^## /{flag=0} flag' CHANGELOG.md)
 
           if [[ -z "$section" ]]; then
@@ -194,6 +201,7 @@ jobs:
           echo "text<<EOF" >> "$GITHUB_OUTPUT"
           echo "$section" >> "$GITHUB_OUTPUT"
           echo "EOF" >> "$GITHUB_OUTPUT"
+          echo "is_prerelease=$is_prerelease" >> "$GITHUB_OUTPUT"
 
       - name: Download Windows artifact
         uses: actions/download-artifact@v4
@@ -220,6 +228,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           body: ${{ steps.changelog.outputs.text }}
+          prerelease: ${{ steps.changelog.outputs.is_prerelease }}
 
           files: |
             GoExport-windows-x64.zip
@@ -227,7 +236,7 @@ jobs:
             GoExport-macos-x64.tar.gz
 
       - name: Notify Discord
-        if: ${{ !startsWith(github.ref_name, 'b') }}
+        if: steps.changelog.outputs.is_prerelease == 'false'
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
           CHANGELOG: ${{ steps.changelog.outputs.text }}
