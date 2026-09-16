@@ -218,11 +218,11 @@ jobs:
         with:
           name: GoExport-macos-x64
 
-      - name: Move release archives
+      - name: Verify release archives
         run: |
-          mv GoExport-windows-x64/GoExport-windows-x64.zip .
-          mv GoExport-linux-x64/GoExport-linux-x64.tar.gz .
-          mv GoExport-macos-x64/GoExport-macos-x64.tar.gz .
+          test -f GoExport-windows-x64.zip
+          test -f GoExport-linux-x64.tar.gz
+          test -f GoExport-macos-x64.tar.gz
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
