@@ -91,8 +91,9 @@ jobs:
           distribution_directory=dist/GoExport
           gui_archive="$RUNNER_TEMP/GoExport-GUI-linux-x64.zip"
           gui_directory="$RUNNER_TEMP/GoExport-GUI"
+          mv dist/GoExport dist/GoExport-cli
           mkdir "$distribution_directory"
-          mv dist/GoExport "$distribution_directory/GoExport"
+          mv dist/GoExport-cli "$distribution_directory/GoExport"
           curl --fail --location --output "$gui_archive" https://github.com/GoExport/GoExport-GUI/releases/latest/download/GoExport-GUI-linux-x64.zip
           unzip -q "$gui_archive" -d "$gui_directory"
           cp "$gui_directory/GoExport-GUI" "$distribution_directory/"
@@ -108,8 +109,9 @@ jobs:
           distribution_directory=dist/GoExport
           gui_archive="$RUNNER_TEMP/GoExport-GUI-macos-intel.zip"
           gui_directory="$RUNNER_TEMP/GoExport-GUI"
+          mv dist/GoExport dist/GoExport-cli
           mkdir "$distribution_directory"
-          mv dist/GoExport "$distribution_directory/GoExport"
+          mv dist/GoExport-cli "$distribution_directory/GoExport"
           curl --fail --location --output "$gui_archive" https://github.com/GoExport/GoExport-GUI/releases/latest/download/GoExport-GUI-macos-intel.zip
           unzip -q "$gui_archive" -d "$gui_directory"
           cp "$gui_directory/GoExport-GUI" "$distribution_directory/"
