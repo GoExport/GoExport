@@ -97,6 +97,19 @@ def find_file(parent: Path, filename: str) -> Path:
     raise FileNotFoundError(f"Unable to find '{filename}' in '{parent}'")
 
 
+def find_windows_pepper_flash(parent: Path) -> Path:
+    """Find the release x64 PPAPI Flash DLL from the Clean Flash archive."""
+
+    candidates = list(parent.glob("**/flash64/pepflashplayer64_*.dll"))
+
+    if len(candidates) != 1:
+        raise FileNotFoundError(
+            f"Unable to find exactly one release x64 Pepper Flash DLL in '{parent}'."
+        )
+
+    return candidates[0]
+
+
 def download_file(url: str, destination: Path) -> None:
     """Downloads a file with a progress bar."""
 
@@ -344,7 +357,9 @@ def install_flash(temp_dir: Path) -> None:
 
     if archive.suffix == ".7z":
         extract_7z(archive, temp_dir)
-        plugin = next(temp_dir.rglob("pepflashplayer*.dll"))
+        # The archive also contains debug and 32-bit builds. Chromium is x64,
+        # so explicitly install the release DLL from flash64.
+        plugin = find_windows_pepper_flash(temp_dir)
 
         shutil.copy2(
             plugin,
