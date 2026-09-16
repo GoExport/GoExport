@@ -56,31 +56,68 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          dist/GoExport/GoExport.exe --help
+          dist/GoExport.exe --help
           python -c "import scap; print('PyScap import OK')"
 
       - name: Packaged PyScap smoke test (Unix)
         if: runner.os != 'Windows'
         run: |
-          ./dist/GoExport/GoExport --help
+          ./dist/GoExport --help
           python -c "import scap; print('PyScap import OK')"
 
       - name: Prepare distribution (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          Copy-Item -Recurse bin dist/GoExport/
-          Copy-Item -Recurse resources dist/GoExport/
-          Copy-Item README.md dist/GoExport/
-          Copy-Item LICENSE dist/GoExport/
+          $distributionDirectory = 'dist/GoExport'
+          $guiArchive = Join-Path $env:RUNNER_TEMP 'GoExport-GUI-windows-x64.zip'
+          $guiDirectory = Join-Path $env:RUNNER_TEMP 'GoExport-GUI'
 
-      - name: Prepare distribution (Linux/macOS)
-        if: runner.os != 'Windows'
+          New-Item -ItemType Directory -Path $distributionDirectory | Out-Null
+          Invoke-WebRequest -Uri 'https://github.com/GoExport/GoExport-GUI/releases/latest/download/GoExport-GUI-windows-x64.zip' -OutFile $guiArchive
+          Expand-Archive -LiteralPath $guiArchive -DestinationPath $guiDirectory
+
+          Copy-Item dist/GoExport.exe $distributionDirectory/
+          Copy-Item -Recurse bin $distributionDirectory/
+          Copy-Item -Recurse resources $distributionDirectory/
+          Copy-Item README.md $distributionDirectory/
+          Copy-Item LICENSE $distributionDirectory/
+          Copy-Item (Join-Path $guiDirectory 'GoExport-GUI.exe') $distributionDirectory/
+          Copy-Item (Join-Path $guiDirectory 'presets.toml') $distributionDirectory/
+
+      - name: Prepare distribution (Linux)
+        if: runner.os == 'Linux'
         run: |
-          cp -r bin dist/GoExport/
-          cp -r resources dist/GoExport/
-          cp README.md dist/GoExport/
-          cp LICENSE dist/GoExport/
+          distribution_directory=dist/GoExport
+          gui_archive="$RUNNER_TEMP/GoExport-GUI-linux-x64.zip"
+          gui_directory="$RUNNER_TEMP/GoExport-GUI"
+          mkdir "$distribution_directory"
+          mv dist/GoExport "$distribution_directory/GoExport"
+          curl --fail --location --output "$gui_archive" https://github.com/GoExport/GoExport-GUI/releases/latest/download/GoExport-GUI-linux-x64.zip
+          unzip -q "$gui_archive" -d "$gui_directory"
+          cp "$gui_directory/GoExport-GUI" "$distribution_directory/"
+          cp "$gui_directory/presets.toml" "$distribution_directory/"
+          cp -r bin "$distribution_directory/"
+          cp -r resources "$distribution_directory/"
+          cp README.md "$distribution_directory/"
+          cp LICENSE "$distribution_directory/"
+
+      - name: Prepare distribution (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          distribution_directory=dist/GoExport
+          gui_archive="$RUNNER_TEMP/GoExport-GUI-macos-intel.zip"
+          gui_directory="$RUNNER_TEMP/GoExport-GUI"
+          mkdir "$distribution_directory"
+          mv dist/GoExport "$distribution_directory/GoExport"
+          curl --fail --location --output "$gui_archive" https://github.com/GoExport/GoExport-GUI/releases/latest/download/GoExport-GUI-macos-intel.zip
+          unzip -q "$gui_archive" -d "$gui_directory"
+          cp "$gui_directory/GoExport-GUI" "$distribution_directory/"
+          cp "$gui_directory/presets.toml" "$distribution_directory/"
+          cp -r bin "$distribution_directory/"
+          cp -r resources "$distribution_directory/"
+          cp README.md "$distribution_directory/"
+          cp LICENSE "$distribution_directory/"
 
       - name: Package Windows
         if: runner.os == 'Windows'
