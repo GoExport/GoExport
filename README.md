@@ -18,6 +18,7 @@ python -m venv .venv
 # Activate .venv using your shell's activation command.
 python -m pip install -r requirements.txt
 python scripts/download_dependencies.py
+python main.py doctor
 python main.py --help
 ```
 

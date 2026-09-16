@@ -1,6 +1,7 @@
-from ..commands import export, record
+from ..commands import doctor, export, record
 
 COMMANDS = [
     export,
     record,
+    doctor,
 ]
