@@ -16,6 +16,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from goexport import config
+from goexport.reporting import get_reporter
 
 logger = logging.getLogger(__name__)
 
@@ -40,32 +41,55 @@ def register(subparsers: argparse._SubParsersAction) -> None:
     parser.set_defaults(func=entry)
 
 
-def entry(_: argparse.Namespace) -> int:
+def entry(args: argparse.Namespace) -> int:
+    reporter = get_reporter(args)
     checks = list(run_checks())
 
     for check in checks:
         icon = {"ok": "OK", "warning": "WARNING", "error": "ERROR"}[check.status]
-        log = logger.error if check.status == "error" else logger.warning
-        if check.status == "ok":
-            log = logger.info
-        log("[%s] %s: %s", icon, check.name, check.detail)
+        level = {
+            "ok": logging.INFO,
+            "warning": logging.WARNING,
+            "error": logging.ERROR,
+        }[check.status]
+        reporter.diagnostic(
+            level, "[%s] %s: %s", icon, check.name, check.detail, logger=logger
+        )
 
     errors = sum(check.status == "error" for check in checks)
     warnings = sum(check.status == "warning" for check in checks)
     if errors:
-        logger.error(
-            "GoExport is not ready: %d error(s), %d warning(s).", errors, warnings
+        reporter.diagnostic(
+            logging.ERROR,
+            "GoExport is not ready: %d error(s), %d warning(s).",
+            errors,
+            warnings,
+            logger=logger,
         )
-        logger.error(
-            "Run 'python scripts/download_dependencies.py' to install bundled dependencies."
+        reporter.diagnostic(
+            logging.ERROR,
+            "Run 'python scripts/download_dependencies.py' to install bundled dependencies.",
+            logger=logger,
         )
-        return 1
-
-    if warnings:
-        logger.warning("GoExport is ready with %d warning(s).", warnings)
+    elif warnings:
+        reporter.diagnostic(
+            logging.WARNING,
+            "GoExport is ready with %d warning(s).",
+            warnings,
+            logger=logger,
+        )
     else:
-        logger.info("GoExport is ready to use.")
-    return 0
+        reporter.diagnostic(logging.INFO, "GoExport is ready to use.", logger=logger)
+
+    reporter.result(
+        command="doctor",
+        ok=not errors,
+        checks=[
+            {"name": check.name, "status": check.status, "detail": check.detail}
+            for check in checks
+        ],
+    )
+    return 1 if errors else 0
 
 
 def run_checks() -> Iterable[Check]:

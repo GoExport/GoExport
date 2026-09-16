@@ -6,6 +6,7 @@ from pathlib import Path
 
 from goexport import config
 from goexport.helpers import resolve_output_path
+from goexport.reporting import get_reporter
 from goexport.services.browser import BrowserService
 from goexport.services.capture import (
     VideoSelector,
@@ -19,7 +20,12 @@ from goexport.services.ffmpeg import (
     FFmpegRawAudioEncoder,
     FFmpegRawVideoEncoder,
 )
-from goexport.services.flash import await_player_ready, await_started, await_stopped
+from goexport.services.flash import (
+    await_player_ready,
+    await_started,
+    await_stopped,
+    get_total_frames,
+)
 
 logger = logging.getLogger(__name__)
 _AUDIO_FORMATS = {
@@ -36,9 +42,17 @@ _AUDIO_FORMATS = {
 }
 
 
+def recording_progress(timestamp: int, origin: int, total_duration: int) -> int:
+    """Calculate clamped integer timeline progress from capture timestamps."""
+    if total_duration <= 0:
+        return 0
+    return int(max(0, min(100, (timestamp - origin) * 100 / total_duration)))
+
+
 class RecordingService:
     def __init__(self, args: argparse.Namespace):
         self.args = args
+        self.reporter = get_reporter(args)
         # PyScap identifies browser windows by title. A per-run title prevents
         # stale Chromium windows from matching this recording's capture target.
         self._capture_window_title = f"GoExport Recorder {uuid.uuid4().hex}"
@@ -49,7 +63,15 @@ class RecordingService:
     def _create_capturer(self, target, crop_area=None):
         return create_capturer(target, crop_area)
 
-    def _capture_streams(self, capturer, video_path, audio_path, started, stopped):
+    def _capture_streams(
+        self,
+        capturer,
+        video_path,
+        audio_path,
+        started,
+        stopped,
+        total_duration_ns=None,
+    ):
         import scap
 
         video = audio = None
@@ -116,6 +138,11 @@ class RecordingService:
                         self._write_audio(frame, now, video_origin, audio, boundary)
                 else:
                     raise RuntimeError(f"unexpected scap frame type: {type(frame)!r}")
+                if video_origin is not None and total_duration_ns:
+                    timeline_percent = recording_progress(
+                        now, video_origin, total_duration_ns
+                    )
+                    self.reporter.progress(5 + timeline_percent * 0.79, "recording")
                 if boundary is not None:
                     break
         finally:
@@ -214,10 +241,21 @@ class RecordingService:
         )
         try:
             capturer.start()
+            total_frames = get_total_frames(driver, config.FPS)
+            if total_frames <= 0:
+                raise RuntimeError("The movie has no frames to record")
+            total_duration_ns = total_frames * 1_000_000_000 // config.FPS
             watcher.start()
             driver.execute_script("player.play();")
             started.set()
-            self._capture_streams(capturer, video_path, audio_path, started, stopped)
+            self._capture_streams(
+                capturer,
+                video_path,
+                audio_path,
+                started,
+                stopped,
+                total_duration_ns,
+            )
             watcher.join(30)
             if watcher.is_alive():
                 raise TimeoutError("Playback did not stop within 30 seconds")
@@ -235,8 +273,10 @@ class RecordingService:
 
     def _finish_recording(self, output, video, audio):
         muxer = FFmpegMuxer(config.FFMPEG_PATH)
+        self.reporter.progress(85, "muxing")
         muxer.mux(video, audio if audio.is_file() else None, output)
         if not self.args.no_outro:
+            self.reporter.progress(95, "outro")
             muxer.append_outro(
                 output,
                 Path(self.args.use_outro),
@@ -244,6 +284,7 @@ class RecordingService:
                 *self.args.resolution,
                 config.FPS,
             )
+        self.reporter.progress(99, "finalizing")
 
     def _create_browser_service(self):
         return BrowserService(
@@ -271,6 +312,7 @@ class RecordingService:
     def run(self):
         import scap
 
+        self.reporter.progress(0, "preparing")
         if not scap.is_supported():
             raise RuntimeError("This platform does not support screen capture")
         if not scap.has_permission() and not scap.request_permission():
@@ -282,6 +324,7 @@ class RecordingService:
         complete = False
         try:
             service, driver = self._prepare_browser()
+            self.reporter.progress(5, "recording")
             self._record_playback(driver, video, audio, service)
             self._finish_recording(output, video, audio)
             complete = True
@@ -295,4 +338,5 @@ class RecordingService:
                 logger.error(
                     "Retaining capture diagnostics after failure: %s, %s", video, audio
                 )
+        self.reporter.complete(output)
         return 0

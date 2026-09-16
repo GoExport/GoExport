@@ -23,7 +23,11 @@ class _PipeEncoder:
         self._stderr = tempfile.TemporaryFile(mode="w+b")
         try:
             self.process = subprocess.Popen(
-                command, stdin=subprocess.PIPE, stderr=self._stderr, bufsize=0
+                command,
+                stdin=subprocess.PIPE,
+                stdout=subprocess.DEVNULL,
+                stderr=self._stderr,
+                bufsize=0,
             )
         except BaseException:
             self._stderr.close()
@@ -209,6 +213,7 @@ class FFmpegAudioEncoder:
                     str(output_file),
                 ],
                 check=True,
+                stdout=subprocess.DEVNULL,
             )
             return
         filters, inputs = [], []
@@ -244,6 +249,7 @@ class FFmpegAudioEncoder:
                 str(output_file),
             ],
             check=True,
+            stdout=subprocess.DEVNULL,
         )
 
 
@@ -253,7 +259,7 @@ class FFmpegMuxer:
 
     def _run(self, command: list[str]) -> None:
         logger.info("FFmpeg command: %s", " ".join(command))
-        subprocess.run(command, check=True)
+        subprocess.run(command, check=True, stdout=subprocess.DEVNULL)
 
     def mux(self, video_file: Path, audio_file: Path | None, output_file: Path) -> None:
         command = [str(self.ffmpeg_path), "-y", "-i", str(video_file)]

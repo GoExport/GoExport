@@ -6,6 +6,7 @@ from goexport import config
 from goexport.helpers import add_player_arguments, existing_directory, existing_file
 from goexport.helpers import calculate_aspect_ratio as calculate_aspect_ratio
 from goexport.helpers import parse_resolution as parse_resolution
+from goexport.reporting import get_reporter
 from goexport.services.asset_resolver import AssetResolver
 from goexport.services.audio import AudioProcessor
 from goexport.services.browser import BrowserService
@@ -74,6 +75,8 @@ def entry(args: argparse.Namespace) -> int:
 
 
 def export_video(args: argparse.Namespace) -> int:
+    reporter = get_reporter(args)
+    reporter.progress(0, "preparing")
     resolver = AssetResolver(
         args.ugc_path,
         args.assets,
@@ -147,18 +150,26 @@ def export_video(args: argparse.Namespace) -> int:
             driver=driver,
             encoder=encoder,
             resolution_guard=browser_service.assert_full_resolution,
+            progress_callback=lambda progress: reporter.progress(
+                5 + progress * 0.79, "rendering"
+            ),
         )
 
+        reporter.progress(5, "rendering")
         renderer.render()
+        reporter.progress(85, "audio")
         timeline = timeline_builder.build()
         audio = audio_processor.process(timeline, renderer.duration_frames)
+        reporter.progress(92, "muxing")
         muxer.mux(
             video_file=Path("output.mkv"),
             audio_file=audio,
             output_file=Path(f"final_output.{args.format}"),
         )
+        reporter.progress(99, "finalizing")
 
     finally:
         browser_service.close()
 
+    reporter.complete(Path(f"final_output.{args.format}"))
     return 0

@@ -44,6 +44,29 @@ without captured audio muxes a silent audio track into the requested container.
 Frame-by-frame export uses `output.mkv`, `audio.wav`, and `final_output.<format>`
 in the working directory. These fixed names are unsuitable for concurrent runs.
 
+### JSON output
+
+Place `--json` before the command to reserve stdout for newline-delimited JSON:
+
+```sh
+python main.py --json record -id MOVIE_ID -out final_output --no-outro
+python main.py --json export -id MOVIE_ID -xml movie.xml -ugc /path/to/ugc -as /path/to/theme/assets
+python main.py --json doctor
+```
+
+Progress events use `{"event":"progress","progress":42.5,"stage":"recording"}`.
+Successful video commands finish with
+`{"event":"complete","progress":100,"output":"final_output.mp4"}`, while
+failures use `{"event":"error","message":"...","code":1}`. A caller can consume
+the live stream one event at a time:
+
+```python
+for line in process.stdout:
+    event = json.loads(line)
+    if "progress" in event:
+        update_progress(event["progress"])
+```
+
 ## Code map
 
 - `main.py` calls `goexport/cli.py`, which parses once, sets up Rich logging, and

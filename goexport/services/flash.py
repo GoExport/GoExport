@@ -2,6 +2,24 @@ from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.support.ui import WebDriverWait
 
 
+def get_total_frames(driver, fps: int) -> int:
+    """Return the movie duration using the Flash player's scene timeline."""
+    return int(
+        driver.execute_script(
+            """
+            const fps = arguments[0];
+            return player
+                .getSceneInfoArray()
+                .reduce(
+                    (total, scene) => total + Math.round(scene.duration * fps),
+                    0
+                );
+            """,
+            fps,
+        )
+    )
+
+
 def await_started(driver, timeout_minutes=30):
     timeout_seconds = timeout_minutes * 60 if timeout_minutes > 0 else float("inf")
 
