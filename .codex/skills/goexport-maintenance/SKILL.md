@@ -20,6 +20,16 @@ before changing code. Preserve existing worktree changes.
 - Keep the existing command/service split. Prefer direct, readable sequencing
   over coordinator layers, broad exception suppression, or speculative helpers.
   Use module loggers; application diagnostics should go through logging.
+- CLI machine output is owned by `reporting.Reporter`. Keep `--json` stdout as
+  flushed JSON Lines only; route diagnostics to stderr and make commands report
+  semantic progress, completion, errors, and structured results through the
+  reporter rather than serializing JSON themselves. `complete` is the only
+  event that may report progress 100. Rendering and recording progress ranges
+  must leave room for audio, muxing, outro, and cleanup.
+- `flash.get_total_frames()` is the shared Flash scene-timeline duration source.
+  Recording progress uses PyScap timestamps relative to its video origin (not
+  Python wall clocks); renderers expose progress through a callback and do not
+  know about output encoding.
 
 `requirements.txt` is the existing pinned runtime/build set. Keep development
 tools in `requirements-dev.txt`; do not regenerate runtime dependencies from a
