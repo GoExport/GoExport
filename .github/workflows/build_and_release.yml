@@ -225,11 +225,11 @@ jobs:
           test -f GoExport-macos-x64.tar.gz
 
       - name: Create Release
+        timeout-minutes: 10
         uses: softprops/action-gh-release@v2
         with:
           body: ${{ steps.changelog.outputs.text }}
           prerelease: ${{ steps.changelog.outputs.is_prerelease }}
-
           files: |
             GoExport-windows-x64.zip
             GoExport-linux-x64.tar.gz
