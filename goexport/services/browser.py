@@ -11,6 +11,10 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
 
 from goexport import config
+from goexport.services.chromium import (
+    ChromiumDependencyCheckError,
+    find_linux_chromium_missing_dependencies,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -60,6 +64,7 @@ class BrowserService:
         self._virtual_display_logged = False
 
     def create_driver(self):
+        self.validate_linux_dependencies()
         self.start_display()
         options = Options()
 
@@ -95,6 +100,27 @@ class BrowserService:
         )
 
         return self.driver
+
+    def validate_linux_dependencies(self):
+        """Fail before Selenium starts when bundled Chromium lacks Linux libraries."""
+
+        if config.SYSTEM != "Linux":
+            return
+
+        try:
+            missing = find_linux_chromium_missing_dependencies(self.chrome_path)
+        except ChromiumDependencyCheckError as error:
+            raise RuntimeError(
+                "Could not validate Chromium's Linux shared libraries: "
+                f"{error}\n\nRun `GoExport doctor` for additional diagnostics."
+            ) from error
+
+        if missing:
+            libraries = "\n".join(f"  - {library}" for library in missing)
+            raise RuntimeError(
+                "Chromium cannot start because required Linux shared libraries are missing:\n"
+                f"{libraries}\n\nRun `GoExport doctor` for additional diagnostics."
+            )
 
     def start_display(self):
         if config.SYSTEM != "Linux":

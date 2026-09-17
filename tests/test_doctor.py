@@ -32,6 +32,30 @@ class DoctorTests(unittest.TestCase):
         ):
             self.assertEqual(doctor.entry(Namespace()), 0)
 
+    def test_linux_chromium_dependencies_report_missing_libraries(self):
+        with (
+            patch.object(doctor.config, "SYSTEM", "Linux"),
+            patch.object(doctor.config, "CHROME_PATH", Path("chrome")),
+            patch.object(Path, "is_file", return_value=True),
+            patch.object(
+                doctor,
+                "find_linux_chromium_missing_dependencies",
+                return_value=("libpci.so.3", "libasound.so.2"),
+            ),
+        ):
+            checks = list(doctor._check_chromium_dependencies())
+        self.assertEqual(
+            checks,
+            [
+                doctor.Check(
+                    "Chromium dependencies",
+                    "error",
+                    "Missing required shared libraries:\n"
+                    "        libpci.so.3\n        libasound.so.2",
+                )
+            ],
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

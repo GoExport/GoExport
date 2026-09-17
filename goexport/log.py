@@ -15,6 +15,7 @@ def setup_logging(verbose: bool = False, json_mode: bool = False) -> None:
             RichHandler(
                 console=Console(stderr=json_mode),
                 rich_tracebacks=True,
+                markup=True,
                 show_path=False,
             )
         ],

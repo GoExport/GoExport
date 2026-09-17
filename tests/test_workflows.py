@@ -15,6 +15,32 @@ from goexport.services.timeline_builder import TimelineBuilder
 
 
 class ResourceCleanupTests(unittest.TestCase):
+    def test_linux_browser_stops_before_selenium_for_missing_dependencies(self):
+        service = BrowserService(Path("chrome"), Mock(), Mock(), "1")
+        with (
+            patch("goexport.services.browser.config.SYSTEM", "Linux"),
+            patch(
+                "goexport.services.browser.find_linux_chromium_missing_dependencies",
+                return_value=("libpci.so.3", "libasound.so.2"),
+            ),
+        ):
+            with self.assertRaisesRegex(
+                RuntimeError,
+                "(?s)Chromium cannot start.*libpci.so.3.*libasound.so.2",
+            ):
+                service.validate_linux_dependencies()
+
+    def test_non_linux_browser_skips_dependency_validation(self):
+        service = BrowserService(Path("chrome"), Mock(), Mock(), "1")
+        with (
+            patch("goexport.services.browser.config.SYSTEM", "Windows"),
+            patch(
+                "goexport.services.browser.find_linux_chromium_missing_dependencies"
+            ) as check,
+        ):
+            service.validate_linux_dependencies()
+        check.assert_not_called()
+
     def test_browser_releases_display_when_quit_fails(self):
         service = BrowserService(Mock(), Mock(), Mock(), "1")
         service.driver = Mock()

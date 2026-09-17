@@ -17,6 +17,10 @@ from pathlib import Path
 
 from goexport import config
 from goexport.reporting import get_reporter
+from goexport.services.chromium import (
+    ChromiumDependencyCheckError,
+    find_linux_chromium_missing_dependencies,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -47,13 +51,18 @@ def entry(args: argparse.Namespace) -> int:
 
     for check in checks:
         icon = {"ok": "OK", "warning": "WARNING", "error": "ERROR"}[check.status]
+        color = {"ok": "green", "warning": "yellow", "error": "red"}[check.status]
         level = {
             "ok": logging.INFO,
             "warning": logging.WARNING,
             "error": logging.ERROR,
         }[check.status]
         reporter.diagnostic(
-            level, "[%s] %s: %s", icon, check.name, check.detail, logger=logger
+            level,
+            f"[{color}][{icon}][/{color}] %s: %s",
+            check.name,
+            check.detail,
+            logger=logger,
         )
 
     errors = sum(check.status == "error" for check in checks)
@@ -98,6 +107,7 @@ def run_checks() -> Iterable[Check]:
     yield from _check_python()
     yield from _check_requirements()
     yield from _check_runtime_files()
+    yield from _check_chromium_dependencies()
     yield from _check_executables()
     yield from _check_resources()
     yield from _check_platform()
@@ -212,6 +222,33 @@ def _check_executables() -> Iterable[Check]:
             "Chromium launch",
             "warning",
             "Not started by doctor; Chromium 87 can open a GUI for version probes.",
+        )
+
+
+def _check_chromium_dependencies() -> Iterable[Check]:
+    """Check the bundled Chromium shared libraries on Linux with ``ldd``."""
+
+    if config.SYSTEM != "Linux" or not config.CHROME_PATH.is_file():
+        return
+
+    try:
+        missing = find_linux_chromium_missing_dependencies(config.CHROME_PATH)
+    except ChromiumDependencyCheckError as error:
+        yield Check("Chromium dependencies", "error", str(error))
+        return
+
+    if missing:
+        libraries = "\n        ".join(missing)
+        yield Check(
+            "Chromium dependencies",
+            "error",
+            f"Missing required shared libraries:\n        {libraries}",
+        )
+    else:
+        yield Check(
+            "Chromium dependencies",
+            "ok",
+            "All required shared libraries are available.",
         )
 
 
