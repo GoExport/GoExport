@@ -16,10 +16,12 @@ from goexport import config
 NANOSECONDS = 1_000_000_000
 
 
-def configure_backend() -> None:
-    """Select X11 before PyScap initializes its native Linux backend."""
+def configure_backend(display: str | None = None) -> None:
+    """Select the owned X11 display before PyScap initializes its backend."""
     if config.SYSTEM == "Linux":
         os.environ.setdefault("SCAP_BACKEND", "x11")
+        if display is not None:
+            os.environ["DISPLAY"] = display
 
 
 def timestamp_ns(timestamp: Any) -> int:
@@ -27,9 +29,13 @@ def timestamp_ns(timestamp: Any) -> int:
     return int((Decimal(str(timestamp)) * NANOSECONDS).to_integral_value(ROUND_HALF_UP))
 
 
-def create_capturer(target: Any, crop_area: tuple[int, int, int, int] | None = None):
+def create_capturer(
+    target: Any,
+    crop_area: tuple[int, int, int, int] | None = None,
+    display: str | None = None,
+):
     """Create the sole production PyScap capturer (imported lazily for export)."""
-    configure_backend()
+    configure_backend(display)
     import scap
 
     return scap.Capturer(

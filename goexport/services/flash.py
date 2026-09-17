@@ -30,7 +30,6 @@ def await_started(driver, timeout_minutes=30):
     except TimeoutException:
         raise TimeoutError("Video failed to load")
 
-
 def await_player_ready(driver, timeout_seconds=30):
     try:
         WebDriverWait(driver, timeout_seconds).until(
@@ -46,7 +45,17 @@ def await_player_ready(driver, timeout_seconds=30):
             )
         )
     except TimeoutException:
-        raise TimeoutError("Timed out waiting for the Flash player to become ready.")
+        screenshot_path = "player_ready_timeout.png"
+
+        try:
+            driver.save_screenshot(screenshot_path)
+            print(f"Player readiness screenshot saved to: {screenshot_path}")
+        except Exception as screenshot_error:
+            print(f"Failed to capture screenshot: {screenshot_error}")
+
+        raise TimeoutError(
+            "Timed out waiting for the Flash player to become ready."
+        )
 
 
 def await_stopped(driver, timeout_minutes=60):

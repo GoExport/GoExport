@@ -17,10 +17,12 @@ from pathlib import Path
 
 from goexport import config
 from goexport.reporting import get_reporter
+from goexport.services.capture import configure_backend
 from goexport.services.chromium import (
     ChromiumDependencyCheckError,
     find_linux_chromium_missing_dependencies,
 )
+from goexport.services.display import LinuxDisplay
 
 logger = logging.getLogger(__name__)
 
@@ -265,18 +267,7 @@ def _check_resources() -> Iterable[Check]:
 
 def _check_platform() -> Iterable[Check]:
     if config.SYSTEM == "Linux":
-        if shutil.which("Xvfb"):
-            yield Check("Linux display", "ok", "Xvfb is available for browser capture.")
-        elif os.environ.get("DISPLAY"):
-            yield Check(
-                "Linux display",
-                "warning",
-                "Xvfb is unavailable; GoExport will use DISPLAY.",
-            )
-        else:
-            yield Check(
-                "Linux display", "error", "Install Xvfb or set DISPLAY for X11 capture."
-            )
+        yield from _check_linux_display()
     elif config.SYSTEM == "Darwin":
         yield Check(
             "macOS screen capture",
@@ -289,3 +280,54 @@ def _check_platform() -> Iterable[Check]:
         yield Check(
             "Platform", "error", f"Unsupported operating system: {config.SYSTEM}"
         )
+
+
+def _check_linux_display() -> Iterable[Check]:
+    """Validate the same display lifecycle used by recording, without xdpyinfo."""
+    inherited_display = os.environ.get("DISPLAY")
+    xvfb_available = bool(shutil.which("Xvfb"))
+    yield Check(
+        "Xvfb",
+        "ok" if xvfb_available else "warning",
+        "Available" if xvfb_available else "Unavailable",
+    )
+    yield Check(
+        "Inherited DISPLAY",
+        "ok" if inherited_display else "warning",
+        inherited_display or "Not set",
+    )
+
+    virtual_display = None
+    capture_display = inherited_display
+    if xvfb_available:
+        virtual_display = LinuxDisplay(size=(config.WIDTH, config.HEIGHT))
+        try:
+            capture_display = virtual_display.start()
+        except Exception as error:
+            yield Check("Virtual display", "warning", f"Could not start: {error}")
+        else:
+            yield Check("Virtual display", "ok", capture_display)
+    else:
+        yield Check("Virtual display", "warning", "Not active; Xvfb is unavailable.")
+
+    try:
+        if not capture_display:
+            yield Check(
+                "Capture display", "error", "No X display is available for capture."
+            )
+            return
+        yield Check("Capture display", "ok", capture_display)
+        configure_backend()
+        import scap
+
+        supported = scap.is_supported()
+        yield Check(
+            "Scap capture support",
+            "ok" if supported else "error",
+            "Available" if supported else f"Unavailable on {capture_display}",
+        )
+    except Exception as error:
+        yield Check("Scap capture support", "error", str(error))
+    finally:
+        if virtual_display is not None and virtual_display.active:
+            virtual_display.stop()

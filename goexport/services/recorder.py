@@ -12,8 +12,8 @@ from goexport.services.capture import (
     VideoSelector,
     audio_padding_samples,
     audio_trim_samples,
-    create_capturer,
     configure_backend,
+    create_capturer,
     timestamp_ns,
 )
 from goexport.services.ffmpeg import (
@@ -61,8 +61,8 @@ class RecordingService:
     def _create_output_path(self):
         return resolve_output_path(Path(self.args.output), self.args.format)
 
-    def _create_capturer(self, target, crop_area=None):
-        return create_capturer(target, crop_area)
+    def _create_capturer(self, target, crop_area=None, display=None):
+        return create_capturer(target, crop_area, display)
 
     def _capture_streams(
         self,
@@ -233,7 +233,8 @@ class RecordingService:
         else:
             target = service.get_capture_target(driver)
             crop_area = service.get_capture_crop_area(driver)
-        capturer = self._create_capturer(target, crop_area)
+        capture_display = service.capture_display if service is not None else None
+        capturer = self._create_capturer(target, crop_area, capture_display)
         started = threading.Event()
         stopped = threading.Event()
         errors = []
@@ -311,14 +312,7 @@ class RecordingService:
         }
 
     def run(self):
-        configure_backend()
-        import scap
-
         self.reporter.progress(0, "preparing")
-        if not scap.is_supported():
-            raise RuntimeError("This platform does not support screen capture")
-        if not scap.has_permission() and not scap.request_permission():
-            raise PermissionError("Screen-capture permission was denied")
         output = self._create_output_path()
         video = output.with_name(f"{output.stem}.video.mkv")
         audio = output.with_name(f"{output.stem}.audio.wav")
@@ -326,6 +320,16 @@ class RecordingService:
         complete = False
         try:
             service, driver = self._prepare_browser()
+            # Browser setup activates its owned Xvfb display before PyScap is
+            # imported or probes native support.  Chromium and PyScap therefore
+            # inherit the identical DISPLAY.
+            configure_backend(service.capture_display)
+            import scap
+
+            if not scap.is_supported():
+                raise RuntimeError("This platform does not support screen capture")
+            if not scap.has_permission() and not scap.request_permission():
+                raise PermissionError("Screen-capture permission was denied")
             self.reporter.progress(5, "recording")
             self._record_playback(driver, video, audio, service)
             self._finish_recording(output, video, audio)

@@ -1,9 +1,9 @@
 import logging
+import os
 import time
 import urllib.parse
 from pathlib import Path
 
-from pyvirtualdisplay import Display
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
@@ -15,6 +15,7 @@ from goexport.services.chromium import (
     ChromiumDependencyCheckError,
     find_linux_chromium_missing_dependencies,
 )
+from goexport.services.display import LinuxDisplay
 
 logger = logging.getLogger(__name__)
 
@@ -57,7 +58,7 @@ class BrowserService:
         self.flash_version = flash_version
         self.width = width
         self.height = height
-        self.display = None
+        self.display: LinuxDisplay | None = None
         self.driver = None
         self.check_screen_resolution = check_screen_resolution
         self.check_frame_resolution = check_frame_resolution
@@ -127,17 +128,16 @@ class BrowserService:
             return
 
         try:
-            self.display = Display(
-                visible=False,
+            self.display = LinuxDisplay(
                 size=(
                     self.width + self.VIRTUAL_DISPLAY_MARGIN,
                     self.height + self.VIRTUAL_DISPLAY_MARGIN,
                 ),
                 color_depth=24,
             )
-            self.display.start()
+            capture_display = self.display.start()
 
-            logger.info("Started virtual display.")
+            logger.info("Started virtual display %s.", capture_display)
 
         except Exception as e:
             self.display = None
@@ -151,6 +151,13 @@ class BrowserService:
         if self.display is not None:
             self.display.stop()
             self.display = None
+
+    @property
+    def capture_display(self):
+        """The X display shared by this browser and Linux capture session."""
+        if self.display is not None:
+            return self.display.capture_display
+        return os.environ.get("DISPLAY")
 
     def close(self):
         """Release the display even if Chromium fails to shut down."""

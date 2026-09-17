@@ -38,6 +38,14 @@ class CaptureTimelineTests(unittest.TestCase):
             configure_backend()
             self.assertEqual(os.environ["SCAP_BACKEND"], "pipewire")
 
+    def test_linux_capture_configuration_uses_owned_display(self):
+        with (
+            patch.object(config, "SYSTEM", "Linux"),
+            patch.dict(os.environ, {"DISPLAY": ":0"}, clear=True),
+        ):
+            configure_backend(":99")
+            self.assertEqual(os.environ["DISPLAY"], ":99")
+
     def test_cfr_rounding_at_boundary(self):
         origin = 1_000_000_000
         self.assertEqual(cfr_index(origin + 20_833_333, origin, 24), 0)
@@ -124,11 +132,32 @@ class BrowserCaptureTargetTests(unittest.TestCase):
 
     def test_virtual_display_includes_browser_frame_margin(self):
         service = self._service()
-        with patch("goexport.services.browser.Display") as display:
+        with patch("goexport.services.browser.LinuxDisplay") as display:
             with patch.object(config, "SYSTEM", "Linux"):
+                display.return_value.start.return_value = ":99"
                 service.start_display()
                 service.stop_display()
-        display.assert_called_once_with(visible=False, size=(1536, 976), color_depth=24)
+        display.assert_called_once_with(size=(1536, 976), color_depth=24)
+        display.return_value.stop.assert_called_once()
+
+    def test_virtual_display_is_the_capture_display_when_inherited_differs(self):
+        service = self._service()
+        with (
+            patch.object(config, "SYSTEM", "Linux"),
+            patch.dict(os.environ, {"DISPLAY": ":0"}, clear=True),
+            patch("goexport.services.browser.LinuxDisplay") as display,
+        ):
+            display.return_value.start.return_value = ":99"
+            display.return_value.capture_display = ":99"
+            service.start_display()
+            self.assertEqual(service.capture_display, ":99")
+
+    def test_inherited_display_remains_capture_display_without_xvfb(self):
+        from goexport.services.display import LinuxDisplay
+
+        with patch.dict(os.environ, {"DISPLAY": ":0"}, clear=True):
+            display = LinuxDisplay((1280, 720))
+            self.assertEqual(display.capture_display, ":0")
 
     def test_xvfb_window_is_grown_to_requested_viewport(self):
         service = self._service()
@@ -159,6 +188,7 @@ class BrowserCaptureTargetTests(unittest.TestCase):
 
         self.assertIsNone(service.get_capture_target(driver))
         self.assertEqual(service.get_capture_crop_area(driver), (0, 70, 1280, 720))
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,12 +1,36 @@
+import os
+import sys
 import unittest
 from argparse import Namespace
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 from goexport.commands import doctor
 
 
 class DoctorTests(unittest.TestCase):
+    def test_linux_display_reports_owned_xvfb_display_to_scap(self):
+        display = Mock()
+        display.start.side_effect = lambda: (
+            os.environ.__setitem__("DISPLAY", ":99") or ":99"
+        )
+        display.active = True
+        scap = Mock()
+        scap.is_supported.side_effect = lambda: os.environ.get("DISPLAY") == ":99"
+        with (
+            patch.object(doctor.config, "SYSTEM", "Linux"),
+            patch.object(doctor.shutil, "which", return_value="/usr/bin/Xvfb"),
+            patch.object(doctor, "LinuxDisplay", return_value=display),
+            patch.dict(os.environ, {"DISPLAY": ":0"}, clear=True),
+            patch.dict(sys.modules, {"scap": scap}),
+        ):
+            checks = list(doctor._check_platform())
+        self.assertIn(doctor.Check("Inherited DISPLAY", "ok", ":0"), checks)
+        self.assertIn(doctor.Check("Virtual display", "ok", ":99"), checks)
+        self.assertIn(doctor.Check("Capture display", "ok", ":99"), checks)
+        self.assertIn(doctor.Check("Scap capture support", "ok", "Available"), checks)
+        display.stop.assert_called_once()
+
     def test_missing_runtime_file_is_reported(self):
         with patch.object(doctor.config, "CHROME_PATH", Path("missing-chrome")):
             checks = list(doctor._check_runtime_files())

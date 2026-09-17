@@ -1,4 +1,6 @@
 import io
+import os
+import sys
 import tempfile
 import unittest
 from argparse import Namespace
@@ -15,6 +17,32 @@ from goexport.services.timeline_builder import TimelineBuilder
 
 
 class ResourceCleanupTests(unittest.TestCase):
+    def test_recording_probes_scap_after_browser_activates_display(self):
+        args = Namespace(output=Path("out"), format="mkv")
+        recording = RecordingService(args)
+        browser = Mock()
+        browser.capture_display = ":99"
+        scap = Mock()
+        scap.is_supported.side_effect = lambda: os.environ.get("DISPLAY") == ":99"
+        with (
+            patch.dict(os.environ, {"DISPLAY": ":0"}, clear=True),
+            patch.object(recording, "_prepare_browser", return_value=(browser, Mock())),
+            patch.object(
+                recording, "_create_output_path", return_value=Path("out.mkv")
+            ),
+            patch.object(recording, "_record_playback"),
+            patch.object(recording, "_finish_recording"),
+            patch.dict(sys.modules, {"scap": scap}),
+        ):
+            # This models BrowserService.start_display selecting Xvfb :99 before
+            # it returns control to RecordingService.run().
+            browser_activation = recording._prepare_browser
+            browser_activation.side_effect = lambda: (
+                os.environ.__setitem__("DISPLAY", ":99") or (browser, Mock())
+            )
+            self.assertEqual(recording.run(), 0)
+        scap.is_supported.assert_called_once()
+
     def test_linux_browser_stops_before_selenium_for_missing_dependencies(self):
         service = BrowserService(Path("chrome"), Mock(), Mock(), "1")
         with (
