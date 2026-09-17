@@ -1,5 +1,4 @@
 import logging
-import os
 import time
 import urllib.parse
 from pathlib import Path
@@ -59,8 +58,6 @@ class BrowserService:
         self.check_screen_resolution = check_screen_resolution
         self.check_frame_resolution = check_frame_resolution
         self._virtual_display_logged = False
-        self._previous_scap_backend = None
-        self._scap_backend_overridden = False
 
     def create_driver(self):
         self.start_display()
@@ -102,12 +99,6 @@ class BrowserService:
         if config.SYSTEM != "Linux":
             return
 
-        # PyScap's Linux X11 backend captures the root window of DISPLAY and
-        # does not expose individual windows through scap.targets().
-        self._previous_scap_backend = os.environ.get("SCAP_BACKEND")
-        self._scap_backend_overridden = True
-        os.environ["SCAP_BACKEND"] = "x11"
-
         try:
             self.display = Display(
                 visible=False,
@@ -130,18 +121,9 @@ class BrowserService:
             )
 
     def stop_display(self):
-        try:
-            if self.display is not None:
-                self.display.stop()
-                self.display = None
-        finally:
-            if self._scap_backend_overridden:
-                if self._previous_scap_backend is None:
-                    os.environ.pop("SCAP_BACKEND", None)
-                else:
-                    os.environ["SCAP_BACKEND"] = self._previous_scap_backend
-                self._previous_scap_backend = None
-                self._scap_backend_overridden = False
+        if self.display is not None:
+            self.display.stop()
+            self.display = None
 
     def close(self):
         """Release the display even if Chromium fails to shut down."""

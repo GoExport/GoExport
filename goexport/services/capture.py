@@ -6,6 +6,7 @@ GoExport.  The recorder deliberately never compares them with Python clocks.
 
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass
 from decimal import ROUND_HALF_UP, Decimal
 from typing import Any
@@ -15,6 +16,12 @@ from goexport import config
 NANOSECONDS = 1_000_000_000
 
 
+def configure_backend() -> None:
+    """Select X11 before PyScap initializes its native Linux backend."""
+    if config.SYSTEM == "Linux":
+        os.environ.setdefault("SCAP_BACKEND", "x11")
+
+
 def timestamp_ns(timestamp: Any) -> int:
     """Convert PyScap's numeric timestamp to an exact-ish integer duration."""
     return int((Decimal(str(timestamp)) * NANOSECONDS).to_integral_value(ROUND_HALF_UP))
@@ -22,6 +29,7 @@ def timestamp_ns(timestamp: Any) -> int:
 
 def create_capturer(target: Any, crop_area: tuple[int, int, int, int] | None = None):
     """Create the sole production PyScap capturer (imported lazily for export)."""
+    configure_backend()
     import scap
 
     return scap.Capturer(

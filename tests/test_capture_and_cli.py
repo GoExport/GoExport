@@ -11,10 +11,33 @@ from goexport.services.capture import (
     audio_padding_samples,
     audio_trim_samples,
     cfr_index,
+    configure_backend,
+    create_capturer,
 )
 
 
 class CaptureTimelineTests(unittest.TestCase):
+    def test_linux_backend_is_configured_before_scap_import(self):
+        scap = Mock()
+        scap.CaptureOptions.return_value = Mock()
+        with (
+            patch.object(config, "SYSTEM", "Linux"),
+            patch.dict(os.environ, {}, clear=True),
+            patch.dict(sys.modules, {"scap": scap}),
+        ):
+            create_capturer(None)
+            self.assertEqual(os.environ["SCAP_BACKEND"], "x11")
+
+        scap.Capturer.assert_called_once_with(scap.CaptureOptions.return_value)
+
+    def test_explicit_linux_backend_overrides_x11_default(self):
+        with (
+            patch.object(config, "SYSTEM", "Linux"),
+            patch.dict(os.environ, {"SCAP_BACKEND": "pipewire"}, clear=True),
+        ):
+            configure_backend()
+            self.assertEqual(os.environ["SCAP_BACKEND"], "pipewire")
+
     def test_cfr_rounding_at_boundary(self):
         origin = 1_000_000_000
         self.assertEqual(cfr_index(origin + 20_833_333, origin, 24), 0)
@@ -99,35 +122,12 @@ class BrowserCaptureTargetTests(unittest.TestCase):
         ):
             self.assertIs(self._service().get_capture_target(driver), expected)
 
-    def test_linux_display_forces_x11_backend(self):
-        from goexport.services.browser import BrowserService
-
-        service = BrowserService(
-            Mock(), Mock(), Mock(), "1", check_screen_resolution=False
-        )
-        display = Mock()
-        with (
-            patch.object(config, "SYSTEM", "Linux"),
-            patch("goexport.services.browser.Display", return_value=display),
-            patch.dict(os.environ, {"SCAP_BACKEND": "pipewire"}),
-        ):
-            service.start_display()
-            self.assertEqual(os.environ["SCAP_BACKEND"], "x11")
-
-        display.start.assert_called_once_with()
-
     def test_virtual_display_includes_browser_frame_margin(self):
         service = self._service()
-        with (
-            patch("goexport.services.browser.Display") as display,
-            patch.dict(os.environ, {}, clear=False),
-        ):
-            os.environ.pop("SCAP_BACKEND", None)
+        with patch("goexport.services.browser.Display") as display:
             with patch.object(config, "SYSTEM", "Linux"):
                 service.start_display()
-                self.assertEqual(os.environ["SCAP_BACKEND"], "x11")
                 service.stop_display()
-            self.assertNotIn("SCAP_BACKEND", os.environ)
         display.assert_called_once_with(visible=False, size=(1536, 976), color_depth=24)
 
     def test_xvfb_window_is_grown_to_requested_viewport(self):
@@ -159,19 +159,6 @@ class BrowserCaptureTargetTests(unittest.TestCase):
 
         self.assertIsNone(service.get_capture_target(driver))
         self.assertEqual(service.get_capture_crop_area(driver), (0, 70, 1280, 720))
-
-    def test_existing_scap_backend_is_restored(self):
-        service = self._service()
-        with (
-            patch.object(config, "SYSTEM", "Linux"),
-            patch("goexport.services.browser.Display"),
-            patch.dict(os.environ, {"SCAP_BACKEND": "pipewire"}),
-        ):
-            service.start_display()
-            self.assertEqual(os.environ["SCAP_BACKEND"], "x11")
-            service.stop_display()
-            self.assertEqual(os.environ["SCAP_BACKEND"], "pipewire")
-
 
 if __name__ == "__main__":
     unittest.main()

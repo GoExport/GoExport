@@ -13,6 +13,7 @@ from goexport.services.capture import (
     audio_padding_samples,
     audio_trim_samples,
     create_capturer,
+    configure_backend,
     timestamp_ns,
 )
 from goexport.services.ffmpeg import (
@@ -310,6 +311,7 @@ class RecordingService:
         }
 
     def run(self):
+        configure_backend()
         import scap
 
         self.reporter.progress(0, "preparing")
