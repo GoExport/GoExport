@@ -225,15 +225,24 @@ jobs:
           test -f GoExport-macos-x64.tar.gz
 
       - name: Create Release
-        timeout-minutes: 10
-        uses: softprops/action-gh-release@v2
-        with:
-          body: ${{ steps.changelog.outputs.text }}
-          prerelease: ${{ steps.changelog.outputs.is_prerelease }}
-          files: |
-            GoExport-windows-x64.zip
-            GoExport-linux-x64.tar.gz
-            GoExport-macos-x64.tar.gz
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CHANGELOG: ${{ steps.changelog.outputs.text }}
+        shell: bash
+        run: |
+          args=()
+
+          if [[ "${{ steps.changelog.outputs.is_prerelease }}" == "true" ]]; then
+            args+=(--prerelease)
+          fi
+
+          gh release create "$GITHUB_REF_NAME" \
+            GoExport-windows-x64.zip \
+            GoExport-linux-x64.tar.gz \
+            GoExport-macos-x64.tar.gz \
+            --title "$GITHUB_REF_NAME" \
+            --notes "$CHANGELOG" \
+            "${args[@]}"
 
       - name: Notify Discord
         if: steps.changelog.outputs.is_prerelease == 'false'
