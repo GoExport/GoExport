@@ -48,18 +48,18 @@ DOWNLOADS = {
         "chromium": "https://github.com/tangalbert919/ungoogled-chromium-binaries/releases/download/87.0.4280.141-1/ungoogled-chromium_87.0.4280.141-1.1_windows-x64.zip",
         "chromedriver": "https://chromedriver.storage.googleapis.com/87.0.4280.88/chromedriver_win32.zip",
         "ffmpeg": "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip",
-        "flash": "https://github.com/GoExport/goexport-flash-player/releases/latest/download/pepflashplayer.zip",
+        "flash": "https://github.com/Lexian-droid/goexport-flash-player/releases/latest/download/pepflashplayer.zip",
     },
     "Linux": {
         "chromium": "https://github.com/LordTwix/ungoogled-chromium-binaries/releases/download/87.0.4280.141-1.1/ungoogled-chromium_87.0.4280.141-1.1_linux.tar.xz",
         "ffmpeg": "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-linux64-gpl.tar.xz",
-        "flash": "https://github.com/GoExport/goexport-flash-player/releases/latest/download/libpepflashplayer.zip",
+        "flash": "https://github.com/Lexian-droid/goexport-flash-player/releases/latest/download/libpepflashplayer.zip",
     },
     "Darwin": {
         "chromium": "https://github.com/kramred/ungoogled-chromium-macos/releases/download/87.0.4280.141-1.1/ungoogled-chromium_87.0.4280.141-1.1_macos.dmg",
         "chromedriver": "https://chromedriver.storage.googleapis.com/87.0.4280.88/chromedriver_mac64.zip",
         "ffmpeg": "https://evermeet.cx/ffmpeg/getrelease/zip",
-        "flash": "https://github.com/GoExport/goexport-flash-player/releases/latest/download/PepperFlashPlayer.plugin.zip",
+        "flash": "https://github.com/Lexian-droid/goexport-flash-player/releases/latest/download/PepperFlashPlayer.plugin.zip",
     },
 }
 
