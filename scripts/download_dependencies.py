@@ -97,6 +97,13 @@ def find_file(parent: Path, filename: str) -> Path:
     raise FileNotFoundError(f"Unable to find '{filename}' in '{parent}'")
 
 
+def make_executable(path: Path) -> None:
+    """Ensure a Unix executable remains runnable after archive extraction."""
+
+    if SYSTEM != "Windows":
+        path.chmod(path.stat().st_mode | 0o111)
+
+
 def find_windows_pepper_flash(parent: Path) -> Path:
     """Find the release x64 PPAPI Flash DLL from the Clean Flash archive."""
 
@@ -279,6 +286,7 @@ def install_chromedriver(temp_dir: Path) -> None:
     """Downloads and installs ChromeDriver."""
 
     if SYSTEM == "Linux":
+        make_executable(CHROMIUM_DIR / "chromedriver")
         console.print("[cyan]ChromeDriver bundled with Chromium[/cyan]")
         return
 
@@ -298,10 +306,9 @@ def install_chromedriver(temp_dir: Path) -> None:
         executable,
     )
 
-    shutil.copy2(
-        chromedriver,
-        CHROMIUM_DIR / chromedriver.name,
-    )
+    installed_driver = CHROMIUM_DIR / chromedriver.name
+    shutil.copy2(chromedriver, installed_driver)
+    make_executable(installed_driver)
 
     console.print("[green]ChromeDriver installed[/green]")
 
@@ -456,3 +463,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
