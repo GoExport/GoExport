@@ -127,5 +127,7 @@ def add_runtime_arguments(parser: argparse.ArgumentParser) -> None:
                         help="Path to the ChromeDriver executable.")
     parser.add_argument("--flash-plugin-path", type=existing_file, default=config.FLASH_PLUGIN_PATH,
                         help="Path to the Pepper Flash plugin.")
+    parser.add_argument("--flash-plugin-version", default=config.FLASH_PLUGIN_VERSION,
+                        help="Pepper Flash plugin version passed to Chromium.")
     parser.add_argument("--ffmpeg-path", type=existing_file, default=config.FFMPEG_PATH,
                         help="Path to the FFmpeg executable.")
