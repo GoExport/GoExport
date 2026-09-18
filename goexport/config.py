@@ -2,6 +2,8 @@ import platform
 import sys
 from pathlib import Path
 
+from goexport.configuration.loader import load_overrides
+
 APP_NAME = "GoExport"
 VERSION = "2.0.0"
 
@@ -65,3 +67,9 @@ SWF_URL = "http://localhost:4664/animation/414827163ad4eb60/player.swf"
 
 STORE_PATH = "http://localhost:4664/store/3a981f5cb2739137/<store>"
 CLIENT_THEME_PATH = "http://localhost:4664/static/ad44370a650793d9/<client_theme>"
+
+CONFIG_PATH = BASE_DIR / "config.toml"
+
+# The loader returns only explicitly configured values; all other names above
+# retain the built-in or platform-specific defaults declared in this module.
+globals().update(load_overrides(CONFIG_PATH, BASE_DIR, SUPPORTED_FORMATS))

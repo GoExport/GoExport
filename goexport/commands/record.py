@@ -60,7 +60,6 @@ def register(subparsers: argparse._SubParsersAction) -> None:
 
     parser.set_defaults(
         func=entry,
-        is_wide=True,
     )
 
 

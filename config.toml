@@ -1,0 +1,25 @@
+# GoExport user configuration. Omitted values use the built-in defaults.
+
+[video]
+# format = "mp4"
+# wide = true
+# width = 1280
+# height = 720
+# fps = 24
+
+[wrapper]
+# url = "http://localhost:4343/"
+# api_url = "http://localhost:4343/"
+# swf_url = "http://localhost:4664/animation/414827163ad4eb60/player.swf"
+# store_path = "http://localhost:4664/store/3a981f5cb2739137/<store>"
+# client_theme_path = "http://localhost:4664/static/ad44370a650793d9/<client_theme>"
+
+[paths]
+# Relative paths are resolved beside the GoExport executable (or project root in source mode).
+# chrome = "bin/ungoogled-chromium/chrome.exe"
+# chromedriver = "bin/ungoogled-chromium/chromedriver.exe"
+# ffmpeg = "bin/ffmpeg/bin/ffmpeg.exe"
+
+[flash]
+# plugin_path = "bin/ungoogled-chromium/extensions/pepflashplayer.dll"
+# plugin_version = "32.0.0.371"

@@ -78,6 +78,7 @@ def add_player_arguments(parser: argparse.ArgumentParser) -> None:
         "--no-wide",
         action="store_false",
         dest="is_wide",
+        default=config.IS_WIDE,
         help="Disable GoAnimate widescreen mode.",
     )
 
@@ -121,13 +122,32 @@ def add_player_arguments(parser: argparse.ArgumentParser) -> None:
 
 def add_runtime_arguments(parser: argparse.ArgumentParser) -> None:
     """Register paths for the external runtime binaries."""
-    parser.add_argument("--chrome-path", type=existing_file, default=config.CHROME_PATH,
-                        help="Path to the Chromium executable.")
-    parser.add_argument("--chromedriver-path", type=existing_file, default=config.CHROMEDRIVER_PATH,
-                        help="Path to the ChromeDriver executable.")
-    parser.add_argument("--flash-plugin-path", type=existing_file, default=config.FLASH_PLUGIN_PATH,
-                        help="Path to the Pepper Flash plugin.")
-    parser.add_argument("--flash-plugin-version", default=config.FLASH_PLUGIN_VERSION,
-                        help="Pepper Flash plugin version passed to Chromium.")
-    parser.add_argument("--ffmpeg-path", type=existing_file, default=config.FFMPEG_PATH,
-                        help="Path to the FFmpeg executable.")
+    parser.add_argument(
+        "--chrome-path",
+        type=existing_file,
+        default=config.CHROME_PATH,
+        help="Path to the Chromium executable.",
+    )
+    parser.add_argument(
+        "--chromedriver-path",
+        type=existing_file,
+        default=config.CHROMEDRIVER_PATH,
+        help="Path to the ChromeDriver executable.",
+    )
+    parser.add_argument(
+        "--flash-plugin-path",
+        type=existing_file,
+        default=config.FLASH_PLUGIN_PATH,
+        help="Path to the Pepper Flash plugin.",
+    )
+    parser.add_argument(
+        "--flash-plugin-version",
+        default=config.FLASH_PLUGIN_VERSION,
+        help="Pepper Flash plugin version passed to Chromium.",
+    )
+    parser.add_argument(
+        "--ffmpeg-path",
+        type=existing_file,
+        default=config.FFMPEG_PATH,
+        help="Path to the FFmpeg executable.",
+    )
