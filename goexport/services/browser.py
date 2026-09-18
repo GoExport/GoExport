@@ -140,6 +140,8 @@ class BrowserService:
 
         options.add_argument(f"--ppapi-flash-version={self.flash_version}")
 
+        options.add_argument("--allow-outdated-plugins")
+
         if config.SYSTEM == "Linux":
             options.add_argument("--no-sandbox")
             options.add_argument("--disable-dev-shm-usage")
