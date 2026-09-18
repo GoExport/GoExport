@@ -116,6 +116,11 @@ def add_player_arguments(parser: argparse.ArgumentParser) -> None:
         help="The URL of the client theme path to be used in the export.",
     )
 
+    add_runtime_arguments(parser)
+
+
+def add_runtime_arguments(parser: argparse.ArgumentParser) -> None:
+    """Register paths for the external runtime binaries."""
     parser.add_argument("--chrome-path", type=existing_file, default=config.CHROME_PATH,
                         help="Path to the Chromium executable.")
     parser.add_argument("--chromedriver-path", type=existing_file, default=config.CHROMEDRIVER_PATH,
