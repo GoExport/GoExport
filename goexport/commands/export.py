@@ -103,7 +103,7 @@ def export_video(args: argparse.Namespace) -> int:
         chrome_path=args.chrome_path,
         chromedriver_path=args.chromedriver_path,
         flash_path=args.flash_plugin_path,
-        flash_version=config.FLASH_PLUGIN_VERSION,
+        flash_version=args.flash_plugin_version,
         width=args.resolution[0],
         height=args.resolution[1],
     )

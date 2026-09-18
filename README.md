@@ -44,8 +44,10 @@ without captured audio muxes a silent audio track into the requested container.
 
 Chromium, ChromeDriver, Pepper Flash, and FFmpeg paths can be changed with
 `--chrome-path`, `--chromedriver-path`, `--flash-plugin-path`, and `--ffmpeg-path`.
-They default to the existing files under `bin/`, are validated before the
-command starts, and are also honored by `doctor`.
+The Flash version passed to Chromium can be changed with
+`--flash-plugin-version`. These default to the existing platform-specific
+configuration, paths are validated before the command starts, and the path
+options are also honored by `doctor`.
 Frame-by-frame export uses `output.mkv`, `audio.wav`, and `final_output.<format>`
 in the working directory. These fixed names are unsuitable for concurrent runs.
 
