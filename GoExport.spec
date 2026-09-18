@@ -26,6 +26,7 @@ exe = EXE(
     a.datas,
     [],
     name='GoExport',
+    icon='resources/default.ico',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
