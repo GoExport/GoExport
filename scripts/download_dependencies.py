@@ -26,7 +26,6 @@ import zipfile
 from pathlib import Path
 
 import httpx
-import py7zr
 from rich.console import Console
 from rich.progress import (
     BarColumn,
@@ -49,18 +48,18 @@ DOWNLOADS = {
         "chromium": "https://github.com/tangalbert919/ungoogled-chromium-binaries/releases/download/87.0.4280.141-1/ungoogled-chromium_87.0.4280.141-1.1_windows-x64.zip",
         "chromedriver": "https://chromedriver.storage.googleapis.com/87.0.4280.88/chromedriver_win32.zip",
         "ffmpeg": "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip",
-        "flash": "https://github.com/darktohka/clean-flash-builds/releases/download/v1.54/ChineseFlash-Patched-Win-34.0.0.376.7z",
+        "flash": "https://github.com/GoExport/goexport-flash-player/releases/latest/download/pepflashplayer.zip",
     },
     "Linux": {
         "chromium": "https://github.com/LordTwix/ungoogled-chromium-binaries/releases/download/87.0.4280.141-1.1/ungoogled-chromium_87.0.4280.141-1.1_linux.tar.xz",
         "ffmpeg": "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-linux64-gpl.tar.xz",
-        "flash": "https://github.com/darktohka/clean-flash-builds/releases/download/v1.7/flash_player_patched_ppapi_linux.x86_64.tar.gz",
+        "flash": "https://github.com/GoExport/goexport-flash-player/releases/latest/download/libpepflashplayer.zip",
     },
     "Darwin": {
         "chromium": "https://github.com/kramred/ungoogled-chromium-macos/releases/download/87.0.4280.141-1.1/ungoogled-chromium_87.0.4280.141-1.1_macos.dmg",
         "chromedriver": "https://chromedriver.storage.googleapis.com/87.0.4280.88/chromedriver_mac64.zip",
         "ffmpeg": "https://evermeet.cx/ffmpeg/getrelease/zip",
-        "flash": "https://github.com/darktohka/clean-flash-builds/releases/download/v1.53/ChineseFlash-PPAPI-PepperFlashPlayer.zip",
+        "flash": "https://github.com/GoExport/goexport-flash-player/releases/latest/download/PepperFlashPlayer.plugin.zip",
     },
 }
 
@@ -102,19 +101,6 @@ def make_executable(path: Path) -> None:
 
     if SYSTEM != "Windows":
         path.chmod(path.stat().st_mode | 0o111)
-
-
-def find_windows_pepper_flash(parent: Path) -> Path:
-    """Find the release x64 PPAPI Flash DLL from the Clean Flash archive."""
-
-    candidates = list(parent.glob("**/flash64/pepflashplayer64_*.dll"))
-
-    if len(candidates) != 1:
-        raise FileNotFoundError(
-            f"Unable to find exactly one release x64 Pepper Flash DLL in '{parent}'."
-        )
-
-    return candidates[0]
 
 
 def download_file(url: str, destination: Path) -> None:
@@ -164,16 +150,6 @@ def extract_zip(
 
     with zipfile.ZipFile(archive) as zip_file:
         zip_file.extractall(destination)
-
-
-def extract_7z(
-    archive: Path,
-    destination: Path,
-) -> None:
-    console.print(f"[cyan]Extracting[/cyan] {archive.name}")
-
-    with py7zr.SevenZipFile(archive) as seven_zip:
-        seven_zip.extractall(destination)
 
 
 def extract_tar(
@@ -362,31 +338,29 @@ def install_flash(temp_dir: Path) -> None:
         exist_ok=True,
     )
 
-    if archive.suffix == ".7z":
-        extract_7z(archive, temp_dir)
-        # The archive also contains debug and 32-bit builds. Chromium is x64,
-        # so explicitly install the release DLL from flash64.
-        plugin = find_windows_pepper_flash(temp_dir)
-
+    if SYSTEM == "Windows":
+        extract_zip(archive, temp_dir)
+        plugin = find_file(temp_dir, "pepflashplayer.dll")
         shutil.copy2(
             plugin,
             extensions / "pepflashplayer.dll",
         )
 
-    elif archive.suffixes[-2:] == [".tar", ".gz"]:
-        extract_tar(archive, temp_dir)
-
-        plugin = next(temp_dir.rglob("libpepflashplayer.so"))
-
+    elif SYSTEM == "Linux":
+        extract_zip(archive, temp_dir)
+        plugin = find_file(temp_dir, "libpepflashplayer.so")
         shutil.copy2(
             plugin,
             extensions / plugin.name,
         )
 
-    elif archive.suffix == ".zip":
+    elif SYSTEM == "Darwin":
         extract_zip(archive, temp_dir)
-
-        plugin = next(temp_dir.rglob("*.plugin"))
+        plugin = next(temp_dir.rglob("PepperFlashPlayer.plugin"), None)
+        if plugin is None or not plugin.is_dir():
+            raise FileNotFoundError(
+                f"Unable to find PepperFlashPlayer.plugin bundle in '{temp_dir}'."
+            )
 
         shutil.copytree(
             plugin,
@@ -395,7 +369,7 @@ def install_flash(temp_dir: Path) -> None:
         )
 
     else:
-        raise RuntimeError(f"Unsupported Flash archive: {archive.name}")
+        raise RuntimeError(f"Unsupported operating system: {SYSTEM}")
 
     console.print("[green]Pepper Flash installed[/green]")
 
