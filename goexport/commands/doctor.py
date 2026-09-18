@@ -199,19 +199,18 @@ def _check_runtime_files(runtime_paths: dict[str, Path] | None = None) -> Iterab
             yield Check(name, "error", f"Missing: {path}")
 
 
-def _check_executables(runtime_paths: dict[str, Path] | None = None) -> Iterable[Check]:
-    runtime_paths = runtime_paths or {
-        "chrome": config.CHROME_PATH,
-        "chromedriver": config.CHROMEDRIVER_PATH,
-        "ffmpeg": config.FFMPEG_PATH,
-    }
+def _check_executables(runtime_paths: dict[str, Path]) -> Iterable[Check]:
     for name, path in (
         ("ChromeDriver", runtime_paths["chromedriver"]),
         ("FFmpeg", runtime_paths["ffmpeg"]),
     ):
         yield from _check_executable(name, path)
 
-    if runtime_paths["chrome"].is_file():
+    yield from _check_chromium_launch(runtime_paths["chrome"])
+
+
+def _check_chromium_launch(chrome_path: Path) -> Iterable[Check]:
+    if chrome_path.is_file():
         yield Check(
             "Chromium launch",
             "warning",
