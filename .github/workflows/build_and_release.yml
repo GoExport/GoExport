@@ -48,6 +48,12 @@ jobs:
         run: |
           python scripts/download_dependencies.py
 
+      - name: Ad-hoc sign macOS Flash Player
+        if: runner.os == 'macOS'
+        run: |
+          codesign --force --deep --sign - bin/ungoogled-chromium/extensions/PepperFlashPlayer.plugin
+          codesign --verify --deep --strict --verbose=4 bin/ungoogled-chromium/extensions/PepperFlashPlayer.plugin
+
       - name: Build GoExport
         run: |
           pyinstaller GoExport.spec
