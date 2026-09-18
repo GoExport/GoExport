@@ -190,5 +190,46 @@ class BrowserCaptureTargetTests(unittest.TestCase):
         self.assertEqual(service.get_capture_crop_area(driver), (0, 70, 1280, 720))
 
 
+class FlashPermissionTests(unittest.TestCase):
+    def test_enable_flash_targets_chromium_plugins_permission(self):
+        from goexport.services.browser import (
+            FLASH_PERMISSION_SCRIPT,
+            BrowserService,
+        )
+
+        driver = Mock()
+        driver.current_url = "http://localhost:4343/player"
+        driver.execute_script.return_value = {"status": "changed"}
+
+        BrowserService.enable_flash(driver)
+
+        self.assertIn("element.category === 'plugins'", FLASH_PERMISSION_SCRIPT)
+        self.assertIn(
+            "shadowRoot.querySelector('#permission')", FLASH_PERMISSION_SCRIPT
+        )
+        self.assertIn("select.disabled", FLASH_PERMISSION_SCRIPT)
+        self.assertIn('option[value="allow"]', FLASH_PERMISSION_SCRIPT)
+        driver.execute_script.assert_called_once_with(FLASH_PERMISSION_SCRIPT)
+        self.assertEqual(
+            driver.get.call_args_list[0].args[0],
+            "chrome://settings/content/siteDetails?site=http%3A//localhost%3A4343/player",
+        )
+        self.assertEqual(driver.get.call_args_list[1].args[0], driver.current_url)
+
+    def test_enable_flash_does_not_navigate_away_after_permission_failure(self):
+        from goexport.services.browser import BrowserService
+
+        driver = Mock()
+        driver.current_url = "http://localhost:4343/player"
+        driver.execute_script.return_value = {"status": "disabled"}
+
+        with self.assertRaisesRegex(
+            RuntimeError, "Flash permission control is disabled"
+        ):
+            BrowserService.enable_flash(driver)
+
+        self.assertEqual(driver.get.call_count, 1)
+
+
 if __name__ == "__main__":
     unittest.main()

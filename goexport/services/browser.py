@@ -7,8 +7,6 @@ from pathlib import Path
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.common.action_chains import ActionChains
-from selenium.webdriver.common.keys import Keys
 
 from goexport import config
 from goexport.services.chromium import (
@@ -19,9 +17,62 @@ from goexport.services.display import LinuxDisplay
 
 logger = logging.getLogger(__name__)
 
-THRESHOLD_WIDTH = 980
-NARROW_TABS = 11
-WIDE_TABS = 19
+FLASH_PERMISSION_WAIT_SECONDS = 5
+FLASH_PERMISSION_POLL_SECONDS = 0.1
+
+
+# Chromium 87's site-details page defines Flash as the `plugins` content
+# setting. Its <select id="permission"> lives in a site-details-permission
+# component's open Shadow DOM. This script walks all open shadow roots because
+# the component is itself nested inside several settings components.
+FLASH_PERMISSION_SCRIPT = """
+    const roots = [document];
+    const seenRoots = new Set();
+    let flashPermission = null;
+
+    while (roots.length && !flashPermission) {
+        const root = roots.pop();
+        if (seenRoots.has(root)) {
+            continue;
+        }
+        seenRoots.add(root);
+
+        for (const element of root.querySelectorAll('*')) {
+            if (element.shadowRoot) {
+                roots.push(element.shadowRoot);
+            }
+            if (element.localName === 'site-details-permission' &&
+                element.category === 'plugins') {
+                flashPermission = element;
+                break;
+            }
+        }
+    }
+
+    if (!flashPermission) {
+        return {status: 'not-found'};
+    }
+
+    const select = flashPermission.shadowRoot.querySelector('#permission');
+    if (!select || !select.getClientRects().length) {
+        return {status: 'not-ready'};
+    }
+    if (select.disabled) {
+        return {status: 'disabled'};
+    }
+
+    const allow = select.querySelector('option[value="allow"]');
+    if (!allow || allow.hidden || allow.disabled) {
+        return {status: 'allow-unavailable'};
+    }
+    if (select.value === 'allow') {
+        return {status: 'allowed'};
+    }
+
+    select.value = 'allow';
+    select.dispatchEvent(new Event('change', {bubbles: true, composed: true}));
+    return {status: select.value === 'allow' ? 'changed' : 'change-failed'};
+"""
 
 
 class BrowserService:
@@ -398,30 +449,28 @@ class BrowserService:
             + urllib.parse.quote(current_url)
         )
 
-        # Give the settings page a moment to render.
-        time.sleep(0.5)
+        deadline = time.monotonic() + FLASH_PERMISSION_WAIT_SECONDS
+        result = {"status": "not-found"}
+        while True:
+            result = driver.execute_script(FLASH_PERMISSION_SCRIPT)
+            status = result["status"]
 
-        width = driver.execute_script("""
-            return window.innerWidth;
-        """)
+            if status in {"allowed", "changed"}:
+                logger.info("Enabled Flash through Chromium site settings.")
+                break
 
-        is_narrow = width < THRESHOLD_WIDTH
+            if status in {"disabled", "allow-unavailable", "change-failed"}:
+                raise RuntimeError(
+                    "Could not enable Flash in Chromium site settings: "
+                    f"the Flash permission control is {status.replace('-', ' ')}."
+                )
 
-        if is_narrow:
-            logger.info("Detected narrow toolbar layout.")
-            tab_count = NARROW_TABS
-        else:
-            logger.info("Detected wide toolbar layout.")
-            tab_count = WIDE_TABS
+            if time.monotonic() >= deadline:
+                raise RuntimeError(
+                    "Could not locate a usable Flash permission control in "
+                    "Chromium site settings."
+                )
 
-        actions = ActionChains(driver)
-
-        for _ in range(tab_count):
-            actions.send_keys(Keys.TAB).perform()
-            time.sleep(0.05)
-
-        actions.send_keys(Keys.SPACE).perform()
-        actions.send_keys(Keys.ARROW_DOWN).perform()
-        actions.send_keys(Keys.ENTER).perform()
+            time.sleep(FLASH_PERMISSION_POLL_SECONDS)
 
         driver.get(current_url)
