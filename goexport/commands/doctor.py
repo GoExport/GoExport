@@ -221,10 +221,20 @@ def _check_chromium_launch(chrome_path: Path) -> Iterable[Check]:
 def _check_executable(name: str, path: Path) -> Iterable[Check]:
     if not path.is_file():
         return
-    if os.name != "nt" and not os.access(path, os.X_OK):
-        yield Check(name + " permissions", "error", f"Not executable: {path}")
+    permission_check = _check_executable_permissions(name, path)
+    if permission_check is not None:
+        yield permission_check
         return
+    yield from _check_executable_launch(name, path)
 
+
+def _check_executable_permissions(name: str, path: Path) -> Check | None:
+    if os.name != "nt" and not os.access(path, os.X_OK):
+        return Check(name + " permissions", "error", f"Not executable: {path}")
+    return None
+
+
+def _check_executable_launch(name: str, path: Path) -> Iterable[Check]:
     try:
         result = subprocess.run(
             [str(path), "-version" if name == "FFmpeg" else "--version"],
@@ -237,19 +247,22 @@ def _check_executable(name: str, path: Path) -> Iterable[Check]:
         yield Check(name + " launch", "error", f"Could not run {path}: {error}")
         return
 
+    yield _check_executable_result(name, result)
+
+
+def _check_executable_result(name: str, result) -> Check:
     output = (result.stderr or result.stdout).strip().splitlines()
     if result.returncode:
-        yield Check(
+        return Check(
             name + " launch",
             "warning",
             output[0] if output else f"Exited with {result.returncode}.",
         )
-    else:
-        yield Check(
-            name + " launch",
-            "ok",
-            output[0] if output else "Responded to --version.",
-        )
+    return Check(
+        name + " launch",
+        "ok",
+        output[0] if output else "Responded to --version.",
+    )
 
 
 def _check_chromium_dependencies(chrome_path: Path | None = None) -> Iterable[Check]:
