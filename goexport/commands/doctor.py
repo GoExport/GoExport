@@ -16,6 +16,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from goexport import config
+from goexport.helpers import add_runtime_arguments
 from goexport.reporting import get_reporter
 from goexport.services.capture import configure_backend
 from goexport.services.chromium import (
@@ -44,12 +45,13 @@ def register(subparsers: argparse._SubParsersAction) -> None:
         help="Check whether this computer is ready to run GoExport.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
+    add_runtime_arguments(parser)
     parser.set_defaults(func=entry)
 
 
 def entry(args: argparse.Namespace) -> int:
     reporter = get_reporter(args)
-    checks = list(run_checks())
+    checks = list(run_checks(args))
 
     for check in checks:
         icon = {"ok": "OK", "warning": "WARNING", "error": "ERROR"}[check.status]
@@ -103,14 +105,22 @@ def entry(args: argparse.Namespace) -> int:
     return 1 if errors else 0
 
 
-def run_checks() -> Iterable[Check]:
+def run_checks(args: argparse.Namespace | None = None) -> Iterable[Check]:
     """Yield checks required by the dependency installer and runtime."""
+
+    args = args or argparse.Namespace()
+    runtime_paths = {
+        "chrome": getattr(args, "chrome_path", config.CHROME_PATH),
+        "chromedriver": getattr(args, "chromedriver_path", config.CHROMEDRIVER_PATH),
+        "flash": getattr(args, "flash_plugin_path", config.FLASH_PLUGIN_PATH),
+        "ffmpeg": getattr(args, "ffmpeg_path", config.FFMPEG_PATH),
+    }
 
     yield from _check_python()
     yield from _check_requirements()
-    yield from _check_runtime_files()
-    yield from _check_chromium_dependencies()
-    yield from _check_executables()
+    yield from _check_runtime_files(runtime_paths)
+    yield from _check_chromium_dependencies(runtime_paths["chrome"])
+    yield from _check_executables(runtime_paths)
     yield from _check_resources()
     yield from _check_platform()
 
@@ -169,12 +179,18 @@ def _read_requirements(requirements: Path) -> str:
     return data.decode("utf-8-sig")
 
 
-def _check_runtime_files() -> Iterable[Check]:
+def _check_runtime_files(runtime_paths: dict[str, Path] | None = None) -> Iterable[Check]:
+    runtime_paths = runtime_paths or {
+        "chrome": config.CHROME_PATH,
+        "chromedriver": config.CHROMEDRIVER_PATH,
+        "flash": config.FLASH_PLUGIN_PATH,
+        "ffmpeg": config.FFMPEG_PATH,
+    }
     required = {
-        "Chromium": config.CHROME_PATH,
-        "ChromeDriver": config.CHROMEDRIVER_PATH,
-        "Pepper Flash": config.FLASH_PLUGIN_PATH,
-        "FFmpeg": config.FFMPEG_PATH,
+        "Chromium": runtime_paths["chrome"],
+        "ChromeDriver": runtime_paths["chromedriver"],
+        "Pepper Flash": runtime_paths["flash"],
+        "FFmpeg": runtime_paths["ffmpeg"],
     }
     for name, path in required.items():
         if path.is_file() or (name == "Pepper Flash" and path.is_dir()):
@@ -183,43 +199,18 @@ def _check_runtime_files() -> Iterable[Check]:
             yield Check(name, "error", f"Missing: {path}")
 
 
-def _check_executables() -> Iterable[Check]:
+def _check_executables(runtime_paths: dict[str, Path]) -> Iterable[Check]:
     for name, path in (
-        ("ChromeDriver", config.CHROMEDRIVER_PATH),
-        ("FFmpeg", config.FFMPEG_PATH),
+        ("ChromeDriver", runtime_paths["chromedriver"]),
+        ("FFmpeg", runtime_paths["ffmpeg"]),
     ):
-        if not path.is_file():
-            continue
-        if os.name != "nt" and not os.access(path, os.X_OK):
-            yield Check(name + " permissions", "error", f"Not executable: {path}")
-            continue
-        try:
-            result = subprocess.run(
-                [str(path), "-version" if name == "FFmpeg" else "--version"],
-                capture_output=True,
-                text=True,
-                timeout=10,
-                check=False,
-            )
-        except (OSError, subprocess.TimeoutExpired) as error:
-            yield Check(name + " launch", "error", f"Could not run {path}: {error}")
-            continue
-        if result.returncode:
-            detail = (result.stderr or result.stdout).strip().splitlines()
-            yield Check(
-                name + " launch",
-                "warning",
-                detail[0] if detail else f"Exited with {result.returncode}.",
-            )
-        else:
-            version = (result.stdout or result.stderr).strip().splitlines()
-            yield Check(
-                name + " launch",
-                "ok",
-                version[0] if version else "Responded to --version.",
-            )
+        yield from _check_executable(name, path)
 
-    if config.CHROME_PATH.is_file():
+    yield from _check_chromium_launch(runtime_paths["chrome"])
+
+
+def _check_chromium_launch(chrome_path: Path) -> Iterable[Check]:
+    if chrome_path.is_file():
         yield Check(
             "Chromium launch",
             "warning",
@@ -227,14 +218,62 @@ def _check_executables() -> Iterable[Check]:
         )
 
 
-def _check_chromium_dependencies() -> Iterable[Check]:
+def _check_executable(name: str, path: Path) -> Iterable[Check]:
+    if not path.is_file():
+        return
+    permission_check = _check_executable_permissions(name, path)
+    if permission_check is not None:
+        yield permission_check
+        return
+    yield from _check_executable_launch(name, path)
+
+
+def _check_executable_permissions(name: str, path: Path) -> Check | None:
+    if os.name != "nt" and not os.access(path, os.X_OK):
+        return Check(name + " permissions", "error", f"Not executable: {path}")
+    return None
+
+
+def _check_executable_launch(name: str, path: Path) -> Iterable[Check]:
+    try:
+        result = subprocess.run(
+            [str(path), "-version" if name == "FFmpeg" else "--version"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired) as error:
+        yield Check(name + " launch", "error", f"Could not run {path}: {error}")
+        return
+
+    yield _check_executable_result(name, result)
+
+
+def _check_executable_result(name: str, result) -> Check:
+    output = (result.stderr or result.stdout).strip().splitlines()
+    if result.returncode:
+        return Check(
+            name + " launch",
+            "warning",
+            output[0] if output else f"Exited with {result.returncode}.",
+        )
+    return Check(
+        name + " launch",
+        "ok",
+        output[0] if output else "Responded to --version.",
+    )
+
+
+def _check_chromium_dependencies(chrome_path: Path | None = None) -> Iterable[Check]:
     """Check the bundled Chromium shared libraries on Linux with ``ldd``."""
 
-    if config.SYSTEM != "Linux" or not config.CHROME_PATH.is_file():
+    chrome_path = chrome_path or config.CHROME_PATH
+    if config.SYSTEM != "Linux" or not chrome_path.is_file():
         return
 
     try:
-        missing = find_linux_chromium_missing_dependencies(config.CHROME_PATH)
+        missing = find_linux_chromium_missing_dependencies(chrome_path)
     except ChromiumDependencyCheckError as error:
         yield Check("Chromium dependencies", "error", str(error))
         return

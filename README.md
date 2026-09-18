@@ -41,6 +41,11 @@ Recording defaults to 1280x720 at 24 fps and appends `resources/outro.mp4` unles
 `--no-outro` is supplied. Its intermediate files are `<output>.video.mkv` and
 `<output>.audio.wav`; failed captures retain available diagnostics. Recording
 without captured audio muxes a silent audio track into the requested container.
+
+Chromium, ChromeDriver, Pepper Flash, and FFmpeg paths can be changed with
+`--chrome-path`, `--chromedriver-path`, `--flash-plugin-path`, and `--ffmpeg-path`.
+They default to the existing files under `bin/`, are validated before the
+command starts, and are also honored by `doctor`.
 Frame-by-frame export uses `output.mkv`, `audio.wav`, and `final_output.<format>`
 in the working directory. These fixed names are unsuitable for concurrent runs.
 
