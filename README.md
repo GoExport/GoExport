@@ -135,9 +135,10 @@ alignment and cancellation of a blocked native capture read remain limitations.
 The export command needs movie XML for local audio even though `--movie-xml` is
 not marked required by argparse. The shared HTML template plays by movie ID;
 it does not consume the supplied XML path or user ID. Flash settings automation
-uses layout-dependent keyboard navigation. Outro concatenation expects an
-audio stream in the custom outro. These workflows require an actual Wrapper
-instance and platform testing beyond synthetic FFmpeg checks.
+locates Chromium's Flash permission control through the settings page's Shadow
+DOM. Outro concatenation expects an audio stream in the custom outro. These
+workflows require an actual Wrapper instance and platform testing beyond
+synthetic FFmpeg checks.
 
 ## Roles
 
