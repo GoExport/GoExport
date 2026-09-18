@@ -209,42 +209,47 @@ def _check_executables(runtime_paths: dict[str, Path] | None = None) -> Iterable
         ("ChromeDriver", runtime_paths["chromedriver"]),
         ("FFmpeg", runtime_paths["ffmpeg"]),
     ):
-        if not path.is_file():
-            continue
-        if os.name != "nt" and not os.access(path, os.X_OK):
-            yield Check(name + " permissions", "error", f"Not executable: {path}")
-            continue
-        try:
-            result = subprocess.run(
-                [str(path), "-version" if name == "FFmpeg" else "--version"],
-                capture_output=True,
-                text=True,
-                timeout=10,
-                check=False,
-            )
-        except (OSError, subprocess.TimeoutExpired) as error:
-            yield Check(name + " launch", "error", f"Could not run {path}: {error}")
-            continue
-        if result.returncode:
-            detail = (result.stderr or result.stdout).strip().splitlines()
-            yield Check(
-                name + " launch",
-                "warning",
-                detail[0] if detail else f"Exited with {result.returncode}.",
-            )
-        else:
-            version = (result.stdout or result.stderr).strip().splitlines()
-            yield Check(
-                name + " launch",
-                "ok",
-                version[0] if version else "Responded to --version.",
-            )
+        yield from _check_executable(name, path)
 
     if runtime_paths["chrome"].is_file():
         yield Check(
             "Chromium launch",
             "warning",
             "Not started by doctor; Chromium 87 can open a GUI for version probes.",
+        )
+
+
+def _check_executable(name: str, path: Path) -> Iterable[Check]:
+    if not path.is_file():
+        return
+    if os.name != "nt" and not os.access(path, os.X_OK):
+        yield Check(name + " permissions", "error", f"Not executable: {path}")
+        return
+
+    try:
+        result = subprocess.run(
+            [str(path), "-version" if name == "FFmpeg" else "--version"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired) as error:
+        yield Check(name + " launch", "error", f"Could not run {path}: {error}")
+        return
+
+    output = (result.stderr or result.stdout).strip().splitlines()
+    if result.returncode:
+        yield Check(
+            name + " launch",
+            "warning",
+            output[0] if output else f"Exited with {result.returncode}.",
+        )
+    else:
+        yield Check(
+            name + " launch",
+            "ok",
+            output[0] if output else "Responded to --version.",
         )
 
 
