@@ -115,3 +115,12 @@ def add_player_arguments(parser: argparse.ArgumentParser) -> None:
         default=config.CLIENT_THEME_PATH,
         help="The URL of the client theme path to be used in the export.",
     )
+
+    parser.add_argument("--chrome-path", type=existing_file, default=config.CHROME_PATH,
+                        help="Path to the Chromium executable.")
+    parser.add_argument("--chromedriver-path", type=existing_file, default=config.CHROMEDRIVER_PATH,
+                        help="Path to the ChromeDriver executable.")
+    parser.add_argument("--flash-plugin-path", type=existing_file, default=config.FLASH_PLUGIN_PATH,
+                        help="Path to the Pepper Flash plugin.")
+    parser.add_argument("--ffmpeg-path", type=existing_file, default=config.FFMPEG_PATH,
+                        help="Path to the FFmpeg executable.")

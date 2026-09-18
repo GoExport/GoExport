@@ -58,6 +58,9 @@ class RecordingService:
         # stale Chromium windows from matching this recording's capture target.
         self._capture_window_title = f"GoExport Recorder {uuid.uuid4().hex}"
 
+    def _ffmpeg_path(self):
+        return getattr(self.args, "ffmpeg_path", config.FFMPEG_PATH)
+
     def _create_output_path(self):
         return resolve_output_path(Path(self.args.output), self.args.format)
 
@@ -100,7 +103,7 @@ class RecordingService:
                         )
                     if video is None:
                         video = FFmpegRawVideoEncoder(
-                            config.FFMPEG_PATH,
+                            self._ffmpeg_path(),
                             video_path,
                             frame.width,
                             frame.height,
@@ -124,7 +127,7 @@ class RecordingService:
                         )
                     if audio is None:
                         audio = FFmpegRawAudioEncoder(
-                            config.FFMPEG_PATH,
+                            self._ffmpeg_path(),
                             audio_path,
                             frame.channels,
                             frame.rate,
@@ -274,7 +277,7 @@ class RecordingService:
                 watcher.join(30)
 
     def _finish_recording(self, output, video, audio):
-        muxer = FFmpegMuxer(config.FFMPEG_PATH)
+        muxer = FFmpegMuxer(self._ffmpeg_path())
         self.reporter.progress(85, "muxing")
         muxer.mux(video, audio if audio.is_file() else None, output)
         if not self.args.no_outro:
@@ -290,9 +293,9 @@ class RecordingService:
 
     def _create_browser_service(self):
         return BrowserService(
-            config.CHROME_PATH,
-            config.CHROMEDRIVER_PATH,
-            config.FLASH_PLUGIN_PATH,
+            getattr(self.args, "chrome_path", config.CHROME_PATH),
+            getattr(self.args, "chromedriver_path", config.CHROMEDRIVER_PATH),
+            getattr(self.args, "flash_plugin_path", config.FLASH_PLUGIN_PATH),
             config.FLASH_PLUGIN_VERSION,
             *self.args.resolution,
         )

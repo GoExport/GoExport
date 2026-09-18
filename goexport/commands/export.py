@@ -83,12 +83,12 @@ def export_video(args: argparse.Namespace) -> int:
     )
 
     audio_encoder = FFmpegAudioEncoder(
-        ffmpeg_path=config.FFMPEG_PATH,
+        ffmpeg_path=args.ffmpeg_path,
         resolver=resolver,
         fps=config.FPS,
     )
 
-    muxer = FFmpegMuxer(config.FFMPEG_PATH)
+    muxer = FFmpegMuxer(args.ffmpeg_path)
 
     audio_processor = AudioProcessor(
         audio_encoder,
@@ -100,9 +100,9 @@ def export_video(args: argparse.Namespace) -> int:
     timeline_builder = TimelineBuilder(args.movie_xml)
 
     browser_service = BrowserService(
-        chrome_path=config.CHROME_PATH,
-        chromedriver_path=config.CHROMEDRIVER_PATH,
-        flash_path=config.FLASH_PLUGIN_PATH,
+        chrome_path=args.chrome_path,
+        chromedriver_path=args.chromedriver_path,
+        flash_path=args.flash_plugin_path,
         flash_version=config.FLASH_PLUGIN_VERSION,
         width=args.resolution[0],
         height=args.resolution[1],
@@ -139,7 +139,7 @@ def export_video(args: argparse.Namespace) -> int:
         await_started(driver)
 
         encoder = FFmpegVideoEncoder(
-            ffmpeg_path=config.FFMPEG_PATH,
+            ffmpeg_path=args.ffmpeg_path,
             output_file="output.mkv",
             width=args.resolution[0],
             height=args.resolution[1],
