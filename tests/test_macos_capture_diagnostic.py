@@ -128,9 +128,35 @@ class MacOSRealScapDiagnostic(unittest.TestCase):
                 if not permitted:
                     raise PermissionError("Screen Recording permission was denied")
 
+            def find_production_target():
+                window_title = driver.title
+                print(f"[scap diagnostic] Selenium window title: {window_title!r}")
+                all_targets = list(scap.targets())
+                print(
+                    f"[scap diagnostic] targets visible during browser lookup: "
+                    f"{len(all_targets)}"
+                )
+                for index, item in enumerate(all_targets):
+                    print(f"[scap diagnostic] lookup target[{index}]: {_describe(item)}")
+                matching = [
+                    item
+                    for item in all_targets
+                    if getattr(item, "kind", None) == "window"
+                    and (
+                        getattr(item, "title", None) == window_title
+                        or getattr(item, "title", "").startswith(
+                            f"{window_title} - "
+                        )
+                    )
+                ]
+                print(
+                    "[scap diagnostic] title-matching window targets:",
+                    len(matching),
+                )
+                return browser.get_capture_target(driver)
+
             target = self._stage(
-                "find GoExport browser capture target",
-                lambda: browser.get_capture_target(driver),
+                "find GoExport browser capture target", find_production_target
             )
             crop_area = self._stage(
                 "calculate production capture crop",
