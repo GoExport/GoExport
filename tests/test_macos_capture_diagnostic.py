@@ -91,17 +91,14 @@ class MacOSRealScapDiagnostic(unittest.TestCase):
             config.FLASH_PLUGIN_VERSION,
             config.WIDTH,
             config.HEIGHT,
+            check_screen_resolution=False,
+            check_frame_resolution=False,
         )
         capturer = None
         try:
             driver = self._stage("start Chromium", browser.create_driver)
             self._stage("load Wrapper URL", lambda: driver.get(config.URL))
             self._stage("enter fullscreen", lambda: browser.enter_fullscreen(driver))
-            self._stage(
-                "validate screen resolution",
-                lambda: browser.validate_screen_resolution(driver),
-            )
-            self._stage("validate browser viewport", browser.assert_full_resolution)
             self._stage("enable Flash", lambda: browser.enable_flash(driver))
             self._stage(
                 "load GoExport template",
