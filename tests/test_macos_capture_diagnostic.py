@@ -16,6 +16,8 @@ import traceback
 import unittest
 
 from goexport import config
+from goexport.services.browser import BrowserService
+from goexport.services.capture import create_capturer
 
 
 def _describe(value):
@@ -82,28 +84,72 @@ class MacOSRealScapDiagnostic(unittest.TestCase):
                 pass
 
         scap = self._stage("import real scap module", lambda: __import__("scap"))
-        targets = self._stage("scap.targets()", scap.targets)
-        targets = list(targets)
-        print(f"[scap diagnostic] detected targets: {len(targets)}")
-        for index, target in enumerate(targets):
-            print(f"[scap diagnostic] target[{index}]: {_describe(target)}")
-        if not targets:
-            raise RuntimeError("scap.targets() returned no capture targets")
-
+        browser = BrowserService(
+            config.CHROME_PATH,
+            config.CHROMEDRIVER_PATH,
+            config.FLASH_PLUGIN_PATH,
+            config.FLASH_PLUGIN_VERSION,
+            config.WIDTH,
+            config.HEIGHT,
+        )
         capturer = None
         try:
-            options = scap.CaptureOptions(
-                fps=config.FPS,
-                target=targets[0],
-                crop_area=None,
-                show_cursor=False,
-                show_highlight=False,
-                output_type="bgra",
-                output_resolution="captured",
-                captures_audio=True,
+            driver = self._stage("start Chromium", browser.create_driver)
+            self._stage("load Wrapper URL", lambda: driver.get(config.URL))
+            self._stage("enter fullscreen", lambda: browser.enter_fullscreen(driver))
+            self._stage(
+                "validate screen resolution",
+                lambda: browser.validate_screen_resolution(driver),
             )
+            self._stage("validate browser viewport", browser.assert_full_resolution)
+            self._stage("enable Flash", lambda: browser.enable_flash(driver))
+            self._stage(
+                "load GoExport template",
+                lambda: browser.inject_dom(
+                    driver,
+                    config.TEMPLATE_HTML_PATH,
+                    {
+                        "WINDOW_TITLE": "GoExport macOS Capture Diagnostic",
+                        "PLAYER_WIDTH": config.WIDTH,
+                        "PLAYER_HEIGHT": config.HEIGHT,
+                        "PLAYER_SWF_URL": config.SWF_URL,
+                        "IS_WIDE": int(config.IS_WIDE),
+                        "API_SERVER": config.API_URL,
+                        "STORE_PATH": config.STORE_PATH,
+                        "CLIENT_THEME_PATH": config.CLIENT_THEME_PATH,
+                        "MOVIE_ID": "capture-diagnostic",
+                        "USER_ID": "capture-diagnostic",
+                    },
+                ),
+            )
+            if not self._stage("check scap support", scap.is_supported):
+                raise RuntimeError("scap reports that this platform is unsupported")
+            if not self._stage("check Screen Recording permission", scap.has_permission):
+                permitted = self._stage(
+                    "request Screen Recording permission", scap.request_permission
+                )
+                if not permitted:
+                    raise PermissionError("Screen Recording permission was denied")
+
+            target = self._stage(
+                "find GoExport browser capture target",
+                lambda: browser.get_capture_target(driver),
+            )
+            crop_area = self._stage(
+                "calculate production capture crop",
+                lambda: browser.get_capture_crop_area(driver),
+            )
+            print(f"[scap diagnostic] production target: {_describe(target)}")
+            print(f"[scap diagnostic] production crop area: {crop_area!r}")
+            if target is None:
+                targets = list(self._stage("scap.targets()", scap.targets))
+                print(f"[scap diagnostic] detected targets: {len(targets)}")
+                for index, item in enumerate(targets):
+                    print(f"[scap diagnostic] target[{index}]: {_describe(item)}")
+
             capturer = self._stage(
-                "construct scap.Capturer", lambda: scap.Capturer(options)
+                "construct production scap.Capturer",
+                lambda: create_capturer(target, crop_area, browser.capture_display),
             )
             self._stage("start capture", capturer.start)
             deadline = time.monotonic() + 5.0
@@ -138,6 +184,11 @@ class MacOSRealScapDiagnostic(unittest.TestCase):
                             method()
                         except BaseException:
                             traceback.print_exc()
+            try:
+                print("[scap diagnostic] cleanup: close Chromium")
+                browser.close()
+            except BaseException:
+                traceback.print_exc()
 
 
 if __name__ == "__main__":
