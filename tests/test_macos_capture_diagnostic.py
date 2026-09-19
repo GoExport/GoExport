@@ -17,7 +17,6 @@ import unittest
 
 from goexport import config
 from goexport.services.browser import BrowserService
-from goexport.services.capture import create_capturer
 
 
 def _describe(value):
@@ -29,6 +28,21 @@ def _describe(value):
                 details.append(f"{name}={getattr(value, name)!r}")
         except Exception:
             details.append(f"{name}=<unreadable>")
+    return ", ".join(details)
+
+
+def _frame_details(frame):
+    details = [_describe(frame)]
+    for name in ("width", "height", "format", "timestamp"):
+        try:
+            details.append(f"{name}={getattr(frame, name)!r}")
+        except Exception:
+            details.append(f"{name}=<unreadable>")
+    try:
+        details.append(f"data.shape={frame.data.shape!r}")
+        details.append(f"data.size={frame.data.size!r}")
+    except Exception:
+        details.append("data=<unreadable>")
     return ", ".join(details)
 
 
@@ -128,7 +142,7 @@ class MacOSRealScapDiagnostic(unittest.TestCase):
                 if not permitted:
                     raise PermissionError("Screen Recording permission was denied")
 
-            def find_production_target():
+            def enumerate_targets():
                 window_title = driver.title
                 print(f"[scap diagnostic] Selenium window title: {window_title!r}")
                 all_targets = list(scap.targets())
@@ -153,13 +167,17 @@ class MacOSRealScapDiagnostic(unittest.TestCase):
                     "[scap diagnostic] title-matching window targets:",
                     len(matching),
                 )
-                return browser.get_capture_target(driver)
+                return all_targets
 
+            self._stage(
+                "enumerate PyScap targets", enumerate_targets
+            )
             target = self._stage(
-                "find GoExport browser capture target", find_production_target
+                "select Chromium capture target",
+                lambda: browser.get_capture_target(driver),
             )
             crop_area = self._stage(
-                "calculate production capture crop",
+                "calculate crop area",
                 lambda: browser.get_capture_crop_area(driver),
             )
             print(f"[scap diagnostic] production target: {_describe(target)}")
@@ -170,11 +188,43 @@ class MacOSRealScapDiagnostic(unittest.TestCase):
                 for index, item in enumerate(targets):
                     print(f"[scap diagnostic] target[{index}]: {_describe(item)}")
 
-            capturer = self._stage(
-                "construct production scap.Capturer",
-                lambda: create_capturer(target, crop_area, browser.capture_display),
+            options = self._stage(
+                "construct scap.CaptureOptions",
+                lambda: scap.CaptureOptions(
+                    fps=config.FPS,
+                    target=target,
+                    crop_area=crop_area,
+                    show_cursor=False,
+                    show_highlight=False,
+                    output_type="bgra",
+                    output_resolution="captured",
+                    captures_audio=True,
+                ),
             )
-            self._stage("start capture", capturer.start)
+            print(
+                "[scap diagnostic] requested options: "
+                f"fps={config.FPS}, target={_describe(target)}, "
+                f"crop_area={crop_area!r}, show_cursor=False, "
+                "show_highlight=False, output_type='bgra', "
+                "output_resolution='captured', captures_audio=True, "
+                "exclude_current_process_audio=False",
+                flush=True,
+            )
+            capturer = self._stage(
+                "construct scap.Capturer / SCStream",
+                lambda: scap.Capturer(options),
+            )
+            effective_size = self._stage(
+                "read effective capture dimensions", capturer.output_size
+            )
+            print(
+                "[scap diagnostic] effective capture dimensions: "
+                f"{effective_size[0]}x{effective_size[1]}",
+                flush=True,
+            )
+            self.assertGreater(effective_size[0], 0)
+            self.assertGreater(effective_size[1], 0)
+            self._stage("start SCStream", capturer.start)
             deadline = time.monotonic() + 5.0
             video_frame = None
             frame_count = 0
@@ -184,7 +234,8 @@ class MacOSRealScapDiagnostic(unittest.TestCase):
                     f"read frame {frame_count}", capturer.next_frame
                 )
                 print(
-                    f"[scap diagnostic] frame[{frame_count}]: {_describe(frame)}",
+                    f"[scap diagnostic] frame[{frame_count}]: "
+                    f"{_frame_details(frame)}",
                     flush=True,
                 )
                 if isinstance(frame, scap.VideoFrameInfo):
@@ -196,6 +247,11 @@ class MacOSRealScapDiagnostic(unittest.TestCase):
                     "scap.VideoFrameInfo was received within 5 seconds "
                     f"({frame_count} frames read)"
                 )
+            self.assertGreater(video_frame.width, 0)
+            self.assertGreater(video_frame.height, 0)
+            self.assertGreater(video_frame.data.size, 0)
+            self.assertEqual(video_frame.data.shape[0], video_frame.height)
+            self.assertEqual(video_frame.data.shape[1], video_frame.width)
             print("[scap diagnostic] valid video frame received: yes")
         finally:
             if capturer is not None:
