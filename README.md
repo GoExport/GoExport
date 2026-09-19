@@ -110,6 +110,7 @@ logging. Keep encoder stderr file-backed to avoid pipe deadlocks.
 ```sh
 python -m pip install -r requirements-dev.txt
 python -m unittest discover -s tests -v
+python3 -m unittest tests.test_macos_capture_diagnostic -v
 python -m ruff check goexport scripts tests main.py
 python -m ruff format --check goexport scripts tests main.py
 python -m mypy
