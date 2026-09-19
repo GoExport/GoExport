@@ -11,6 +11,7 @@ import platform
 import subprocess
 import sys
 import sysconfig
+import time
 import traceback
 import unittest
 
@@ -105,17 +106,26 @@ class MacOSRealScapDiagnostic(unittest.TestCase):
                 "construct scap.Capturer", lambda: scap.Capturer(options)
             )
             self._stage("start capture", capturer.start)
-            frames = []
-            for index in range(3):
-                frame = self._stage(f"read frame {index + 1}", capturer.next_frame)
-                print(f"[scap diagnostic] frame[{index}]: {_describe(frame)}")
-                frames.append(frame)
-            video_frames = [
-                frame for frame in frames if isinstance(frame, scap.VideoFrameInfo)
-            ]
-            if not video_frames:
+            deadline = time.monotonic() + 5.0
+            video_frame = None
+            frame_count = 0
+            while frame_count < 300 and time.monotonic() < deadline:
+                frame_count += 1
+                frame = self._stage(
+                    f"read frame {frame_count}", capturer.next_frame
+                )
+                print(
+                    f"[scap diagnostic] frame[{frame_count}]: {_describe(frame)}",
+                    flush=True,
+                )
+                if isinstance(frame, scap.VideoFrameInfo):
+                    video_frame = frame
+                    break
+            if video_frame is None:
                 raise RuntimeError(
-                    "capture returned no valid scap.VideoFrameInfo frame"
+                    "capture started successfully, but no "
+                    "scap.VideoFrameInfo was received within 5 seconds "
+                    f"({frame_count} frames read)"
                 )
             print("[scap diagnostic] valid video frame received: yes")
         finally:
