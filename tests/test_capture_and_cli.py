@@ -3,7 +3,7 @@ import sys
 import unittest
 from argparse import Namespace
 from types import SimpleNamespace
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, call, patch
 
 from goexport import config
 from goexport.services.capture import (
@@ -12,11 +12,45 @@ from goexport.services.capture import (
     audio_trim_samples,
     cfr_index,
     configure_backend,
+    configure_windows_dpi_awareness,
     create_capturer,
 )
 
 
 class CaptureTimelineTests(unittest.TestCase):
+    def test_windows_uses_per_monitor_v2_dpi_awareness(self):
+        import goexport.services.capture as capture
+
+        windll = Mock()
+        windll.user32.SetProcessDpiAwarenessContext.return_value = True
+        with (
+            patch.object(config, "SYSTEM", "Windows"),
+            patch.object(capture, "_windows_dpi_configured", False),
+            patch.object(capture.ctypes, "windll", windll, create=True),
+        ):
+            configure_windows_dpi_awareness()
+
+        argument = windll.user32.SetProcessDpiAwarenessContext.call_args.args[0]
+        self.assertEqual(argument.value, capture.ctypes.c_void_p(-4).value)
+        windll.shcore.SetProcessDpiAwareness.assert_not_called()
+        windll.user32.SetProcessDPIAware.assert_not_called()
+
+    def test_windows_dpi_awareness_falls_back_for_older_versions(self):
+        import goexport.services.capture as capture
+
+        windll = Mock()
+        windll.user32.SetProcessDpiAwarenessContext.side_effect = AttributeError
+        windll.shcore.SetProcessDpiAwareness.return_value = 0
+        with (
+            patch.object(config, "SYSTEM", "Windows"),
+            patch.object(capture, "_windows_dpi_configured", False),
+            patch.object(capture.ctypes, "windll", windll, create=True),
+        ):
+            configure_windows_dpi_awareness()
+
+        self.assertEqual(windll.shcore.SetProcessDpiAwareness.call_args, call(2))
+        windll.user32.SetProcessDPIAware.assert_not_called()
+
     def test_linux_backend_is_configured_before_scap_import(self):
         scap = Mock()
         scap.CaptureOptions.return_value = Mock()

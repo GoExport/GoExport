@@ -6,6 +6,8 @@ GoExport.  The recorder deliberately never compares them with Python clocks.
 
 from __future__ import annotations
 
+import ctypes
+import logging
 import os
 from dataclasses import dataclass
 from decimal import ROUND_HALF_UP, Decimal
@@ -14,10 +16,60 @@ from typing import Any
 from goexport import config
 
 NANOSECONDS = 1_000_000_000
+logger = logging.getLogger(__name__)
+
+_windows_dpi_configured = False
+
+
+def configure_windows_dpi_awareness() -> None:
+    """Use physical pixels for Windows capture and window coordinates.
+
+    Without process DPI awareness, Windows virtualizes a 1920x1080 display to
+    1536x864 at 125% scaling.  PyScap then returns frames in those logical
+    dimensions, which are too small for a requested 1920x1080 export.
+    """
+    global _windows_dpi_configured
+
+    if config.SYSTEM != "Windows" or _windows_dpi_configured:
+        return
+
+    windll = getattr(ctypes, "windll", None)
+    if windll is None:
+        logger.debug("Windows DPI APIs are unavailable")
+        return
+
+    # Windows 10 1703+: per-monitor v2 is the most accurate mode when a window
+    # moves between monitors with different scale factors.
+    try:
+        if windll.user32.SetProcessDpiAwarenessContext(ctypes.c_void_p(-4)):
+            _windows_dpi_configured = True
+            return
+    except (AttributeError, OSError):
+        pass
+
+    # Windows 8.1 fallback.
+    try:
+        if windll.shcore.SetProcessDpiAwareness(2) == 0:
+            _windows_dpi_configured = True
+            return
+    except (AttributeError, OSError):
+        pass
+
+    # Vista/Windows 7 fallback. This is system-DPI aware rather than per-monitor
+    # aware, but still prevents the logical-pixel virtualization behind the bug.
+    try:
+        if windll.user32.SetProcessDPIAware():
+            _windows_dpi_configured = True
+            return
+    except (AttributeError, OSError):
+        pass
+
+    logger.debug("Windows DPI awareness could not be configured")
 
 
 def configure_backend(display: str | None = None) -> None:
-    """Select the owned X11 display before PyScap initializes its backend."""
+    """Configure the process before PyScap initializes its native backend."""
+    configure_windows_dpi_awareness()
     if config.SYSTEM == "Linux":
         os.environ.setdefault("SCAP_BACKEND", "x11")
         if display is not None:
