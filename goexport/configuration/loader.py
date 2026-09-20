@@ -79,7 +79,7 @@ def load_overrides(
 
     video = _section(data, "video")
     wrapper = _section(data, "wrapper")
-    paths = _section(data, "paths")
+    browser = _section(data, "browser")
     flash = _section(data, "flash")
     result: dict[str, Any] = {}
 
@@ -95,6 +95,12 @@ def load_overrides(
     _add(result, "HEIGHT", _positive_integer(video, "height", "video.height"))
     _add(result, "FPS", _positive_integer(video, "fps", "video.fps"))
 
+    _add(
+        result,
+        "ELECTRON",
+        _boolean(browser, "electron", "browser.electron"),
+    )
+
     for key, name in (
         ("URL", "url"),
         ("API_URL", "api_url"),
@@ -109,7 +115,7 @@ def load_overrides(
         ("CHROMEDRIVER_PATH", "chromedriver"),
         ("FFMPEG_PATH", "ffmpeg"),
     ):
-        _add(result, key, _path(paths, name, f"paths.{name}", base_dir))
+        _add(result, key, _path(browser, name, f"browser.{name}", base_dir))
 
     _add(
         result,
