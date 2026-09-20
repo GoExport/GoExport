@@ -103,6 +103,7 @@ def export_video(args: argparse.Namespace) -> int:
         chromedriver_path=args.chromedriver_path,
         flash_path=args.flash_plugin_path,
         flash_version=args.flash_plugin_version,
+        electron=getattr(args, "electron", config.ELECTRON),
         width=args.resolution[0],
         height=args.resolution[1],
     )
@@ -135,7 +136,10 @@ def export_video(args: argparse.Namespace) -> int:
             },
         )
 
-        await_started(driver)
+        await_started(
+            driver,
+            timeout_minutes=0 if getattr(args, "no_flash_timeout", False) else 30,
+        )
 
         encoder = FFmpegVideoEncoder(
             ffmpeg_path=args.ffmpeg_path,

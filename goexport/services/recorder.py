@@ -218,7 +218,12 @@ class RecordingService:
         service.inject_dom(
             driver, config.TEMPLATE_HTML_PATH, self._build_replacements()
         )
-        await_player_ready(driver)
+        await_player_ready(
+            driver,
+            timeout_seconds=0
+            if getattr(self.args, "no_flash_timeout", False)
+            else 30,
+        )
 
     @staticmethod
     def _watch(driver, stopped, errors):
@@ -232,7 +237,12 @@ class RecordingService:
 
     def _record_playback(self, driver, video_path, audio_path, service=None):
         driver.execute_script("player.pause();")
-        await_started(driver)
+        await_started(
+            driver,
+            timeout_minutes=0
+            if getattr(self.args, "no_flash_timeout", False)
+            else 30,
+        )
         if service is None:
             target = BrowserService.get_capture_target(driver)
             crop_area = None

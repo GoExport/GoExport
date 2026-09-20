@@ -31,6 +31,8 @@ def await_started(driver, timeout_minutes=30):
         raise TimeoutError("Video failed to load")
 
 def await_player_ready(driver, timeout_seconds=30):
+    timeout_seconds = timeout_seconds if timeout_seconds > 0 else float("inf")
+
     try:
         WebDriverWait(driver, timeout_seconds).until(
             lambda d: d.execute_script(

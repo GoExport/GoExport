@@ -125,6 +125,13 @@ class ResourceCleanupTests(unittest.TestCase):
             client_theme_path="theme",
             movie_id="movie",
             format="mp4",
+            electron=True,
+            no_flash_timeout=True,
+            chrome_path=Path("chrome"),
+            chromedriver_path=Path("chromedriver"),
+            flash_plugin_path=Path("flash"),
+            flash_plugin_version="1",
+            ffmpeg_path=Path("ffmpeg"),
         )
         with (
             patch.object(export, "BrowserService", autospec=True) as browser,
@@ -143,6 +150,11 @@ class ResourceCleanupTests(unittest.TestCase):
                 output_file=Path("final_output.mp4"),
             )
             browser.return_value.close.assert_called_once()
+            self.assertEqual(browser.call_args.kwargs["electron"], True)
+            export.await_started.assert_called_once_with(
+                browser.return_value.create_driver.return_value,
+                timeout_minutes=0,
+            )
 
 
 class EncodingTests(unittest.TestCase):

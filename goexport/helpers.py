@@ -83,6 +83,23 @@ def add_player_arguments(parser: argparse.ArgumentParser) -> None:
     )
 
     parser.add_argument(
+        "--electron",
+        action="store_true",
+        default=config.ELECTRON,
+        help=(
+            "When you want to hook into Electron browsers instead of a separate "
+            "browser, useful for Wrapper Offline integration."
+        ),
+    )
+
+    parser.add_argument(
+        "-nft",
+        "--no-flash-timeout",
+        action="store_true",
+        help="Wait indefinitely for the Flash player to load.",
+    )
+
+    parser.add_argument(
         "-u",
         "--url",
         default=config.URL,

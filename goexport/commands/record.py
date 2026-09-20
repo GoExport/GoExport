@@ -58,13 +58,6 @@ def register(subparsers: argparse._SubParsersAction) -> None:
         help="Path to an outro video to append after recording.",
     )
 
-    parser.add_argument(
-        "--electron",
-        action="store_true",
-        default=config.ELECTRON,
-        help="When you want to hook into Electron browsers instead of a separate browser, useful for Wrapper Offline integration.",
-    )
-
     parser.set_defaults(
         func=entry,
     )
