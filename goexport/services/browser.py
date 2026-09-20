@@ -2,6 +2,7 @@ import logging
 import os
 import time
 import urllib.parse
+import uuid
 from pathlib import Path
 
 from selenium import webdriver
@@ -19,6 +20,8 @@ logger = logging.getLogger(__name__)
 
 FLASH_PERMISSION_WAIT_SECONDS = 5
 FLASH_PERMISSION_POLL_SECONDS = 0.1
+CAPTURE_TARGET_WAIT_SECONDS = 5
+CAPTURE_TARGET_POLL_SECONDS = 0.1
 
 
 # Chromium 87's site-details page defines Flash as the `plugins` content
@@ -98,7 +101,7 @@ class BrowserService:
         chromedriver_path: Path,
         flash_path: Path,
         flash_version: str,
-        electron: bool,
+        electron: bool = False,
         width: int = config.WIDTH,
         height: int = config.HEIGHT,
         check_screen_resolution: bool = True,
@@ -116,6 +119,7 @@ class BrowserService:
         self.check_screen_resolution = check_screen_resolution
         self.check_frame_resolution = check_frame_resolution
         self._virtual_display_logged = False
+        self._capture_target_id = None
 
     def create_driver(self):
         self.validate_linux_dependencies()
@@ -125,7 +129,7 @@ class BrowserService:
         options.binary_location = str(self.chrome_path)
 
         if self.electron:
-            options.add_argument('--remote-debugging-port=9222')
+            options.add_argument("--remote-debugging-port=9222")
 
         options.add_argument("--high-dpi-support=1")
         options.add_argument("--force-device-scale-factor=1")
@@ -235,9 +239,25 @@ class BrowserService:
         import scap
 
         window_title = driver.title
+        all_targets = list(scap.targets())
+
+        if self._capture_target_id is not None:
+            remembered = [
+                target
+                for target in all_targets
+                if target.kind == "window" and target.id == self._capture_target_id
+            ]
+            if len(remembered) == 1:
+                return remembered[0]
+            raise RuntimeError(
+                "The Selenium window changed identity after entering fullscreen. "
+                f"Expected macOS window ID {self._capture_target_id}, found "
+                f"{len(remembered)} matching windows."
+            )
+
         targets = [
             target
-            for target in scap.targets()
+            for target in all_targets
             if target.kind == "window"
             and (
                 target.title == window_title
@@ -260,6 +280,49 @@ class BrowserService:
 
         return targets[0]
 
+    def remember_capture_target(self, driver):
+        """Bind the current macOS Chromium window before fullscreen changes its title."""
+        if config.SYSTEM != "Darwin" or self.electron:
+            return
+
+        import scap
+
+        original_title = driver.title
+        marker = f"GoExport Capture Probe {uuid.uuid4().hex}"
+        driver.execute_script("document.title = arguments[0];", marker)
+        deadline = time.monotonic() + CAPTURE_TARGET_WAIT_SECONDS
+        try:
+            while True:
+                matches = [
+                    target
+                    for target in scap.targets()
+                    if target.kind == "window"
+                    and (
+                        target.title == marker
+                        or target.title.startswith(f"{marker} - ")
+                    )
+                ]
+                if len(matches) == 1:
+                    self._capture_target_id = matches[0].id
+                    logger.info(
+                        "Bound Chromium to macOS capture window ID %s before fullscreen.",
+                        self._capture_target_id,
+                    )
+                    return
+                if len(matches) > 1:
+                    raise RuntimeError(
+                        "Could not uniquely identify the Selenium window before "
+                        f"fullscreen; marker {marker!r} matched {len(matches)} windows."
+                    )
+                if time.monotonic() >= deadline:
+                    raise RuntimeError(
+                        "Could not identify the Selenium window before fullscreen. "
+                        "macOS did not publish Chromium's temporary capture title."
+                    )
+                time.sleep(CAPTURE_TARGET_POLL_SECONDS)
+        finally:
+            driver.execute_script("document.title = arguments[0];", original_title)
+
     def get_capture_crop_area(self, driver):
         viewport = driver.execute_script("""
             return {
@@ -268,10 +331,7 @@ class BrowserService:
             };
         """)
 
-        top_inset = max(
-            0,
-            int(viewport["outerHeight"]) - int(viewport["innerHeight"])
-        )
+        top_inset = max(0, int(viewport["outerHeight"]) - int(viewport["innerHeight"]))
 
         if top_inset == 0:
             return None
@@ -470,7 +530,9 @@ class BrowserService:
 
     def enable_flash(self, driver):
         if self.electron:
-            logger.info("Skipping Chromium Flash permission setup for Electron browser.")
+            logger.info(
+                "Skipping Chromium Flash permission setup for Electron browser."
+            )
             return
         current_url = driver.current_url
 

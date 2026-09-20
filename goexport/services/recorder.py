@@ -203,19 +203,22 @@ class RecordingService:
         try:
             driver = service.create_driver()
             driver.get(self.args.url)
-            service.enter_fullscreen(driver)
-            service.validate_screen_resolution(driver)
-            service.assert_full_resolution()
-            service.enable_flash(driver)
-            service.inject_dom(
-                driver, config.TEMPLATE_HTML_PATH, self._build_replacements()
-            )
-            await_player_ready(driver)
         except BaseException:
             # Setup can fail before run() receives the service and driver.
             service.close()
             raise
         return service, driver
+
+    def _finish_browser_setup(self, service, driver):
+        service.remember_capture_target(driver)
+        service.enter_fullscreen(driver)
+        service.validate_screen_resolution(driver)
+        service.assert_full_resolution()
+        service.enable_flash(driver)
+        service.inject_dom(
+            driver, config.TEMPLATE_HTML_PATH, self._build_replacements()
+        )
+        await_player_ready(driver)
 
     @staticmethod
     def _watch(driver, stopped, errors):
@@ -325,8 +328,9 @@ class RecordingService:
         try:
             service, driver = self._prepare_browser()
             # Browser setup activates its owned Xvfb display before PyScap is
-            # imported or probes native support.  Chromium and PyScap therefore
-            # inherit the identical DISPLAY.
+            # imported or probes native support. Chromium and PyScap therefore
+            # inherit the identical DISPLAY. On macOS, permission is required
+            # before the pre-fullscreen window identity can be enumerated.
             configure_backend(service.capture_display)
             import scap
 
@@ -334,6 +338,7 @@ class RecordingService:
                 raise RuntimeError("This platform does not support screen capture")
             if not scap.has_permission() and not scap.request_permission():
                 raise PermissionError("Screen-capture permission was denied")
+            self._finish_browser_setup(service, driver)
             self.reporter.progress(5, "recording")
             self._record_playback(driver, video, audio, service)
             self._finish_recording(output, video, audio)

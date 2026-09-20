@@ -61,23 +61,29 @@ class MacOSRealScapDiagnostic(unittest.TestCase):
         python_machine = platform.machine()
         machine = python_machine
         try:
-            machine = subprocess.run(
-                ["sysctl", "-in", "hw.machine"],
-                check=False,
-                capture_output=True,
-                text=True,
-            ).stdout.strip() or machine
+            machine = (
+                subprocess.run(
+                    ["sysctl", "-in", "hw.machine"],
+                    check=False,
+                    capture_output=True,
+                    text=True,
+                ).stdout.strip()
+                or machine
+            )
         except OSError:
             pass
         rosetta = "unknown"
         if machine == "arm64" or python_machine == "x86_64":
             try:
-                rosetta = subprocess.run(
-                    ["sysctl", "-in", "sysctl.proc_translated"],
-                    check=False,
-                    capture_output=True,
-                    text=True,
-                ).stdout.strip() == "1"
+                rosetta = (
+                    subprocess.run(
+                        ["sysctl", "-in", "sysctl.proc_translated"],
+                        check=False,
+                        capture_output=True,
+                        text=True,
+                    ).stdout.strip()
+                    == "1"
+                )
             except OSError:
                 rosetta = "unavailable"
         print("[scap diagnostic] macOS version:", platform.mac_ver()[0])
@@ -103,6 +109,7 @@ class MacOSRealScapDiagnostic(unittest.TestCase):
             config.CHROMEDRIVER_PATH,
             config.FLASH_PLUGIN_PATH,
             config.FLASH_PLUGIN_VERSION,
+            config.ELECTRON,
             config.WIDTH,
             config.HEIGHT,
             check_screen_resolution=False,
@@ -112,6 +119,20 @@ class MacOSRealScapDiagnostic(unittest.TestCase):
         try:
             driver = self._stage("start Chromium", browser.create_driver)
             self._stage("load Wrapper URL", lambda: driver.get(config.URL))
+            if not self._stage("check scap support", scap.is_supported):
+                raise RuntimeError("scap reports that this platform is unsupported")
+            if not self._stage(
+                "check Screen Recording permission", scap.has_permission
+            ):
+                permitted = self._stage(
+                    "request Screen Recording permission", scap.request_permission
+                )
+                if not permitted:
+                    raise PermissionError("Screen Recording permission was denied")
+            self._stage(
+                "bind Chromium capture target before fullscreen",
+                lambda: browser.remember_capture_target(driver),
+            )
             self._stage("enter fullscreen", lambda: browser.enter_fullscreen(driver))
             self._stage("enable Flash", lambda: browser.enable_flash(driver))
             self._stage(
@@ -133,14 +154,6 @@ class MacOSRealScapDiagnostic(unittest.TestCase):
                     },
                 ),
             )
-            if not self._stage("check scap support", scap.is_supported):
-                raise RuntimeError("scap reports that this platform is unsupported")
-            if not self._stage("check Screen Recording permission", scap.has_permission):
-                permitted = self._stage(
-                    "request Screen Recording permission", scap.request_permission
-                )
-                if not permitted:
-                    raise PermissionError("Screen Recording permission was denied")
 
             def enumerate_targets():
                 window_title = driver.title
@@ -151,16 +164,16 @@ class MacOSRealScapDiagnostic(unittest.TestCase):
                     f"{len(all_targets)}"
                 )
                 for index, item in enumerate(all_targets):
-                    print(f"[scap diagnostic] lookup target[{index}]: {_describe(item)}")
+                    print(
+                        f"[scap diagnostic] lookup target[{index}]: {_describe(item)}"
+                    )
                 matching = [
                     item
                     for item in all_targets
                     if getattr(item, "kind", None) == "window"
                     and (
                         getattr(item, "title", None) == window_title
-                        or getattr(item, "title", "").startswith(
-                            f"{window_title} - "
-                        )
+                        or getattr(item, "title", "").startswith(f"{window_title} - ")
                     )
                 ]
                 print(
@@ -169,9 +182,7 @@ class MacOSRealScapDiagnostic(unittest.TestCase):
                 )
                 return all_targets
 
-            self._stage(
-                "enumerate PyScap targets", enumerate_targets
-            )
+            self._stage("enumerate PyScap targets", enumerate_targets)
             target = self._stage(
                 "select Chromium capture target",
                 lambda: browser.get_capture_target(driver),
@@ -230,12 +241,9 @@ class MacOSRealScapDiagnostic(unittest.TestCase):
             frame_count = 0
             while frame_count < 300 and time.monotonic() < deadline:
                 frame_count += 1
-                frame = self._stage(
-                    f"read frame {frame_count}", capturer.next_frame
-                )
+                frame = self._stage(f"read frame {frame_count}", capturer.next_frame)
                 print(
-                    f"[scap diagnostic] frame[{frame_count}]: "
-                    f"{_frame_details(frame)}",
+                    f"[scap diagnostic] frame[{frame_count}]: {_frame_details(frame)}",
                     flush=True,
                 )
                 if isinstance(frame, scap.VideoFrameInfo):

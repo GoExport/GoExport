@@ -128,11 +128,14 @@ capture, and encoder cleanup. Build output is ignored by Git.
 
 ## Platform behavior and remaining limits
 
-Windows and macOS select the browser capture target by its unique recording
-title. Linux explicitly uses PyScap's X11 backend and the current display's root
-window rather than enumerating windows. It tries to start an Xvfb display and
-logs a fallback to the current display if startup fails. Linux therefore needs
-an available X11 display/Xvfb; macOS may require screen-capture permission.
+Windows selects the browser capture target by its unique recording title. On
+macOS, GoExport assigns a temporary unique title before fullscreen, remembers
+the matching window ID, and resolves that ID again after fullscreen because
+Chromium can expose a stale native title there. Linux explicitly uses PyScap's
+X11 backend and the current display's root window rather than enumerating
+windows. It tries to start an Xvfb display and logs a fallback to the current
+display if startup fails. Linux therefore needs an available X11 display/Xvfb;
+macOS may require screen-capture permission.
 
 PyScap timestamps use integer nanoseconds within GoExport and are never compared
 with Python wall clocks. The recorder discards dequeued frames until `play()`

@@ -141,7 +141,9 @@ class BrowserCaptureTargetTests(unittest.TestCase):
     def _service():
         from goexport.services.browser import BrowserService
 
-        return BrowserService(Mock(), Mock(), Mock(), "1", width=1280, height=720)
+        return BrowserService(
+            Mock(), Mock(), Mock(), "1", False, width=1280, height=720
+        )
 
     def test_linux_uses_x11_root_display_without_enumerating_windows(self):
         scap = Mock()
@@ -163,6 +165,42 @@ class BrowserCaptureTargetTests(unittest.TestCase):
             patch.dict(sys.modules, {"scap": scap}),
         ):
             self.assertIs(self._service().get_capture_target(driver), expected)
+
+    def test_macos_remembers_window_id_before_fullscreen(self):
+        service = self._service()
+        target = SimpleNamespace(kind="window", id=42, title="probe")
+        scap = Mock()
+        scap.targets.return_value = [target]
+        driver = Mock(title="Wrapper")
+
+        def execute_script(_script, title):
+            if title.startswith("GoExport Capture Probe "):
+                target.title = title
+
+        driver.execute_script.side_effect = execute_script
+        with (
+            patch.object(config, "SYSTEM", "Darwin"),
+            patch.dict(sys.modules, {"scap": scap}),
+        ):
+            service.remember_capture_target(driver)
+
+        self.assertEqual(service._capture_target_id, 42)
+        self.assertEqual(driver.execute_script.call_args_list[-1].args[1], "Wrapper")
+
+    def test_macos_uses_remembered_id_when_fullscreen_title_is_stale(self):
+        service = self._service()
+        service._capture_target_id = 42
+        expected = SimpleNamespace(
+            kind="window", id=42, title="Videos - Wrapper: Offline"
+        )
+        scap = Mock()
+        scap.targets.return_value = [expected]
+        driver = SimpleNamespace(title="GoExport Recorder unique-title")
+        with (
+            patch.object(config, "SYSTEM", "Darwin"),
+            patch.dict(sys.modules, {"scap": scap}),
+        ):
+            self.assertIs(service.get_capture_target(driver), expected)
 
     def test_virtual_display_includes_browser_frame_margin(self):
         service = self._service()

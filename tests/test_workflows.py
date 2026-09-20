@@ -32,6 +32,7 @@ class ResourceCleanupTests(unittest.TestCase):
             ),
             patch.object(recording, "_record_playback"),
             patch.object(recording, "_finish_recording"),
+            patch.object(recording, "_finish_browser_setup"),
             patch.dict(sys.modules, {"scap": scap}),
         ):
             # This models BrowserService.start_display selecting Xvfb :99 before
