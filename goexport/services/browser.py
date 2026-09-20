@@ -3,6 +3,7 @@ import os
 import time
 import urllib.parse
 import uuid
+from collections.abc import Mapping
 from pathlib import Path
 
 from selenium import webdriver
@@ -508,7 +509,7 @@ class BrowserService:
     def inject_dom(
         driver,
         html_file: str | Path,
-        replacements: dict[str, object] | None = None,
+        replacements: Mapping[str, object] | None = None,
     ) -> None:
         html = Path(html_file).read_text(encoding="utf-8")
 

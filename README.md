@@ -36,6 +36,25 @@ python main.py record -id MOVIE_ID -out final_output --no-outro
 python main.py export -id MOVIE_ID -xml movie.xml -ugc /path/to/ugc -as /path/to/theme/assets
 ```
 
+Both workflows accept additional Flashvars. New names are added and standard
+names are overridden using last-value-wins behavior:
+
+```sh
+python main.py record -id MOVIE_ID --additional-flashvars "custom=1&movieId=override"
+```
+
+Player settings can contain named placeholders. The built-in `owner_id`
+replacement resolves to the `--user-id` value, so a store path such as
+`https://example/store/<store>?v={owner_id}` is resolved automatically. Add or
+override replacements per invocation with repeatable `--replacement NAME=VALUE`
+options, or persist them in `config.toml`:
+
+```toml
+[replacements]
+owner_id = "{user_id}"
+asset_owner = "users/{user_id}"
+```
+
 Run either command with `--help` for all options. MP4, MOV, and MKV are supported.
 Recording defaults to 1280x720 at 24 fps and appends `resources/outro.mp4` unless
 `--no-outro` is supplied. Its intermediate files are `<output>.video.mkv` and

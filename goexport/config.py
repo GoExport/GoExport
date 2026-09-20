@@ -69,8 +69,16 @@ SWF_URL = "http://localhost:4664/animation/414827163ad4eb60/player.swf"
 STORE_PATH = "http://localhost:4664/store/3a981f5cb2739137/<store>"
 CLIENT_THEME_PATH = "http://localhost:4664/static/ad44370a650793d9/<client_theme>"
 
+# Player-setting placeholders may refer to runtime fields such as ``user_id``.
+# Entries can be extended or replaced by config.toml and --replacement.
+PLACEHOLDER_REPLACEMENTS = {
+    "owner_id": "{user_id}",
+}
+
 CONFIG_PATH = BASE_DIR / "config.toml"
 
 # The loader returns only explicitly configured values; all other names above
 # retain the built-in or platform-specific defaults declared in this module.
-globals().update(load_overrides(CONFIG_PATH, BASE_DIR, SUPPORTED_FORMATS))
+_overrides = load_overrides(CONFIG_PATH, BASE_DIR, SUPPORTED_FORMATS)
+PLACEHOLDER_REPLACEMENTS.update(_overrides.pop("PLACEHOLDER_REPLACEMENTS", {}))
+globals().update(_overrides)

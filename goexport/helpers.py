@@ -3,6 +3,7 @@ from math import gcd
 from pathlib import Path
 
 from goexport import config
+from goexport.player_options import parse_flashvars, parse_replacement
 
 
 def parse_resolution(value: str) -> tuple[int, int]:
@@ -63,6 +64,29 @@ def resolve_output_path(output: Path, video_format: str) -> Path:
 
 def add_player_arguments(parser: argparse.ArgumentParser) -> None:
     """Register player settings shared by recording and frame-by-frame export."""
+    parser.add_argument(
+        "-uid",
+        "--user-id",
+        help="The ID of the user associated with the movie.",
+    )
+
+    parser.add_argument(
+        "--additional-flashvars",
+        type=parse_flashvars,
+        default={},
+        metavar="NAME=VALUE&NAME=VALUE",
+        help="Add Flashvars or override the player's standard Flashvars.",
+    )
+
+    parser.add_argument(
+        "--replacement",
+        action="append",
+        type=parse_replacement,
+        default=[],
+        metavar="NAME=VALUE",
+        help="Add or override a configured player placeholder replacement.",
+    )
+
     parser.add_argument(
         "-r",
         "--resolution",

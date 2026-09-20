@@ -128,12 +128,16 @@ class CliTests(unittest.TestCase):
             client_theme_path="theme",
             movie_id="movie",
             user_id="user",
+            additional_flashvars={},
+            replacement=[],
         )
         first, second = RecordingService(args), RecordingService(args)
         self.assertNotEqual(first._capture_window_title, second._capture_window_title)
         self.assertEqual(
             first._build_replacements()["WINDOW_TITLE"], first._capture_window_title
         )
+        flashvars = first._build_replacements()["FLASHVARS"]
+        self.assertIn("movieId=movie", flashvars)
 
 
 class BrowserCaptureTargetTests(unittest.TestCase):

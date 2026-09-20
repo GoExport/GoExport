@@ -6,6 +6,7 @@ from goexport import config
 from goexport.helpers import add_player_arguments, existing_directory, existing_file
 from goexport.helpers import calculate_aspect_ratio as calculate_aspect_ratio
 from goexport.helpers import parse_resolution as parse_resolution
+from goexport.player_options import build_player_replacements, replacement_overrides
 from goexport.reporting import get_reporter
 from goexport.services.asset_resolver import AssetResolver
 from goexport.services.audio import AudioProcessor
@@ -119,21 +120,32 @@ def export_video(args: argparse.Namespace) -> int:
 
         browser_service.enable_flash(driver)
 
+        player_values = {
+            "WINDOW_TITLE": "GoExport Export",
+            "PLAYER_WIDTH": args.resolution[0],
+            "PLAYER_HEIGHT": args.resolution[1],
+            "PLAYER_SWF_URL": args.swf_url,
+            "IS_WIDE": str(args.is_wide).lower(),
+            "API_SERVER": args.api_url,
+            "STORE_PATH": args.store_path,
+            "CLIENT_THEME_PATH": args.client_theme_path,
+            "MOVIE_ID": args.movie_id,
+            "MOVIE_XML": str(args.movie_xml),
+            "USER_ID": getattr(args, "user_id", None),
+        }
         browser_service.inject_dom(
             driver,
             config.TEMPLATE_HTML_PATH,
-            {
-                "WINDOW_TITLE": "GoExport Export",
-                "PLAYER_WIDTH": args.resolution[0],
-                "PLAYER_HEIGHT": args.resolution[1],
-                "PLAYER_SWF_URL": args.swf_url,
-                "IS_WIDE": str(args.is_wide).lower(),
-                "API_SERVER": args.api_url,
-                "STORE_PATH": args.store_path,
-                "CLIENT_THEME_PATH": args.client_theme_path,
-                "MOVIE_ID": args.movie_id,
-                "MOVIE_XML": str(args.movie_xml),
-            },
+            build_player_replacements(
+                player_values,
+                getattr(args, "additional_flashvars", {}),
+                {
+                    "user_id": getattr(args, "user_id", None),
+                    "movie_id": args.movie_id,
+                },
+                config.PLACEHOLDER_REPLACEMENTS,
+                replacement_overrides(getattr(args, "replacement", [])),
+            ),
         )
 
         await_started(

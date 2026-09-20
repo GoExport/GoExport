@@ -24,12 +24,6 @@ def register(subparsers: argparse._SubParsersAction) -> None:
     )
 
     parser.add_argument(
-        "-uid",
-        "--user-id",
-        help="The ID of the user associated with the movie.",
-    )
-
-    parser.add_argument(
         "-f",
         "--format",
         choices=sorted(config.SUPPORTED_FORMATS),

@@ -6,6 +6,10 @@ from pathlib import Path
 
 from goexport import config
 from goexport.helpers import resolve_output_path
+from goexport.player_options import (
+    build_player_replacements,
+    replacement_overrides,
+)
 from goexport.reporting import get_reporter
 from goexport.services.browser import BrowserService
 from goexport.services.capture import (
@@ -220,9 +224,7 @@ class RecordingService:
         )
         await_player_ready(
             driver,
-            timeout_seconds=0
-            if getattr(self.args, "no_flash_timeout", False)
-            else 30,
+            timeout_seconds=0 if getattr(self.args, "no_flash_timeout", False) else 30,
         )
 
     @staticmethod
@@ -239,9 +241,7 @@ class RecordingService:
         driver.execute_script("player.pause();")
         await_started(
             driver,
-            timeout_minutes=0
-            if getattr(self.args, "no_flash_timeout", False)
-            else 30,
+            timeout_minutes=0 if getattr(self.args, "no_flash_timeout", False) else 30,
         )
         if service is None:
             target = BrowserService.get_capture_target(driver)
@@ -315,7 +315,7 @@ class RecordingService:
         )
 
     def _build_replacements(self):
-        return {
+        values = {
             "WINDOW_TITLE": self._capture_window_title,
             "PLAYER_WIDTH": self.args.resolution[0],
             "PLAYER_HEIGHT": self.args.resolution[1],
@@ -327,6 +327,13 @@ class RecordingService:
             "MOVIE_ID": self.args.movie_id,
             "USER_ID": self.args.user_id,
         }
+        return build_player_replacements(
+            values,
+            getattr(self.args, "additional_flashvars", {}),
+            {"user_id": self.args.user_id, "movie_id": self.args.movie_id},
+            config.PLACEHOLDER_REPLACEMENTS,
+            replacement_overrides(getattr(self.args, "replacement", [])),
+        )
 
     def run(self):
         self.reporter.progress(0, "preparing")

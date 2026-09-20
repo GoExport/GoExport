@@ -87,6 +87,19 @@ class ConfigurationTests(unittest.TestCase):
                 )
         self.assertEqual(args.format, "mov")
 
+    def test_replacement_table_is_loaded(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "config.toml"
+            path.write_text(
+                "[replacements]\nowner_id = '{user_id}'\nsite = 'FlashThemes'\n"
+            )
+            overrides = load_overrides(path, config.BASE_DIR, config.SUPPORTED_FORMATS)
+
+        self.assertEqual(
+            overrides["PLACEHOLDER_REPLACEMENTS"],
+            {"owner_id": "{user_id}", "site": "FlashThemes"},
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

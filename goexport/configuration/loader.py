@@ -55,6 +55,22 @@ def _path(
     return path if path.is_absolute() else base_dir / path
 
 
+def _string_map(data: dict[str, Any], name: str) -> dict[str, str]:
+    values = _section(data, name)
+    result: dict[str, str] = {}
+    for key, value in values.items():
+        if not isinstance(key, str) or not isinstance(value, str):
+            raise ConfigurationError(f"[{name}] entries must be strings")
+        if (
+            not key
+            or not (key[0].isalpha() or key[0] == "_")
+            or not all(character.isalnum() or character == "_" for character in key)
+        ):
+            raise ConfigurationError(f"{name}.{key} is not a valid placeholder name")
+        result[key] = value
+    return result
+
+
 def _add(result: dict[str, Any], name: str, value: Any) -> None:
     if value is not None:
         result[name] = value
@@ -82,6 +98,9 @@ def load_overrides(
     browser = _section(data, "browser")
     flash = _section(data, "flash")
     result: dict[str, Any] = {}
+    replacements = _string_map(data, "replacements")
+    if replacements:
+        result["PLACEHOLDER_REPLACEMENTS"] = replacements
 
     output_format = _string(video, "format", "video.format")
     if output_format is not None and output_format not in supported_formats:
