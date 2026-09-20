@@ -61,6 +61,7 @@ WIDTH = 1280
 HEIGHT = 720
 FPS = 24
 
+ELECTRON = False
 URL = "http://localhost:4343/"
 API_URL = "http://localhost:4343/"
 SWF_URL = "http://localhost:4664/animation/414827163ad4eb60/player.swf"

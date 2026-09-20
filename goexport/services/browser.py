@@ -98,6 +98,7 @@ class BrowserService:
         chromedriver_path: Path,
         flash_path: Path,
         flash_version: str,
+        electron: bool,
         width: int = config.WIDTH,
         height: int = config.HEIGHT,
         check_screen_resolution: bool = True,
@@ -107,6 +108,7 @@ class BrowserService:
         self.chromedriver_path = chromedriver_path
         self.flash_path = flash_path
         self.flash_version = flash_version
+        self.electron = electron
         self.width = width
         self.height = height
         self.display: LinuxDisplay | None = None
@@ -121,6 +123,9 @@ class BrowserService:
         options = Options()
 
         options.binary_location = str(self.chrome_path)
+
+        if self.electron:
+            options.add_argument('--remote-debugging-port=9222')
 
         options.add_argument("--high-dpi-support=1")
         options.add_argument("--force-device-scale-factor=1")
@@ -256,27 +261,48 @@ class BrowserService:
         return targets[0]
 
     def get_capture_crop_area(self, driver):
-        if self.display is None:
-            return None
-
-        window = driver.get_window_rect()
         viewport = driver.execute_script("""
             return {
                 innerHeight: window.innerHeight,
                 outerHeight: window.outerHeight
             };
         """)
-        height_inset = max(
-            0, int(viewport["outerHeight"]) - int(viewport["innerHeight"])
-        )
-        return (
-            int(window["x"]),
-            int(window["y"]) + height_inset,
-            self.width,
-            self.height,
+
+        top_inset = max(
+            0,
+            int(viewport["outerHeight"]) - int(viewport["innerHeight"])
         )
 
+        if top_inset == 0:
+            return None
+
+        if self.display is not None:
+            # Linux/X11 display capture: coordinates are display-relative.
+            window = driver.get_window_rect()
+
+            return (
+                int(window["x"]),
+                int(window["y"]) + top_inset,
+                self.width,
+                self.height,
+            )
+
+        if self.electron:
+            # Windows/macOS window capture: crop relative to captured window.
+            return (
+                0,
+                top_inset,
+                self.width,
+                self.height,
+            )
+
+        return None
+
     def enter_fullscreen(self, driver):
+        if self.electron:
+            logger.info("Skipping Selenium fullscreen for Electron browser.")
+            return
+
         if self.display is None:
             driver.fullscreen_window()
             return
@@ -442,8 +468,10 @@ class BrowserService:
             html,
         )
 
-    @staticmethod
-    def enable_flash(driver):
+    def enable_flash(self, driver):
+        if self.electron:
+            logger.info("Skipping Chromium Flash permission setup for Electron browser.")
+            return
         current_url = driver.current_url
 
         driver.get(

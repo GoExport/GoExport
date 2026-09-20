@@ -297,6 +297,7 @@ class RecordingService:
             getattr(self.args, "chromedriver_path", config.CHROMEDRIVER_PATH),
             getattr(self.args, "flash_plugin_path", config.FLASH_PLUGIN_PATH),
             getattr(self.args, "flash_plugin_version", config.FLASH_PLUGIN_VERSION),
+            getattr(self.args, "electron", config.ELECTRON),
             *self.args.resolution,
         )
 
