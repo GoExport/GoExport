@@ -15,7 +15,7 @@
 # client_theme_path = "http://localhost:4664/static/ad44370a650793d9/<client_theme>"
 
 [browser]
-chrome = "D:\\Applications\\Creative\\WeAnimate-windows-latest\\WeAnimate-win32-x64\\WeAnimate.exe"
+# chrome = "bin/ungoogled-chromium/chrome.exe"
 # chromedriver = "bin/ungoogled-chromium/chromedriver.exe"
 # ffmpeg = "bin/ffmpeg/bin/ffmpeg.exe"
 # electron = false
