@@ -1,3 +1,4 @@
 [submodule "gui"]
 	path = gui
 	url = https://github.com/GoExport/GoExport-GUI.git
+	branch = main
