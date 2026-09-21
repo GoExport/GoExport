@@ -2,6 +2,8 @@
 
 ## [2.0.0]
 
+#### Note: MacOS isn't supported, the build is present but it doesn't work properly. If you want to contribute, help on the MacOS build is appreciated.
+
 - Reworked GoExport into `record` and frame-by-frame `export` CLI commands with shared validation and platform-aware runtime configuration.
 - Added newline-delimited JSON progress, completion, and error reporting for programmatic CLI use.
 - Added the `doctor` command for checking the local GoExport runtime setup.
