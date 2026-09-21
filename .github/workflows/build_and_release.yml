@@ -32,17 +32,23 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.13"
           cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            gui/requirements.txt
 
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+          pip install -r gui/requirements.txt
 
       - name: Download runtime dependencies
         run: |
@@ -57,6 +63,11 @@ jobs:
       - name: Build GoExport
         run: |
           pyinstaller GoExport.spec
+
+      - name: Build GoExport GUI
+        working-directory: gui
+        run: |
+          python -m PyInstaller GoExport-GUI.spec --noconfirm --clean
 
       - name: Packaged PyScap smoke test (Windows)
         if: runner.os == 'Windows'
@@ -76,12 +87,8 @@ jobs:
         shell: pwsh
         run: |
           $distributionDirectory = 'dist/GoExport'
-          $guiArchive = Join-Path $env:RUNNER_TEMP 'GoExport-GUI-windows-x64.zip'
-          $guiDirectory = Join-Path $env:RUNNER_TEMP 'GoExport-GUI'
 
           New-Item -ItemType Directory -Path $distributionDirectory | Out-Null
-          Invoke-WebRequest -Uri 'https://github.com/GoExport/GoExport-GUI/releases/latest/download/GoExport-GUI-windows-x64.zip' -OutFile $guiArchive
-          Expand-Archive -LiteralPath $guiArchive -DestinationPath $guiDirectory
 
           Copy-Item dist/GoExport.exe $distributionDirectory/
           Copy-Item -Recurse bin $distributionDirectory/
@@ -89,22 +96,18 @@ jobs:
           Copy-Item README.md $distributionDirectory/
           Copy-Item LICENSE $distributionDirectory/
           Copy-Item config.toml $distributionDirectory/
-          Copy-Item (Join-Path $guiDirectory 'GoExport-GUI.exe') $distributionDirectory/
-          Copy-Item (Join-Path $guiDirectory 'presets.toml') $distributionDirectory/
+          Copy-Item gui/dist/GoExport-GUI.exe $distributionDirectory/
+          Copy-Item gui/presets.toml $distributionDirectory/
 
       - name: Prepare distribution (Linux)
         if: runner.os == 'Linux'
         run: |
           distribution_directory=dist/GoExport
-          gui_archive="$RUNNER_TEMP/GoExport-GUI-linux-x64.zip"
-          gui_directory="$RUNNER_TEMP/GoExport-GUI"
           mv dist/GoExport dist/GoExport-cli
           mkdir "$distribution_directory"
           mv dist/GoExport-cli "$distribution_directory/GoExport"
-          curl --fail --location --output "$gui_archive" https://github.com/GoExport/GoExport-GUI/releases/latest/download/GoExport-GUI-linux-x64.zip
-          unzip -q "$gui_archive" -d "$gui_directory"
-          cp "$gui_directory/GoExport-GUI" "$distribution_directory/"
-          cp "$gui_directory/presets.toml" "$distribution_directory/"
+          cp gui/dist/GoExport-GUI "$distribution_directory/"
+          cp gui/presets.toml "$distribution_directory/"
           cp -r bin "$distribution_directory/"
           cp -r resources "$distribution_directory/"
           cp README.md "$distribution_directory/"
@@ -115,15 +118,11 @@ jobs:
         if: runner.os == 'macOS'
         run: |
           distribution_directory=dist/GoExport
-          gui_archive="$RUNNER_TEMP/GoExport-GUI-macos-intel.zip"
-          gui_directory="$RUNNER_TEMP/GoExport-GUI"
           mv dist/GoExport dist/GoExport-cli
           mkdir "$distribution_directory"
           mv dist/GoExport-cli "$distribution_directory/GoExport"
-          curl --fail --location --output "$gui_archive" https://github.com/GoExport/GoExport-GUI/releases/latest/download/GoExport-GUI-macos-intel.zip
-          unzip -q "$gui_archive" -d "$gui_directory"
-          cp "$gui_directory/GoExport-GUI" "$distribution_directory/"
-          cp "$gui_directory/presets.toml" "$distribution_directory/"
+          cp gui/dist/GoExport-GUI "$distribution_directory/"
+          cp gui/presets.toml "$distribution_directory/"
           cp -r bin "$distribution_directory/"
           cp -r resources "$distribution_directory/"
           cp README.md "$distribution_directory/"
