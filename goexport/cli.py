@@ -4,9 +4,10 @@ import sys
 from contextlib import nullcontext, redirect_stdout
 
 from goexport.commands import COMMANDS
-from goexport.config import APP_NAME, VERSION
+from goexport.config import APP_NAME
 from goexport.log import setup_logging
 from goexport.reporting import Reporter
+from goexport.version import VERSION
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +19,7 @@ def build_parser() -> argparse.ArgumentParser:
         "-v",
         "--version",
         action="version",
-        version=f"{APP_NAME} {VERSION}",
+        version=VERSION,
     )
 
     parser.add_argument(

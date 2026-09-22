@@ -5,7 +5,6 @@ from pathlib import Path
 from goexport.configuration.loader import load_overrides
 
 APP_NAME = "GoExport"
-VERSION = "2.0.0"
 
 SUPPORTED_FORMATS = {
     "mp4",
