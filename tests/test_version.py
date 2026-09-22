@@ -26,13 +26,20 @@ class VersionTests(unittest.TestCase):
         )
         self.assertEqual(result.stdout.strip(), version.VERSION)
 
-    def test_frozen_application_loads_a_sidecar_version_file(self):
+    def test_frozen_application_loads_the_bundled_version_file(self):
         with tempfile.TemporaryDirectory() as temporary_directory:
-            executable = Path(temporary_directory) / "GoExport.exe"
-            version_path = executable.parent / "version.txt"
-            version_path.write_text("v2.0.0b1\n", encoding="utf-8")
+            root = Path(temporary_directory)
+            executable = root / "release" / "GoExport.exe"
+            bundle_root = root / "bundle"
+            bundle_root.mkdir()
+            (bundle_root / "version.txt").write_text("v2.0.0b1\n", encoding="utf-8")
+            (executable.parent / "version.txt").parent.mkdir()
+            (executable.parent / "version.txt").write_text(
+                "external\n", encoding="utf-8"
+            )
             with (
                 patch.object(version.sys, "frozen", True, create=True),
                 patch.object(version.sys, "executable", str(executable)),
+                patch.object(version.sys, "_MEIPASS", str(bundle_root), create=True),
             ):
                 self.assertEqual(version.load_version(), "v2.0.0b1")

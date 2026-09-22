@@ -102,7 +102,6 @@ jobs:
           Copy-Item README.md $distributionDirectory/
           Copy-Item LICENSE $distributionDirectory/
           Copy-Item config.toml $distributionDirectory/
-          Copy-Item version.txt $distributionDirectory/
           Copy-Item gui/dist/GoExport-GUI.exe $distributionDirectory/
           Copy-Item gui/presets.toml $distributionDirectory/
 
@@ -120,7 +119,6 @@ jobs:
           cp README.md "$distribution_directory/"
           cp LICENSE "$distribution_directory/"
           cp config.toml "$distribution_directory/"
-          cp version.txt "$distribution_directory/"
 
       - name: Prepare distribution (macOS)
         if: runner.os == 'macOS'
@@ -136,7 +134,6 @@ jobs:
           cp README.md "$distribution_directory/"
           cp LICENSE "$distribution_directory/"
           cp config.toml "$distribution_directory/"
-          cp version.txt "$distribution_directory/"
 
       - name: Package Windows
         if: runner.os == 'Windows'

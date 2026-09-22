@@ -15,7 +15,13 @@ def application_directory() -> Path:
 
 def load_version() -> str:
     """Load the release tag from version.txt."""
-    version_path = application_directory() / "version.txt"
+    if getattr(sys, "frozen", False):
+        bundle_root = getattr(sys, "_MEIPASS", None)
+        if not bundle_root:
+            raise RuntimeError("Unable to locate the bundled GoExport version.")
+        version_path = Path(bundle_root) / "version.txt"
+    else:
+        version_path = application_directory() / "version.txt"
     try:
         version = version_path.read_text(encoding="utf-8").strip()
     except OSError as error:

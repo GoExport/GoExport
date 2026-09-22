@@ -8,7 +8,7 @@ a = Analysis(
     ['main.py'],
     pathex=[],
     binaries=scap_binaries,
-    datas=[],
+    datas=[('version.txt', '.')],
     hiddenimports=['scap', 'numpy'],
     hookspath=[],
     hooksconfig={},
