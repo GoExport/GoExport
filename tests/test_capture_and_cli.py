@@ -150,6 +150,17 @@ class CliTests(unittest.TestCase):
         self.assertEqual(defaults.capture_backend, config.RECORDING_BACKEND)
         self.assertEqual(selected.capture_backend, "obs")
 
+    def test_record_accepts_force_obs_profile(self):
+        import goexport.cli as cli
+
+        parser = cli.build_parser()
+
+        defaults = parser.parse_args(["record", "-id", "movie"])
+        forced = parser.parse_args(["record", "-id", "movie", "--obs-force-profile"])
+
+        self.assertFalse(defaults.obs_force_profile)
+        self.assertTrue(forced.obs_force_profile)
+
 
 class BrowserCaptureTargetTests(unittest.TestCase):
     @staticmethod

@@ -65,7 +65,6 @@ class ResourceCleanupTests(unittest.TestCase):
             backend = Mock()
 
             def create_diagnostic_workspace(_service, _driver, artifacts):
-                artifacts.obs_directory.mkdir()
                 (artifacts.obs_directory / "recording.mkv").write_bytes(b"diagnostic")
                 raise RuntimeError("finalization failed")
 
@@ -83,6 +82,8 @@ class ResourceCleanupTests(unittest.TestCase):
 
             workspace = backend.prepare.call_args.args[2].obs_directory
             self.assertTrue(workspace.exists())
+            self.assertEqual(workspace, output.parent)
+            self.assertTrue((workspace / "recording.mkv").exists())
 
     def test_recording_probes_scap_after_browser_activates_display(self):
         args = Namespace(output=Path("out"), format="mkv")

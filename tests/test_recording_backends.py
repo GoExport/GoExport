@@ -31,6 +31,7 @@ class OBSBackendTests(unittest.TestCase):
             obs_port=4455,
             obs_profile="GoExport",
             obs_scene_collection="GoExport",
+            obs_force_profile=False,
         )
         self.client = Mock()
         self.client.get_version.return_value = response(
@@ -108,10 +109,25 @@ class OBSBackendTests(unittest.TestCase):
         self.client.set_video_settings.assert_called_once_with(
             24, 1, 1280, 720, 1280, 720
         )
+        for name, value in (
+            ("BaseCX", "1280"),
+            ("BaseCY", "720"),
+            ("OutputCX", "1280"),
+            ("OutputCY", "720"),
+            ("FPSCommon", "24"),
+        ):
+            self.client.set_profile_parameter.assert_any_call("Video", name, value)
+        self.client.set_profile_parameter.assert_any_call(
+            "Output", "FilenameFormatting", f"goexport-{backend.run_id}"
+        )
         settings = self.client.set_input_settings.call_args.args[1]
         self.assertEqual(settings["window"], 42)
         self.assertFalse(settings["show_cursor"])
         self.client.set_current_program_scene.assert_called_once_with(GOEXPORT_SCENE)
+        transform = self.client.set_scene_item_transform.call_args.args[2]
+        self.assertEqual(transform["alignment"], 5)
+        self.assertEqual(transform["boundsWidth"], 1280.0)
+        self.assertEqual(transform["boundsHeight"], 720.0)
 
     def test_existing_unmarked_profile_is_rejected_and_restored(self):
         self.client.get_profile_list.return_value = response(
@@ -129,6 +145,30 @@ class OBSBackendTests(unittest.TestCase):
                 )
         self.client.remove_profile.assert_not_called()
         self.client.set_current_profile.assert_any_call("User")
+
+    def test_force_profile_allows_existing_unmarked_resources(self):
+        self.args.obs_force_profile = True
+        self.client.get_profile_list.return_value = response(
+            current_profile_name="User", profiles=["User", "GoExport"]
+        )
+        self.client.get_persistent_data.return_value = response(slot_value=None)
+        self.client.get_scene_collection_list.return_value = response(
+            current_scene_collection_name="User Scenes",
+            scene_collections=["User Scenes", "GoExport"],
+        )
+        backend = self.backend()
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            backend.prepare(
+                Mock(),
+                Mock(),
+                CaptureArtifacts(root / "v", root / "a", root),
+            )
+
+        self.client.set_current_profile.assert_any_call("GoExport")
+        self.client.set_current_scene_collection.assert_any_call("GoExport")
+        self.client.set_persistent_data.assert_called_once()
 
     def test_unowned_scene_collection_collision_is_rejected(self):
         self.client.get_scene_collection_list.return_value = response(
@@ -161,6 +201,7 @@ class OBSBackendTests(unittest.TestCase):
             result = backend.stop()
         self.assertEqual(result.video, output.resolve())
         self.assertTrue(result.audio_is_muxed)
+        self.assertEqual(result.owned_paths, (output.resolve(),))
 
     def test_stop_accepts_obs_reported_name_with_spaces(self):
         backend = self.backend()

@@ -89,6 +89,14 @@ def register(subparsers: argparse._SubParsersAction) -> None:
         default=config.OBS_SCENE_COLLECTION,
         help="Persistent GoExport-owned OBS scene collection.",
     )
+    parser.add_argument(
+        "--obs-force-profile",
+        action="store_true",
+        help=(
+            "Allow GoExport to reuse and reconfigure an existing OBS profile and "
+            "scene collection even when they are not marked as GoExport-owned."
+        ),
+    )
 
     parser.set_defaults(
         func=entry,

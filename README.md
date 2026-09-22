@@ -54,7 +54,10 @@ and GoExport must share an X11 `DISPLAY`; unattended Wayland window selection is
 not currently supported. The backend creates and reuses a persistent `GoExport`
 OBS profile and scene collection, switches back to the user's prior resources
 after recording, and never automatically deletes them. OBS itself is not
-bundled or launched.
+bundled or launched. Use `--obs-force-profile` to explicitly allow GoExport to
+reuse and reconfigure an existing unmarked profile and scene collection. OBS
+records its temporary MKV directly beside the requested output, and GoExport
+removes that MKV after successful post-processing.
 
 Both workflows accept additional Flashvars. New names are added and standard
 names are overridden using last-value-wins behavior:

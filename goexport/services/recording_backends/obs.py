@@ -28,6 +28,7 @@ REQUIRED_REQUESTS = {
     "CreateSceneCollection",
     "GetPersistentData",
     "SetPersistentData",
+    "SetProfileParameter",
     "SetVideoSettings",
     "GetVideoSettings",
     "SetRecordDirectory",
@@ -138,6 +139,7 @@ class OBSBackend:
         self.original_profile = profiles.current_profile_name
         profile_name = self.args.obs_profile
         existing_owned_profile = profile_name in profiles.profiles
+        force_profile = getattr(self.args, "obs_force_profile", False)
         if existing_owned_profile:
             self.client.set_current_profile(profile_name)
             marker = self.client.get_persistent_data(
@@ -148,10 +150,11 @@ class OBSBackend:
                 "version": 1,
                 "sceneCollection": self.args.obs_scene_collection,
             }
-            if marker.slot_value != expected_marker:
+            if marker.slot_value != expected_marker and not force_profile:
                 raise RuntimeError(
                     f"OBS profile {profile_name!r} is not owned by GoExport. "
-                    "Choose another --obs-profile name."
+                    "Choose another --obs-profile name or pass --obs-force-profile "
+                    "to reuse and reconfigure it."
                 )
         else:
             self.client.create_profile(profile_name)
@@ -170,11 +173,11 @@ class OBSBackend:
         self.original_scene_collection = collections.current_scene_collection_name
         collection_name = self.args.obs_scene_collection
         if collection_name in collections.scene_collections:
-            if not existing_owned_profile:
+            if not existing_owned_profile and not force_profile:
                 raise RuntimeError(
                     f"OBS scene collection {collection_name!r} already exists and "
                     "cannot be proven to be owned by GoExport. Choose another "
-                    "--obs-scene-collection name."
+                    "--obs-scene-collection name or pass --obs-force-profile."
                 )
             self.client.set_current_scene_collection(collection_name)
         else:
@@ -187,6 +190,14 @@ class OBSBackend:
             raise RuntimeError(
                 "OBS is already recording. Stop the active recording before using GoExport."
             )
+        for name, value in (
+            ("BaseCX", width),
+            ("BaseCY", height),
+            ("OutputCX", width),
+            ("OutputCY", height),
+            ("FPSCommon", config.FPS),
+        ):
+            self.client.set_profile_parameter("Video", name, str(value))
         self.client.set_video_settings(config.FPS, 1, width, height, width, height)
         settings = self.client.get_video_settings()
         actual = (
@@ -204,11 +215,11 @@ class OBSBackend:
             )
         self.client.set_record_directory(str(self.artifacts.obs_directory.resolve()))
         self.client.set_profile_parameter("Output", "Mode", "Simple")
+        self.client.set_profile_parameter(
+            "Output", "FilenameFormatting", f"goexport-{self.run_id}"
+        )
         self.client.set_profile_parameter("SimpleOutput", "RecFormat2", "mkv")
         self.client.set_profile_parameter("SimpleOutput", "RecEncoder", "x264")
-        self.client.set_profile_parameter(
-            "SimpleOutput", "FileNameFormatting", f"goexport-{self.run_id}"
-        )
         # Never inherit global devices, especially a microphone, into this profile.
         for name in (
             "DesktopDevice1",
@@ -281,7 +292,9 @@ class OBSBackend:
             {
                 "positionX": 0.0,
                 "positionY": 0.0,
+                "alignment": 5,
                 "boundsType": "OBS_BOUNDS_STRETCH",
+                "boundsAlignment": 0,
                 "boundsWidth": float(width),
                 "boundsHeight": float(height),
                 "cropLeft": 0,
@@ -402,7 +415,7 @@ class OBSBackend:
             ) from error
         self._wait_for_finalized_recording(path)
         self.result = CaptureResult(
-            path, None, audio_is_muxed=True, owned_paths=(path, owned_root)
+            path, None, audio_is_muxed=True, owned_paths=(path,)
         )
         return self.result
 

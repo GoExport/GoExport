@@ -199,7 +199,7 @@ class RecordingService:
         artifacts = CaptureArtifacts(
             output.with_name(f"{output.stem}.video.mkv"),
             output.with_name(f"{output.stem}.audio.wav"),
-            output.with_name(f".{output.stem}.goexport-obs-{uuid.uuid4().hex}"),
+            output.parent,
         )
         backend_name = getattr(self.args, "capture_backend", "pyscap")
         backend = self._create_backend(backend_name)
