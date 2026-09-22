@@ -162,6 +162,75 @@ class OBSBackendTests(unittest.TestCase):
         self.assertEqual(result.video, output.resolve())
         self.assertTrue(result.audio_is_muxed)
 
+    def test_stop_accepts_obs_reported_name_with_spaces(self):
+        backend = self.backend()
+        backend.client = self.client
+        backend.recording_started = True
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            owned = root / "owned workspace"
+            owned.mkdir()
+            output = owned / "2026-09-22 19-02-54.mkv"
+            output.write_bytes(b"recording")
+            backend.artifacts = CaptureArtifacts(root / "v", root / "a", owned)
+            self.client.stop_record.return_value = response(output_path=str(output))
+
+            result = backend.stop()
+
+        self.assertEqual(result.video, output.resolve())
+
+    def test_stop_waits_for_reported_recording_to_appear(self):
+        backend = self.backend()
+        backend.client = self.client
+        backend.recording_started = True
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            owned = root / "owned"
+            owned.mkdir()
+            output = owned / "delayed recording.mkv"
+            backend.artifacts = CaptureArtifacts(root / "v", root / "a", owned)
+            self.client.stop_record.return_value = response(output_path=str(output))
+            original_is_file = Path.is_file
+            checks = 0
+
+            def delayed_is_file(candidate):
+                nonlocal checks
+                if candidate == output.resolve():
+                    checks += 1
+                    if checks == 2:
+                        output.write_bytes(b"recording")
+                return original_is_file(candidate)
+
+            with (
+                patch.object(Path, "is_file", delayed_is_file),
+                patch.object(obs.time, "sleep") as sleep,
+            ):
+                result = backend.stop()
+
+        self.assertEqual(result.video, output.resolve())
+        sleep.assert_called_once()
+
+    def test_stop_times_out_when_reported_recording_never_appears(self):
+        backend = self.backend()
+        backend.client = self.client
+        backend.recording_started = True
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            owned = root / "owned"
+            owned.mkdir()
+            missing = owned / "missing recording.mkv"
+            backend.artifacts = CaptureArtifacts(root / "v", root / "a", owned)
+            self.client.stop_record.return_value = response(output_path=str(missing))
+
+            with (
+                patch.object(Path, "is_file", return_value=False),
+                patch.object(obs.time, "monotonic", side_effect=(0.0, 10.0)),
+                self.assertRaisesRegex(RuntimeError, "within 10 seconds"),
+            ):
+                backend.stop()
+
+        self.assertFalse(backend.recording_started)
+
     def test_close_restores_scene_collection_then_profile(self):
         backend = self.backend()
         backend.client = self.client

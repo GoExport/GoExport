@@ -12,12 +12,78 @@ from goexport.commands import export
 from goexport.services.browser import BrowserService
 from goexport.services.ffmpeg import FFmpegError, FFmpegMuxer, _PipeEncoder
 from goexport.services.recorder import RecordingService
+from goexport.services.recording_backends.base import CaptureResult
 from goexport.services.recording_backends.pyscap import PyScapBackend
 from goexport.services.renderer import Renderer
 from goexport.services.timeline_builder import TimelineBuilder
 
 
 class ResourceCleanupTests(unittest.TestCase):
+    def test_successful_obs_recording_removes_owned_workspace(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            output = root / "final.mp4"
+            workspace = root / "capture workspace"
+            workspace.mkdir()
+            recording_file = workspace / "recording with spaces.mkv"
+            recording_file.write_bytes(b"recording")
+            result = CaptureResult(
+                recording_file,
+                None,
+                audio_is_muxed=True,
+                owned_paths=(recording_file, workspace),
+            )
+            recording = RecordingService(
+                Namespace(output=output, format="mp4", capture_backend="obs")
+            )
+            browser = Mock(capture_display=None)
+            backend = Mock()
+            with (
+                patch.object(recording, "_create_output_path", return_value=output),
+                patch.object(
+                    recording, "_prepare_browser", return_value=(browser, Mock())
+                ),
+                patch.object(recording, "_finish_browser_setup"),
+                patch.object(recording, "_create_backend", return_value=backend),
+                patch.object(recording, "_record_playback", return_value=result),
+                patch.object(recording, "_finish_recording") as finish_recording,
+            ):
+                self.assertEqual(recording.run(), 0)
+
+            finish_recording.assert_called_once_with(output, result)
+            self.assertFalse(recording_file.exists())
+            self.assertFalse(workspace.exists())
+
+    def test_failed_obs_recording_retains_workspace(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            output = root / "final.mp4"
+            recording = RecordingService(
+                Namespace(output=output, format="mp4", capture_backend="obs")
+            )
+            browser = Mock(capture_display=None)
+            backend = Mock()
+
+            def create_diagnostic_workspace(_service, _driver, artifacts):
+                artifacts.obs_directory.mkdir()
+                (artifacts.obs_directory / "recording.mkv").write_bytes(b"diagnostic")
+                raise RuntimeError("finalization failed")
+
+            backend.prepare.side_effect = create_diagnostic_workspace
+            with (
+                patch.object(recording, "_create_output_path", return_value=output),
+                patch.object(
+                    recording, "_prepare_browser", return_value=(browser, Mock())
+                ),
+                patch.object(recording, "_finish_browser_setup"),
+                patch.object(recording, "_create_backend", return_value=backend),
+                self.assertRaisesRegex(RuntimeError, "finalization failed"),
+            ):
+                recording.run()
+
+            workspace = backend.prepare.call_args.args[2].obs_directory
+            self.assertTrue(workspace.exists())
+
     def test_recording_probes_scap_after_browser_activates_display(self):
         args = Namespace(output=Path("out"), format="mkv")
         recording = RecordingService(args)

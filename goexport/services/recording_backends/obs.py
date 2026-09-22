@@ -46,6 +46,8 @@ REQUIRED_REQUESTS = {
     "StartRecord",
     "StopRecord",
 }
+RECORDING_FINALIZE_TIMEOUT_SECONDS = 10.0
+RECORDING_FINALIZE_POLL_SECONDS = 0.1
 
 
 def _value(item, name, default=None):
@@ -385,7 +387,12 @@ class OBSBackend:
             return self.result
         response = self.client.stop_record()
         self.recording_started = False
-        path = Path(response.output_path).resolve()
+        output_path = _value(response, "output_path")
+        if not output_path:
+            raise RuntimeError(
+                "OBS stopped recording without reporting an output path."
+            )
+        path = Path(output_path).resolve()
         owned_root = self.artifacts.obs_directory.resolve()
         try:
             path.relative_to(owned_root)
@@ -393,12 +400,37 @@ class OBSBackend:
             raise RuntimeError(
                 f"OBS returned an output path outside GoExport's directory: {path}"
             ) from error
-        if not path.is_file() or not path.name.startswith(f"goexport-{self.run_id}"):
-            raise RuntimeError(f"OBS did not produce the expected recording: {path}")
+        self._wait_for_finalized_recording(path)
         self.result = CaptureResult(
             path, None, audio_is_muxed=True, owned_paths=(path, owned_root)
         )
         return self.result
+
+    @staticmethod
+    def _wait_for_finalized_recording(path):
+        """Wait for the authoritative StopRecord path to become visible.
+
+        OBS completes container finalization before replying to StopRecord. The
+        bounded poll only covers delayed filesystem visibility after that reply;
+        it does not attempt to predict OBS's filename or recording duration.
+        """
+        deadline = time.monotonic() + RECORDING_FINALIZE_TIMEOUT_SECONDS
+        last_error = None
+        while True:
+            try:
+                if path.is_file():
+                    return
+            except OSError as error:
+                last_error = error
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                detail = f" Last filesystem error: {last_error}" if last_error else ""
+                raise RuntimeError(
+                    "OBS reported a completed recording, but the file did not "
+                    f"become available within {RECORDING_FINALIZE_TIMEOUT_SECONDS:g} "
+                    f"seconds: {path}.{detail}"
+                )
+            time.sleep(min(RECORDING_FINALIZE_POLL_SECONDS, remaining))
 
     def close(self):
         if self.client is None:
