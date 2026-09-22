@@ -10,6 +10,16 @@ from goexport.services.recorder import RecordingService
 logger = logging.getLogger(__name__)
 
 
+def parse_port(value: str) -> int:
+    try:
+        port = int(value)
+    except ValueError as error:
+        raise argparse.ArgumentTypeError("OBS port must be an integer") from error
+    if not 1 <= port <= 65535:
+        raise argparse.ArgumentTypeError("OBS port must be between 1 and 65535")
+    return port
+
+
 def register(subparsers: argparse._SubParsersAction) -> None:
     parser = subparsers.add_parser(
         "record",
@@ -52,6 +62,34 @@ def register(subparsers: argparse._SubParsersAction) -> None:
         help="Path to an outro video to append after recording.",
     )
 
+    parser.add_argument(
+        "--capture-backend",
+        choices=("pyscap", "obs"),
+        default=config.RECORDING_BACKEND,
+        help="Screen-recording backend.",
+    )
+    parser.add_argument(
+        "--obs-host",
+        default=config.OBS_HOST,
+        help="OBS WebSocket host (OBS backend only).",
+    )
+    parser.add_argument(
+        "--obs-port",
+        type=parse_port,
+        default=config.OBS_PORT,
+        help="OBS WebSocket port (OBS backend only).",
+    )
+    parser.add_argument(
+        "--obs-profile",
+        default=config.OBS_PROFILE,
+        help="Persistent GoExport-owned OBS profile.",
+    )
+    parser.add_argument(
+        "--obs-scene-collection",
+        default=config.OBS_SCENE_COLLECTION,
+        help="Persistent GoExport-owned OBS scene collection.",
+    )
+
     parser.set_defaults(
         func=entry,
     )
@@ -62,5 +100,4 @@ def entry(args: argparse.Namespace) -> int:
 
 
 def record_video(args: argparse.Namespace) -> int:
-    print(args)
     return RecordingService(args).run()

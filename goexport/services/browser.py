@@ -107,6 +107,7 @@ class BrowserService:
         height: int = config.HEIGHT,
         check_screen_resolution: bool = True,
         check_frame_resolution: bool = True,
+        use_virtual_display: bool = True,
     ):
         self.chrome_path = chrome_path
         self.chromedriver_path = chromedriver_path
@@ -119,6 +120,7 @@ class BrowserService:
         self.driver = None
         self.check_screen_resolution = check_screen_resolution
         self.check_frame_resolution = check_frame_resolution
+        self.use_virtual_display = use_virtual_display
         self._virtual_display_logged = False
         self._capture_target_id = None
 
@@ -187,7 +189,7 @@ class BrowserService:
             )
 
     def start_display(self):
-        if config.SYSTEM != "Linux":
+        if config.SYSTEM != "Linux" or not self.use_virtual_display:
             return
 
         try:

@@ -36,6 +36,13 @@ def _positive_integer(values: dict[str, Any], name: str, setting: str) -> int | 
     return value
 
 
+def _port(values: dict[str, Any], name: str, setting: str) -> int | None:
+    value = _positive_integer(values, name, setting)
+    if value is not None and value > 65535:
+        raise ConfigurationError(f"{setting} must be between 1 and 65535")
+    return value
+
+
 def _boolean(values: dict[str, Any], name: str, setting: str) -> bool | None:
     if name not in values:
         return None
@@ -97,6 +104,8 @@ def load_overrides(
     wrapper = _section(data, "wrapper")
     browser = _section(data, "browser")
     flash = _section(data, "flash")
+    recording = _section(data, "recording")
+    obs = _section(data, "obs")
     result: dict[str, Any] = {}
     replacements = _string_map(data, "replacements")
     if replacements:
@@ -145,5 +154,20 @@ def load_overrides(
         result,
         "FLASH_PLUGIN_VERSION",
         _string(flash, "plugin_version", "flash.plugin_version"),
+    )
+
+    backend = _string(recording, "backend", "recording.backend")
+    if backend is not None and backend not in {"pyscap", "obs"}:
+        raise ConfigurationError(
+            f"recording.backend must be one of obs, pyscap; got {backend!r}"
+        )
+    _add(result, "RECORDING_BACKEND", backend)
+    _add(result, "OBS_HOST", _string(obs, "host", "obs.host"))
+    _add(result, "OBS_PORT", _port(obs, "port", "obs.port"))
+    _add(result, "OBS_PROFILE", _string(obs, "profile", "obs.profile"))
+    _add(
+        result,
+        "OBS_SCENE_COLLECTION",
+        _string(obs, "scene_collection", "obs.scene_collection"),
     )
     return result

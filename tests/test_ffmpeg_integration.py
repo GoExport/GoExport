@@ -93,6 +93,22 @@ class FFmpegIntegrationTests(unittest.TestCase):
             self.assert_decodable(output, 24)
             self.assertFalse(audio.exists())
 
+    def test_combined_obs_recording_is_finalized(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            video = root / "video.mkv"
+            audio = root / "audio.wav"
+            combined = root / "obs.mkv"
+            output = root / "output.mp4"
+            self.create_video(video)
+            FFmpegAudioEncoder(config.FFMPEG_PATH, AssetResolver(root, root)).encode(
+                [], audio, 24
+            )
+            FFmpegMuxer(config.FFMPEG_PATH).mux(video, audio, combined)
+            FFmpegMuxer(config.FFMPEG_PATH).mux_combined(combined, output)
+            self.assert_decodable(output, 24)
+            self.assertFalse(combined.exists())
+
     def test_outro_can_replace_main_output(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)

@@ -100,6 +100,35 @@ class ConfigurationTests(unittest.TestCase):
             {"owner_id": "{user_id}", "site": "FlashThemes"},
         )
 
+    def test_obs_configuration_is_validated(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "config.toml"
+            path.write_text(
+                "[recording]\nbackend = 'obs'\n\n"
+                "[obs]\nhost = '127.0.0.1'\nport = 4455\n"
+                "profile = 'GoExport'\nscene_collection = 'GoExport'\n"
+            )
+            overrides = load_overrides(path, config.BASE_DIR, config.SUPPORTED_FORMATS)
+        self.assertEqual(overrides["RECORDING_BACKEND"], "obs")
+        self.assertEqual(overrides["OBS_PORT"], 4455)
+
+    def test_invalid_obs_configuration_is_rejected(self):
+        invalid_configs = (
+            "[recording]\nbackend = 'other'\n",
+            "[obs]\nport = 0\n",
+            "[obs]\nport = 65536\n",
+            "[obs]\nprofile = ''\n",
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            for index, contents in enumerate(invalid_configs):
+                path = Path(directory) / f"obs-invalid-{index}.toml"
+                path.write_text(contents)
+                with (
+                    self.subTest(contents=contents),
+                    self.assertRaises(ConfigurationError),
+                ):
+                    load_overrides(path, config.BASE_DIR, config.SUPPORTED_FORMATS)
+
 
 if __name__ == "__main__":
     unittest.main()

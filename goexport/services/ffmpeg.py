@@ -283,6 +283,30 @@ class FFmpegMuxer:
         if audio_file is not None:
             audio_file.unlink(missing_ok=True)
 
+    def mux_combined(self, media_file: Path, output_file: Path) -> None:
+        """Finalize an OBS recording that already contains synchronized A/V."""
+        self._run(
+            [
+                str(self.ffmpeg_path),
+                "-y",
+                "-i",
+                str(media_file),
+                "-map",
+                "0:v:0",
+                "-map",
+                "0:a:0",
+                "-c:v",
+                "copy",
+                "-c:a",
+                "aac",
+                "-b:a",
+                "192k",
+                "-shortest",
+                str(output_file),
+            ]
+        )
+        media_file.unlink(missing_ok=True)
+
     def append_outro(
         self,
         main_video_file: Path,

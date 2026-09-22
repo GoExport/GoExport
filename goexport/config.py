@@ -61,6 +61,12 @@ WIDTH = 1280
 HEIGHT = 720
 FPS = 24
 
+RECORDING_BACKEND = "pyscap"
+OBS_HOST = "127.0.0.1"
+OBS_PORT = 4455
+OBS_PROFILE = "GoExport"
+OBS_SCENE_COLLECTION = "GoExport"
+
 ELECTRON = False
 URL = "http://localhost:4343/"
 API_URL = "http://localhost:4343/"

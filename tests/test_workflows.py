@@ -12,6 +12,7 @@ from goexport.commands import export
 from goexport.services.browser import BrowserService
 from goexport.services.ffmpeg import FFmpegError, FFmpegMuxer, _PipeEncoder
 from goexport.services.recorder import RecordingService
+from goexport.services.recording_backends.pyscap import PyScapBackend
 from goexport.services.renderer import Renderer
 from goexport.services.timeline_builder import TimelineBuilder
 
@@ -91,16 +92,12 @@ class ResourceCleanupTests(unittest.TestCase):
 
     def test_capture_start_failure_is_not_hidden_by_join(self):
         recording = RecordingService(Namespace())
-        capturer = Mock()
-        capturer.start.side_effect = RuntimeError("capture start")
-        with (
-            patch.object(recording, "_create_capturer", return_value=capturer),
-            patch("goexport.services.recorder.await_started"),
-            patch.object(BrowserService, "get_capture_target"),
-        ):
+        backend = Mock()
+        backend.start.side_effect = RuntimeError("capture start")
+        with patch("goexport.services.recorder.await_started"):
             with self.assertRaisesRegex(RuntimeError, "capture start"):
-                recording._record_playback(Mock(), Path("video"), Path("audio"))
-        capturer.stop.assert_called_once()
+                recording._record_playback(Mock(), backend)
+        backend.stop.assert_called_once()
 
     def test_render_failure_closes_encoder(self):
         driver = Mock()
@@ -207,7 +204,7 @@ class EncodingTests(unittest.TestCase):
                 TimelineBuilder(xml).build()
 
     def test_audio_alignment_and_stop_buffer_trim(self):
-        recording = RecordingService(Namespace())
+        recording = PyScapBackend(Namespace(), Mock(), Path("ffmpeg"), "window")
         recording._audio_aligned = False
         recording._sample_bytes = 2
         frame = SimpleNamespace(data=Mock(), channels=1, rate=4, sample_count=4)

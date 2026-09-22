@@ -1,3 +1,7 @@
+"""Shared browser/playback orchestration for recording capture backends."""
+
+from __future__ import annotations
+
 import argparse
 import logging
 import threading
@@ -6,60 +10,29 @@ from pathlib import Path
 
 from goexport import config
 from goexport.helpers import resolve_output_path
-from goexport.player_options import (
-    build_player_replacements,
-    replacement_overrides,
-)
+from goexport.player_options import build_player_replacements, replacement_overrides
 from goexport.reporting import get_reporter
 from goexport.services.browser import BrowserService
-from goexport.services.capture import (
-    VideoSelector,
-    audio_padding_samples,
-    audio_trim_samples,
-    configure_backend,
-    create_capturer,
-    timestamp_ns,
-)
-from goexport.services.ffmpeg import (
-    FFmpegMuxer,
-    FFmpegRawAudioEncoder,
-    FFmpegRawVideoEncoder,
-)
+from goexport.services.ffmpeg import FFmpegMuxer
 from goexport.services.flash import (
     await_player_ready,
     await_started,
     await_stopped,
     get_total_frames,
 )
+from goexport.services.recording_backends import (
+    CaptureArtifacts,
+    create_recording_backend,
+)
+from goexport.services.recording_backends.pyscap import recording_progress
 
 logger = logging.getLogger(__name__)
-_AUDIO_FORMATS = {
-    "int8": ("s8", 1),
-    "int16": ("s16le", 2),
-    "int32": ("s32le", 4),
-    "int64": ("s64le", 8),
-    "uint8": ("u8", 1),
-    "uint16": ("u16le", 2),
-    "uint32": ("u32le", 4),
-    "uint64": ("u64le", 8),
-    "float32": ("f32le", 4),
-    "float64": ("f64le", 8),
-}
-
-
-def recording_progress(timestamp: int, origin: int, total_duration: int) -> int:
-    """Calculate clamped integer timeline progress from capture timestamps."""
-    if total_duration <= 0:
-        return 0
-    return int(max(0, min(100, (timestamp - origin) * 100 / total_duration)))
 
 
 class RecordingService:
     def __init__(self, args: argparse.Namespace):
         self.args = args
         self.reporter = get_reporter(args)
-        # PyScap identifies browser windows by title. A per-run title prevents
-        # stale Chromium windows from matching this recording's capture target.
         self._capture_window_title = f"GoExport Recorder {uuid.uuid4().hex}"
 
     def _ffmpeg_path(self):
@@ -68,153 +41,25 @@ class RecordingService:
     def _create_output_path(self):
         return resolve_output_path(Path(self.args.output), self.args.format)
 
-    def _create_capturer(self, target, crop_area=None, display=None):
-        return create_capturer(target, crop_area, display)
-
-    def _capture_streams(
-        self,
-        capturer,
-        video_path,
-        audio_path,
-        started,
-        stopped,
-        total_duration_ns=None,
-    ):
-        import scap
-
-        video = audio = None
-        selector = VideoSelector(config.FPS)
-        video_origin = audio_origin = None
-        pending = []
-        boundary = None
-        self._audio_aligned = False
-        try:
-            while True:
-                frame = capturer.next_frame()
-                # PyScap exposes no API to make a browser play() marker in its clock.
-                # Discard frames dequeued before play returns; see README limitation.
-                if not started.is_set():
-                    continue
-                now = timestamp_ns(frame.timestamp)
-                if stopped.is_set() and boundary is None:
-                    boundary = now
-                if boundary is not None and now > boundary:
-                    break
-                if isinstance(frame, scap.VideoFrameInfo):
-                    if frame.format not in {"bgra", "bgr0"}:
-                        raise RuntimeError(
-                            f"unsupported scap video format: {frame.format}"
-                        )
-                    if video is None:
-                        video = FFmpegRawVideoEncoder(
-                            self._ffmpeg_path(),
-                            video_path,
-                            frame.width,
-                            frame.height,
-                            *self.args.resolution,
-                            config.FPS,
-                        )
-                    if video_origin is None:
-                        video_origin = now
-                    for data in selector.add(now, frame.data.tobytes()):
-                        video.write_frame(data)
-                    for item, stamp in pending:
-                        self._write_audio(item, stamp, video_origin, audio, boundary)
-                    pending.clear()
-                elif isinstance(frame, scap.AudioFrameInfo):
-                    if frame.planar:
-                        raise RuntimeError("Planar scap audio is not supported")
-                    spec = _AUDIO_FORMATS.get(frame.format)
-                    if spec is None:
-                        raise RuntimeError(
-                            f"unsupported scap audio format: {frame.format}"
-                        )
-                    if audio is None:
-                        audio = FFmpegRawAudioEncoder(
-                            self._ffmpeg_path(),
-                            audio_path,
-                            frame.channels,
-                            frame.rate,
-                            spec[0],
-                        )
-                        self._sample_bytes = spec[1]
-                    if audio_origin is None:
-                        audio_origin = now
-                    if video_origin is None:
-                        pending.append((frame, now))
-                    else:
-                        self._write_audio(frame, now, video_origin, audio, boundary)
-                else:
-                    raise RuntimeError(f"unexpected scap frame type: {type(frame)!r}")
-                if video_origin is not None and total_duration_ns:
-                    timeline_percent = recording_progress(
-                        now, video_origin, total_duration_ns
-                    )
-                    self.reporter.progress(5 + timeline_percent * 0.79, "recording")
-                if boundary is not None:
-                    break
-        finally:
-            try:
-                capturer.stop()
-            except Exception:
-                logger.debug("capturer.stop failed during cleanup", exc_info=True)
-            try:
-                if video is not None:
-                    try:
-                        if boundary is not None:
-                            for data in selector.finish(boundary):
-                                video.write_frame(data)
-                    finally:
-                        video.close()
-            finally:
-                if audio is not None:
-                    audio.close()
-        if audio_origin is not None and video_origin is not None:
-            logger.debug(
-                "Initial audio/video offset: %.3f ms",
-                (audio_origin - video_origin) / 1_000_000,
-            )
-
-    def _write_audio(self, frame, stamp, video_origin, encoder, boundary=None):
-        data = frame.data.tobytes()
-        offset = stamp - video_origin
-        size = frame.channels * self._sample_bytes
-        if not self._audio_aligned:
-            if offset > 0:
-                encoder.write_frame(
-                    b"\0" * (audio_padding_samples(offset, frame.rate) * size)
-                )
-            elif offset < 0:
-                data = data[
-                    min(len(data), audio_trim_samples(offset, frame.rate) * size) :
-                ]
-            self._audio_aligned = True
-        if boundary is not None:
-            # A buffer may straddle the stop marker. Preserve only samples whose
-            # timestamp range reaches that marker (duration = sample_count / rate).
-            allowed = max(
-                0,
-                min(
-                    frame.sample_count, (boundary - stamp) * frame.rate // 1_000_000_000
-                ),
-            )
-            data = data[: allowed * size]
-        if data:
-            encoder.write_frame(data)
-
     def _prepare_browser(self):
         service = self._create_browser_service()
         try:
             driver = service.create_driver()
             driver.get(self.args.url)
         except BaseException:
-            # Setup can fail before run() receives the service and driver.
             service.close()
             raise
         return service, driver
 
-    def _finish_browser_setup(self, service, driver):
-        service.remember_capture_target(driver)
+    def _finish_browser_setup(self, service, driver, backend_name="pyscap"):
+        if backend_name == "pyscap":
+            service.remember_capture_target(driver)
+        else:
+            # Bind OBS to the unique title even if macOS exposes the
+            # pre-fullscreen native title after Chromium enters fullscreen.
+            driver.execute_script(
+                "document.title = arguments[0];", self._capture_window_title
+            )
         service.enter_fullscreen(driver)
         service.validate_screen_resolution(driver)
         service.assert_full_resolution()
@@ -232,33 +77,25 @@ class RecordingService:
         try:
             await_stopped(driver)
         except Exception as exc:
-            # Forward worker errors to the main thread.
             errors.append(exc)
         finally:
             stopped.set()
 
-    def _record_playback(self, driver, video_path, audio_path, service=None):
+    def _record_playback(self, driver, backend, service=None):
         driver.execute_script("player.pause();")
         await_started(
             driver,
             timeout_minutes=0 if getattr(self.args, "no_flash_timeout", False) else 30,
         )
-        if service is None:
-            target = BrowserService.get_capture_target(driver)
-            crop_area = None
-        else:
-            target = service.get_capture_target(driver)
-            crop_area = service.get_capture_crop_area(driver)
-        capture_display = service.capture_display if service is not None else None
-        capturer = self._create_capturer(target, crop_area, capture_display)
         started = threading.Event()
         stopped = threading.Event()
         errors = []
         watcher = threading.Thread(
             target=self._watch, args=(driver, stopped, errors), daemon=True
         )
+        result = None
         try:
-            capturer.start()
+            backend.start()
             total_frames = get_total_frames(driver, config.FPS)
             if total_frames <= 0:
                 raise RuntimeError("The movie has no frames to record")
@@ -266,33 +103,30 @@ class RecordingService:
             watcher.start()
             driver.execute_script("player.play();")
             started.set()
-            self._capture_streams(
-                capturer,
-                video_path,
-                audio_path,
-                started,
-                stopped,
-                total_duration_ns,
-            )
+            result = backend.capture_until_stopped(started, stopped, total_duration_ns)
             watcher.join(30)
             if watcher.is_alive():
                 raise TimeoutError("Playback did not stop within 30 seconds")
             if errors:
                 raise errors[0]
+            return result
         finally:
             stopped.set()
-            try:
-                capturer.stop()
-            except Exception:
-                # A second stop may fail; keep the original recording error.
-                logger.debug("capturer.stop failed during cleanup", exc_info=True)
+            if result is None:
+                try:
+                    backend.stop()
+                except Exception:
+                    logger.debug("capture stop failed during cleanup", exc_info=True)
             if watcher.ident is not None:
                 watcher.join(30)
 
-    def _finish_recording(self, output, video, audio):
+    def _finish_recording(self, output, result):
         muxer = FFmpegMuxer(self._ffmpeg_path())
         self.reporter.progress(85, "muxing")
-        muxer.mux(video, audio if audio.is_file() else None, output)
+        if result.audio_is_muxed:
+            muxer.mux_combined(result.video, output)
+        else:
+            muxer.mux(result.video, result.audio, output)
         if not self.args.no_outro:
             self.reporter.progress(95, "outro")
             muxer.append_outro(
@@ -312,6 +146,9 @@ class RecordingService:
             getattr(self.args, "flash_plugin_version", config.FLASH_PLUGIN_VERSION),
             getattr(self.args, "electron", config.ELECTRON),
             *self.args.resolution,
+            use_virtual_display=(
+                getattr(self.args, "capture_backend", "pyscap") != "obs"
+            ),
         )
 
     def _build_replacements(self):
@@ -335,40 +172,65 @@ class RecordingService:
             replacement_overrides(getattr(self.args, "replacement", [])),
         )
 
+    def _create_backend(self, name):
+        return create_recording_backend(
+            name,
+            args=self.args,
+            reporter=self.reporter,
+            ffmpeg_path=self._ffmpeg_path(),
+            window_title=self._capture_window_title,
+        )
+
+    @staticmethod
+    def _cleanup_result(result):
+        for path in result.owned_paths:
+            if path.is_file():
+                path.unlink(missing_ok=True)
+        for path in result.owned_paths:
+            if path.is_dir():
+                try:
+                    path.rmdir()
+                except OSError:
+                    logger.warning("OBS intermediate directory is not empty: %s", path)
+
     def run(self):
         self.reporter.progress(0, "preparing")
         output = self._create_output_path()
-        video = output.with_name(f"{output.stem}.video.mkv")
-        audio = output.with_name(f"{output.stem}.audio.wav")
-        service = driver = None
+        artifacts = CaptureArtifacts(
+            output.with_name(f"{output.stem}.video.mkv"),
+            output.with_name(f"{output.stem}.audio.wav"),
+            output.with_name(f".{output.stem}.goexport-obs-{uuid.uuid4().hex}"),
+        )
+        backend_name = getattr(self.args, "capture_backend", "pyscap")
+        backend = self._create_backend(backend_name)
+        service = driver = result = None
         complete = False
         try:
             service, driver = self._prepare_browser()
-            # Browser setup activates its owned Xvfb display before PyScap is
-            # imported or probes native support. Chromium and PyScap therefore
-            # inherit the identical DISPLAY. On macOS, permission is required
-            # before the pre-fullscreen window identity can be enumerated.
-            configure_backend(service.capture_display)
-            import scap
-
-            if not scap.is_supported():
-                raise RuntimeError("This platform does not support screen capture")
-            if not scap.has_permission() and not scap.request_permission():
-                raise PermissionError("Screen-capture permission was denied")
-            self._finish_browser_setup(service, driver)
+            backend.check_available(service.capture_display)
+            self._finish_browser_setup(service, driver, backend_name)
+            backend.prepare(service, driver, artifacts)
             self.reporter.progress(5, "recording")
-            self._record_playback(driver, video, audio, service)
-            self._finish_recording(output, video, audio)
+            result = self._record_playback(driver, backend, service)
+            self._finish_recording(output, result)
             complete = True
         finally:
-            if service is not None:
-                service.close()
-            if complete:
-                video.unlink(missing_ok=True)
-                audio.unlink(missing_ok=True)
-            elif video.exists() or audio.exists():
+            try:
+                backend.close()
+            finally:
+                if service is not None:
+                    service.close()
+            if complete and result is not None:
+                self._cleanup_result(result)
+            elif result is not None or any(
+                path.exists()
+                for path in (artifacts.video, artifacts.audio, artifacts.obs_directory)
+            ):
                 logger.error(
-                    "Retaining capture diagnostics after failure: %s, %s", video, audio
+                    "Retaining capture diagnostics after failure beside %s", output
                 )
         self.reporter.complete(output)
         return 0
+
+
+__all__ = ["RecordingService", "recording_progress"]

@@ -139,6 +139,17 @@ class CliTests(unittest.TestCase):
         flashvars = first._build_replacements()["FLASHVARS"]
         self.assertIn("movieId=movie", flashvars)
 
+    def test_record_backend_defaults_to_pyscap_and_accepts_obs(self):
+        import goexport.cli as cli
+
+        parser = cli.build_parser()
+        defaults = parser.parse_args(["record", "-id", "movie"])
+        selected = parser.parse_args(
+            ["record", "-id", "movie", "--capture-backend", "obs"]
+        )
+        self.assertEqual(defaults.capture_backend, config.RECORDING_BACKEND)
+        self.assertEqual(selected.capture_backend, "obs")
+
 
 class BrowserCaptureTargetTests(unittest.TestCase):
     @staticmethod
@@ -215,6 +226,19 @@ class BrowserCaptureTargetTests(unittest.TestCase):
                 service.stop_display()
         display.assert_called_once_with(size=(1536, 976), color_depth=24)
         display.return_value.stop.assert_called_once()
+
+    def test_obs_linux_browser_uses_existing_display_visible_to_obs(self):
+        from goexport.services.browser import BrowserService
+
+        service = BrowserService(Mock(), Mock(), Mock(), "1", use_virtual_display=False)
+        with (
+            patch.object(config, "SYSTEM", "Linux"),
+            patch.dict(os.environ, {"DISPLAY": ":0"}, clear=True),
+            patch("goexport.services.browser.LinuxDisplay") as display,
+        ):
+            service.start_display()
+            self.assertEqual(service.capture_display, ":0")
+        display.assert_not_called()
 
     def test_virtual_display_is_the_capture_display_when_inherited_differs(self):
         service = self._service()

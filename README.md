@@ -3,8 +3,9 @@
 GoExport 2.0 exports GoAnimate movies through a Flash-enabled Chromium browser.
 It has two CLI commands and no GUI:
 
-- `record` captures playback and system audio with PyScap, then muxes the video
-  and optionally appends an outro.
+- `record` captures playback and audio with PyScap by default, or with an
+  optional OBS Studio backend, then muxes the video and optionally
+  appends an outro.
 - `export` seeks each movie frame, encodes browser screenshots, builds an audio
   timeline from movie XML, and mixes locally resolved sound assets.
 
@@ -35,6 +36,25 @@ server URLs and player paths.
 python main.py record -id MOVIE_ID -out final_output --no-outro
 python main.py export -id MOVIE_ID -xml movie.xml -ugc /path/to/ugc -as /path/to/theme/assets
 ```
+
+### Optional OBS recording backend
+
+OBS Studio can provide an alternative window/audio capture path on macOS 13+,
+Windows, and Linux/X11. Install and start OBS, enable its WebSocket
+server, and install the pinned Python dependency from `requirements.txt`. Put
+the WebSocket password in `GOEXPORT_OBS_PASSWORD`, then run:
+
+```sh
+GOEXPORT_OBS_PASSWORD='your-password' python main.py record \
+  -id MOVIE_ID --capture-backend obs -out final_output --no-outro
+```
+
+PowerShell uses `$env:GOEXPORT_OBS_PASSWORD = 'your-password'`. On Linux, OBS
+and GoExport must share an X11 `DISPLAY`; unattended Wayland window selection is
+not currently supported. The backend creates and reuses a persistent `GoExport`
+OBS profile and scene collection, switches back to the user's prior resources
+after recording, and never automatically deletes them. OBS itself is not
+bundled or launched.
 
 Both workflows accept additional Flashvars. New names are added and standard
 names are overridden using last-value-wins behavior:

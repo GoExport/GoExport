@@ -23,3 +23,13 @@
 [flash]
 # plugin_path = "bin/ungoogled-chromium/extensions/pepflashplayer.dll"
 # plugin_version = "32.0.0.371"
+
+[recording]
+# backend = "pyscap"
+
+[obs]
+# host = "127.0.0.1"
+# port = 4455
+# profile = "GoExport"
+# scene_collection = "GoExport"
+# Set the password through GOEXPORT_OBS_PASSWORD, not this file.
