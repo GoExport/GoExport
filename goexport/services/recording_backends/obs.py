@@ -264,8 +264,11 @@ class OBSBackend:
             else:
                 self.client.set_input_settings(GOEXPORT_VIDEO_INPUT, initial, True)
 
+        window_property = (
+            "capture_window" if input_kind == "xcomposite_input" else "window"
+        )
         items = self.client.get_input_properties_list_property_items(
-            GOEXPORT_VIDEO_INPUT, "window"
+            GOEXPORT_VIDEO_INPUT, window_property
         ).property_items
         matches = [
             item
@@ -280,7 +283,7 @@ class OBSBackend:
         window_id = _value(matches[0], "itemValue")
         self.client.set_input_settings(
             GOEXPORT_VIDEO_INPUT,
-            {**initial, "window": window_id},
+            {**initial, window_property: window_id},
             True,
         )
         self._configure_audio_source(audio_kind, input_names)
@@ -350,7 +353,7 @@ class OBSBackend:
             )
         return (
             "xcomposite_input",
-            {"window": 0, "show_cursor": False, "include_border": False},
+            {"capture_window": "", "show_cursor": False, "include_border": False},
             "pulse_output_capture",
         )
 
