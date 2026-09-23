@@ -328,6 +328,41 @@ class OBSBackendTests(unittest.TestCase):
         self.assertFalse(settings["show_cursor"])
         self.assertEqual(audio_kind, "pulse_output_capture")
 
+    def test_linux_configures_xcomposite_capture_window_property(self):
+        backend = self.backend()
+        self.client.get_input_kind_list.return_value = response(
+            input_kinds=["xcomposite_input", "pulse_output_capture"]
+        )
+        self.client.get_input_properties_list_property_items.return_value = response(
+            property_items=[
+                {
+                    "itemName": "GoExport Recorder test — Chromium",
+                    "itemValue": "0x123456",
+                }
+            ]
+        )
+        with (
+            patch.object(obs.config, "SYSTEM", "Linux"),
+            tempfile.TemporaryDirectory() as directory,
+        ):
+            root = Path(directory)
+            backend.prepare(
+                Mock(),
+                Mock(),
+                CaptureArtifacts(root / "v", root / "a", root / "obs"),
+            )
+
+        self.client.get_input_properties_list_property_items.assert_called_once_with(
+            "GoExport Chromium Capture", "capture_window"
+        )
+        video_settings = [
+            call.args[1]
+            for call in self.client.set_input_settings.call_args_list
+            if call.args[0] == "GoExport Chromium Capture"
+        ]
+        self.assertEqual(video_settings[-1]["capture_window"], "0x123456")
+        self.assertNotIn("window", video_settings[-1])
+
     def test_linux_requires_shared_x11_display(self):
         backend = self.backend()
         with patch.object(obs.config, "SYSTEM", "Linux"):
