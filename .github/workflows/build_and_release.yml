@@ -50,6 +50,12 @@ jobs:
           pip install -r requirements.txt
           pip install -r gui/requirements.txt
 
+      - name: Install Linux GUI build dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libxcb-cursor0 xauth xvfb
+
       - name: Write release version
         shell: bash
         run: |
@@ -86,7 +92,7 @@ jobs:
           echo "ed4ce84f0d9caff66f50bcca6ff6f35aae54ce8135408b3fa33abfc3cb384eb0  appimagetool-x86_64.AppImage" | sha256sum --check
           chmod 755 appimagetool-x86_64.AppImage
           APPIMAGETOOL="$PWD/appimagetool-x86_64.AppImage" bash packaging/build_appimage.sh
-          APPIMAGE_EXTRACT_AND_RUN=1 ./dist/GoExport-GUI-x86_64.AppImage --appimage-version
+          APPIMAGE_EXTRACT_AND_RUN=1 timeout 30s xvfb-run -a ./dist/GoExport-GUI-x86_64.AppImage --smoke-test
 
       - name: Packaged PyScap smoke test (Windows)
         if: runner.os == 'Windows'
