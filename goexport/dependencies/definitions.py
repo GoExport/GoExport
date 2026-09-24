@@ -51,8 +51,8 @@ def dependency_registry(
     elif system == "Linux":
         chrome = chromium_dir / "chrome"
         chromium_support = (
-            chromium_dir / "chrome-sandbox",
             chromium_dir / "icudtl.dat",
+            chromium_dir / "resources.pak",
         )
         driver = chromium_dir / "chromedriver"
         flash = chromium_dir / "extensions" / "libpepflashplayer.so"

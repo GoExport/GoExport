@@ -21,3 +21,6 @@ def setup_logging(verbose: bool = False, json_mode: bool = False) -> None:
         ],
         force=True,
     )
+    # httpx logs complete redirected URLs at INFO, including temporary signed
+    # release-asset query parameters. GoExport reports download stages itself.
+    logging.getLogger("httpx").setLevel(logging.WARNING)

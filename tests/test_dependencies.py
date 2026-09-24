@@ -9,6 +9,7 @@ from pathlib import Path
 from unittest.mock import Mock, patch
 
 from goexport.cli import build_parser
+from goexport.dependencies.definitions import dependency_registry
 from goexport.dependencies.manager import DependencyBootstrapError, DependencyManager
 from goexport.dependencies.models import Dependency, DependencyStatus
 
@@ -168,6 +169,18 @@ class DependencyManagerTests(unittest.TestCase):
     def test_missing_managed_defaults_survive_argument_parsing(self):
         args = build_parser().parse_args(["record", "-id", "movie"])
         self.assertIsInstance(args.ffmpeg_path, Path)
+
+    def test_linux_chromium_checks_runtime_files_not_unused_sandbox_helper(self):
+        registry = dependency_registry(
+            system="Linux",
+            chromium_dir=self.root / "chromium",
+            ffmpeg_dir=self.root / "ffmpeg",
+        )
+
+        required_names = {path.name for path in registry["chromium"].required_paths}
+
+        self.assertEqual(required_names, {"chrome", "icudtl.dat", "resources.pak"})
+        self.assertNotIn("chrome-sandbox", required_names)
 
 
 class DependencyCliBoundaryTests(unittest.TestCase):
