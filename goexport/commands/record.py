@@ -100,6 +100,7 @@ def register(subparsers: argparse._SubParsersAction) -> None:
 
     parser.set_defaults(
         func=entry,
+        runtime_dependencies=("chromium", "chromedriver", "pepper_flash", "ffmpeg"),
     )
 
 

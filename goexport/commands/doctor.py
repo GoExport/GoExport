@@ -16,6 +16,8 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from goexport import config
+from goexport.dependencies.definitions import dependency_registry
+from goexport.dependencies.models import DependencyStatus
 from goexport.helpers import add_runtime_arguments
 from goexport.reporting import get_reporter
 from goexport.services.capture import configure_backend
@@ -179,7 +181,9 @@ def _read_requirements(requirements: Path) -> str:
     return data.decode("utf-8-sig")
 
 
-def _check_runtime_files(runtime_paths: dict[str, Path] | None = None) -> Iterable[Check]:
+def _check_runtime_files(
+    runtime_paths: dict[str, Path] | None = None,
+) -> Iterable[Check]:
     runtime_paths = runtime_paths or {
         "chrome": config.CHROME_PATH,
         "chromedriver": config.CHROMEDRIVER_PATH,
@@ -187,13 +191,30 @@ def _check_runtime_files(runtime_paths: dict[str, Path] | None = None) -> Iterab
         "ffmpeg": config.FFMPEG_PATH,
     }
     required = {
-        "Chromium": runtime_paths["chrome"],
-        "ChromeDriver": runtime_paths["chromedriver"],
-        "Pepper Flash": runtime_paths["flash"],
-        "FFmpeg": runtime_paths["ffmpeg"],
+        "Chromium": ("chromium", runtime_paths["chrome"]),
+        "ChromeDriver": ("chromedriver", runtime_paths["chromedriver"]),
+        "Pepper Flash": ("pepper_flash", runtime_paths["flash"]),
+        "FFmpeg": ("ffmpeg", runtime_paths["ffmpeg"]),
     }
-    for name, path in required.items():
-        if path.is_file() or (name == "Pepper Flash" and path.is_dir()):
+    registry = dependency_registry()
+    for name, (dependency_id, path) in required.items():
+        dependency = registry[dependency_id]
+        if path == dependency.runtime_path:
+            verification = dependency.verify()
+            if verification.status is DependencyStatus.INSTALLED:
+                yield Check(name, "ok", str(path))
+                continue
+            detail = ", ".join(
+                str(candidate)
+                for candidate in (*verification.missing, *verification.invalid)
+            )
+            label = (
+                "Missing"
+                if verification.status is DependencyStatus.MISSING
+                else "Broken"
+            )
+            yield Check(name, "error", f"{label}: {detail}")
+        elif path.is_file() or (name == "Pepper Flash" and path.is_dir()):
             yield Check(name, "ok", str(path))
         else:
             yield Check(name, "error", f"Missing: {path}")

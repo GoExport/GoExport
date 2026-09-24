@@ -23,7 +23,9 @@ python main.py doctor
 python main.py --help
 ```
 
-The dependency installer replaces the Chromium and FFmpeg directories in `bin/`.
+The dependency installer verifies each managed component and repairs only missing or
+incomplete Chromium, ChromeDriver, Pepper Flash, and FFmpeg installations. Downloads
+are staged and verified before a managed destination is replaced.
 Chromium 87 and its matching ChromeDriver are deliberately retained for PPAPI
 Flash support. The FFmpeg download URLs use moving release endpoints; they are
 not reproducibly pinned. `requirements.txt` retains the existing Python pins.
@@ -93,13 +95,19 @@ options are also honored by `doctor`.
 Frame-by-frame export uses `output.mkv`, `audio.wav`, and `final_output.<format>`
 in the working directory. These fixed names are unsuitable for concurrent runs.
 
+Commands that need GoExport-managed runtime components verify them before starting.
+Use `-y` or `--yes` to approve any required installation or repair without a prompt;
+non-interactive callers must use this option. Explicit custom runtime paths are never
+replaced by the managed installer. `doctor`, `--help`, and `--version` remain
+non-mutating.
+
 ### JSON output
 
 Place `--json` before the command to reserve stdout for newline-delimited JSON:
 
 ```sh
-python main.py --json record -id MOVIE_ID -out final_output --no-outro
-python main.py --json export -id MOVIE_ID -xml movie.xml -ugc /path/to/ugc -as /path/to/theme/assets
+python main.py --json -y record -id MOVIE_ID -out final_output --no-outro
+python main.py --json -y export -id MOVIE_ID -xml movie.xml -ugc /path/to/ugc -as /path/to/theme/assets
 python main.py --json doctor
 ```
 
@@ -136,7 +144,8 @@ for line in process.stdout:
 - `services/ffmpeg.py` owns encoding commands, pipe/process diagnostics, muxing,
   and outro concatenation. `models/audio_clip.py` describes timeline clips;
   the `Timeline` model remains available, although export currently uses a list.
-- `scripts/download_dependencies.py` installs external runtime files.
+- `goexport/dependencies/` defines, verifies, and selectively installs managed runtime files.
+- `scripts/download_dependencies.py` is the developer/build wrapper around that shared dependency manager.
   `GoExport.spec` bundles Python code and PyScap libraries; the release workflow
   copies `bin/` and `resources/` alongside the executable separately.
 

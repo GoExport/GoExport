@@ -5,6 +5,7 @@ from contextlib import nullcontext, redirect_stdout
 
 from goexport.commands import COMMANDS
 from goexport.config import APP_NAME
+from goexport.dependencies import DependencyBootstrapError, DependencyManager
 from goexport.log import setup_logging
 from goexport.reporting import Reporter
 from goexport.version import VERSION
@@ -34,6 +35,13 @@ def build_parser() -> argparse.ArgumentParser:
         help="Write newline-delimited JSON events to stdout",
     )
 
+    parser.add_argument(
+        "-y",
+        "--yes",
+        action="store_true",
+        help="Automatically install or repair required runtime dependencies",
+    )
+
     subparsers = parser.add_subparsers(required=True)
 
     for command in COMMANDS:
@@ -52,6 +60,9 @@ def main() -> int:
 
     try:
         with output_context:
+            runtime_dependencies = getattr(args, "runtime_dependencies", ())
+            if runtime_dependencies:
+                DependencyManager().bootstrap(args, runtime_dependencies)
             return args.func(args)
     except KeyboardInterrupt:
         if json_mode:
@@ -59,6 +70,12 @@ def main() -> int:
         else:
             logger.warning("Operation cancelled by user.")
         return 130
+    except DependencyBootstrapError as error:
+        if json_mode:
+            reporter.error(str(error), 1)
+        else:
+            logger.error(str(error))
+        return 1
     except Exception as error:
         if json_mode:
             reporter.error(str(error) or type(error).__name__, 1)

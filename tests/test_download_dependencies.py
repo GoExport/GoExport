@@ -1,6 +1,6 @@
+import os
 import tempfile
 import unittest
-import os
 from pathlib import Path
 
 from scripts import download_dependencies
@@ -27,11 +27,6 @@ class ExecutableTests(unittest.TestCase):
             path = Path(temp) / "chromedriver"
             path.touch(mode=0o644)
 
-            original_system = download_dependencies.SYSTEM
-            download_dependencies.SYSTEM = "Linux"
-            try:
-                download_dependencies.make_executable(path)
-            finally:
-                download_dependencies.SYSTEM = original_system
+            download_dependencies.make_executable(path)
 
             self.assertEqual(path.stat().st_mode & 0o111, 0o111)

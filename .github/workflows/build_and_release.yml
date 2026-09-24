@@ -75,6 +75,19 @@ jobs:
         run: |
           python -m PyInstaller GoExport-GUI.spec --noconfirm --clean
 
+      - name: Build portable Linux GUI
+        if: runner.os == 'Linux'
+        working-directory: gui
+        shell: bash
+        run: |
+          curl --fail --location --retry 3 \
+            --output appimagetool-x86_64.AppImage \
+            https://github.com/AppImage/appimagetool/releases/download/1.9.1/appimagetool-x86_64.AppImage
+          echo "ed4ce84f0d9caff66f50bcca6ff6f35aae54ce8135408b3fa33abfc3cb384eb0  appimagetool-x86_64.AppImage" | sha256sum --check
+          chmod 755 appimagetool-x86_64.AppImage
+          APPIMAGETOOL="$PWD/appimagetool-x86_64.AppImage" bash packaging/build_appimage.sh
+          APPIMAGE_EXTRACT_AND_RUN=1 ./dist/GoExport-GUI-x86_64.AppImage --appimage-version
+
       - name: Packaged PyScap smoke test (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
@@ -112,7 +125,7 @@ jobs:
           mv dist/GoExport dist/GoExport-cli
           mkdir "$distribution_directory"
           mv dist/GoExport-cli "$distribution_directory/GoExport"
-          cp gui/dist/GoExport-GUI "$distribution_directory/"
+          cp gui/dist/GoExport-GUI-x86_64.AppImage "$distribution_directory/"
           cp gui/presets.toml "$distribution_directory/"
           cp -r bin "$distribution_directory/"
           cp -r resources "$distribution_directory/"
