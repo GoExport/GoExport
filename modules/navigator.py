@@ -1,13 +1,13 @@
 import helpers
 from modules.logger import logger
-from modules.exceptions import TimeoutError
+from modules.exceptions import TimeoutError, BrowserClosedError
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support.wait import WebDriverWait
-from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import TimeoutException, InvalidSessionIdException, NoSuchWindowException, WebDriverException
 import urllib
 import os
 
@@ -55,9 +55,96 @@ class Interface:
         # Common options for both OSes
         self.options.add_argument(f"--user-data-dir={helpers.get_path(None, helpers.get_config("DEFAULT_OUTPUT_FILENAME"), f"{helpers.get_timestamp()}_chrome_profile_temp")}")
         self.options.add_experimental_option("excludeSwitches", ["enable-automation"])
+        # Capture everything Chromium exposes through the DevTools console. Selenium's
+        # browser log includes console.log/warn/error calls, uncaught JavaScript
+        # exceptions, and browser-generated console messages such as failed resources.
+        self.options.set_capability("goog:loggingPrefs", {"browser": "ALL"})
         self.options.binary_location = chromium
         self.service = Service(executable_path=chromedriver)
         self.driver = None
+
+    @staticmethod
+    def _is_browser_closed_error(error):
+        """Return True when Selenium lost the Chromium window/session."""
+        if isinstance(error, (NoSuchWindowException, InvalidSessionIdException)):
+            return True
+
+        if isinstance(error, WebDriverException):
+            message = str(error).lower()
+            closed_markers = (
+                "chrome not reachable",
+                "no such window",
+                "target window already closed",
+                "web view not found",
+                "invalid session id",
+                "not connected to devtools",
+                "disconnected: not connected to devtools",
+                "session deleted because of page crash",
+            )
+            return any(marker in message for marker in closed_markers)
+
+        return False
+
+    def _translate_webdriver_error(self, error):
+        if self._is_browser_closed_error(error):
+            raise BrowserClosedError(
+                "Chromium was closed before GoExport finished. "
+                "Please leave the Chromium window open until the export is complete."
+            ) from error
+        raise error
+
+    def log_browser_console(self):
+        """Forward Chromium's DevTools console entries to the GoExport console/log."""
+        if self.driver is None:
+            return
+
+        try:
+            entries = self.driver.get_log("browser")
+        except Exception as error:
+            if self._is_browser_closed_error(error):
+                self._translate_webdriver_error(error)
+            # Console forwarding is diagnostic and should never break an otherwise
+            # healthy export if ChromeDriver cannot provide a log entry.
+            logger.debug(f"Could not read Chromium console log: {error}")
+            return
+
+        for entry in entries:
+            level = str(entry.get("level", "INFO")).upper()
+            message = entry.get("message", "")
+            line = f"[Chromium console][{level}] {message}"
+
+            if level == "SEVERE":
+                logger.error(line)
+            elif level == "WARNING":
+                logger.warning(line)
+            else:
+                # Keep INFO/DEBUG console messages visible without requiring --verbose.
+                logger.info(line)
+
+    def _execute_script(self, script):
+        try:
+            result = self.driver.execute_script(script)
+        except Exception as error:
+            self._translate_webdriver_error(error)
+        self.log_browser_console()
+        return result
+
+    def _execute_cdp_cmd(self, command, params):
+        try:
+            result = self.driver.execute_cdp_cmd(command, params)
+        except Exception as error:
+            self._translate_webdriver_error(error)
+        self.log_browser_console()
+        return result
+
+    def navigate(self, url):
+        """Navigate Chromium while translating a manually closed browser cleanly."""
+        try:
+            self.driver.get(url)
+        except Exception as error:
+            self._translate_webdriver_error(error)
+        self.log_browser_console()
+        return True
 
     def start(self):
         """Initializes and starts the Selenium WebDriver."""
@@ -68,30 +155,40 @@ class Interface:
             logger.info(f"Set DISPLAY environment variable to {display}")
             
         self.driver = webdriver.Chrome(options=self.options, service=self.service)
-        self.driver.get(self.start_url)
+        self.navigate(self.start_url)
         helpers.wait(2)
+        self.log_browser_console()
         return True
     
     def warning(self, width=1280, height=720):
         """Displays a warning on the browser for 5 seconds."""
-        self.driver.get(helpers.convert_to_file_url(helpers.get_path(helpers.get_app_folder(), helpers.get_config("DEFAULT_ASSETS_FILENAME"), "warning.html")) + f"?w={width}&h={height}")
-        print(self.driver.current_url)
+        self.navigate(helpers.convert_to_file_url(helpers.get_path(helpers.get_app_folder(), helpers.get_config("DEFAULT_ASSETS_FILENAME"), "warning.html")) + f"?w={width}&h={height}")
+        try:
+            print(self.driver.current_url)
+        except Exception as error:
+            self._translate_webdriver_error(error)
         helpers.wait(3)
         return True
 
     def close(self):
         """Stops the Selenium WebDriver."""
-        self.driver.quit()
+        self.log_browser_console()
+        try:
+            self.driver.quit()
+        except Exception as error:
+            self._translate_webdriver_error(error)
+        finally:
+            self.driver = None
         return True
 
     def inject_now(self, script: str):
         """Injects a JavaScript snippet into the page immediately."""
-        self.driver.execute_script(script)
+        self._execute_script(script)
         logger.info("Injected script into page")
 
     def inject_in_future(self, script: str):
         """Injects a JavaScript snippet into the page."""
-        self.driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {"source": f'{script}'})
+        self._execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {"source": f'{script}'})
         logger.info("Injecting script in the future")
         return True
 
@@ -101,12 +198,12 @@ class Interface:
         Returns True if any data exists, False otherwise.
         """
         # Check general storage (localStorage, IndexedDB, service workers)
-        storage = self.driver.execute_cdp_cmd("Storage.getUsageAndQuota", {"origin": url})
+        storage = self._execute_cdp_cmd("Storage.getUsageAndQuota", {"origin": url})
         if storage.get("usage", 0) > 0:
             return True
 
         # Check cookies
-        all_cookies = self.driver.execute_cdp_cmd("Network.getAllCookies", {}).get("cookies", [])
+        all_cookies = self._execute_cdp_cmd("Network.getAllCookies", {}).get("cookies", [])
         # Extract domain from URL
         domain = urllib.parse.urlparse(url).netloc
         site_cookies = [c for c in all_cookies if domain in c["domain"]]
@@ -120,26 +217,32 @@ class Interface:
     def enable_flash(self, offset: int = 0):
         # If people start having issues, revert 0.05 to 0.1
         """Enables the Flash Player."""
-        url = self.driver.current_url
-        self.driver.get(f"chrome://settings/content/siteDetails?site={urllib.parse.quote(url)}")
+        try:
+            url = self.driver.current_url
+            self.navigate(f"chrome://settings/content/siteDetails?site={urllib.parse.quote(url)}")
 
-        actions = ActionChains(self.driver)
-        for _ in range(19 + offset): # Find a way around this
-            actions.send_keys(Keys.TAB)
+            actions = ActionChains(self.driver)
+            for _ in range(19 + offset): # Find a way around this
+                actions.send_keys(Keys.TAB)
+                actions.perform()
+                helpers.wait(0.05)
+            actions.send_keys(Keys.SPACE)
             actions.perform()
             helpers.wait(0.05)
-        actions.send_keys(Keys.SPACE)
-        actions.perform()
-        helpers.wait(0.05)
-        actions.send_keys(Keys.ARROW_DOWN)
-        actions.perform()
-        helpers.wait(0.05)
-        actions.send_keys(Keys.ENTER)
-        actions.perform()
-        self.tried = True
+            actions.send_keys(Keys.ARROW_DOWN)
+            actions.perform()
+            helpers.wait(0.05)
+            actions.send_keys(Keys.ENTER)
+            actions.perform()
+            self.tried = True
 
-        self.driver.back()
-        self.driver.refresh()
+            self.driver.back()
+            self.driver.refresh()
+            self.log_browser_console()
+        except Exception as error:
+            if isinstance(error, BrowserClosedError):
+                raise
+            self._translate_webdriver_error(error)
 
         return True
 
@@ -156,7 +259,7 @@ class Interface:
         
         try:
             WebDriverWait(self.driver, timeout_seconds).until(
-                lambda driver: driver.execute_script("return window.startRecord !== undefined")
+                lambda driver: self._execute_script("return window.startRecord !== undefined")
             )
         except TimeoutException:
             raise TimeoutError(
@@ -169,12 +272,12 @@ class Interface:
 
     def play(self):
         """Start the video player if supported"""
-        self.driver.execute_script('document.getElementById("obj").play()')
+        self._execute_script('document.getElementById("obj").play()')
         return True
     
     def pause(self):
         """Pause the video player if supported"""
-        self.driver.execute_script('document.getElementById("obj").pause()')
+        self._execute_script('document.getElementById("obj").pause()')
         return True
 
     def await_completed(self, timeout_minutes: int = 0):
@@ -190,7 +293,7 @@ class Interface:
         
         try:
             WebDriverWait(self.driver, timeout_seconds).until(
-                lambda driver: driver.execute_script("return window.stopRecord !== undefined")
+                lambda driver: self._execute_script("return window.stopRecord !== undefined")
             )
         except TimeoutException:
             raise TimeoutError(
@@ -202,8 +305,8 @@ class Interface:
         return True
     
     def get_timestamps(self):
-        start_record = self.driver.execute_script("return window.startRecord")
-        stop_record = self.driver.execute_script("return window.stopRecord")
+        start_record = self._execute_script("return window.startRecord")
+        stop_record = self._execute_script("return window.stopRecord")
 
         start_offset = self.startedDelay - start_record # ms delay
         stop_offset = self.endedDelay - stop_record # ms delay
