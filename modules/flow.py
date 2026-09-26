@@ -4,7 +4,7 @@ from modules.editor import Editor
 from modules.navigator import Interface
 from modules.capture import Capture
 from modules.server import Server
-from modules.exceptions import TimeoutError
+from modules.exceptions import TimeoutError, BrowserClosedError
 from rich.prompt import Prompt, IntPrompt, Confirm
 from rich import print
 from modules.logger import logger
@@ -365,7 +365,9 @@ class Controller:
                     return False
 
             try:
-                self.browser.driver.get(self.svr_url)
+                self.browser.navigate(self.svr_url)
+            except BrowserClosedError:
+                raise
             except Exception as e:
                 raise RuntimeError(f"Failed to load {self.svr_url}: {e}")
 
@@ -470,6 +472,9 @@ class Controller:
                     logger.error(f"Error copying recording: {e}")
                     return False
                 return True
+        except BrowserClosedError as e:
+            logger.error(str(e))
+            return False
         except Exception as e:
             logger.error(f"Error in export process: {e}")
             return False
