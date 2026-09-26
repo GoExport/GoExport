@@ -18,3 +18,11 @@ class TimeoutError(GoExportError):
         super().__init__(message)
         self.message = message
         self.timeout_type = timeout_type
+
+
+class BrowserClosedError(GoExportError):
+    """Raised when Chromium is closed before an export completes."""
+
+    def __init__(self, message: str):
+        super().__init__(message)
+        self.message = message
