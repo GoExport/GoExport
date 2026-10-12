@@ -26,9 +26,6 @@ jobs:
           - os: Linux
             runner: ubuntu-22.04
 
-          # - os: macOS
-          #   runner: macos-15-intel # Intel runner; artifacts are genuinely x64.
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -74,12 +71,6 @@ jobs:
       - name: Download runtime dependencies
         run: |
           python scripts/download_dependencies.py
-
-      - name: Ad-hoc sign macOS Flash Player
-        if: runner.os == 'macOS'
-        run: |
-          codesign --force --deep --sign - bin/ungoogled-chromium/extensions/PepperFlashPlayer.plugin
-          codesign --verify --deep --strict --verbose=4 bin/ungoogled-chromium/extensions/PepperFlashPlayer.plugin
 
       - name: Build GoExport
         run: |
@@ -148,21 +139,6 @@ jobs:
           cp LICENSE "$distribution_directory/"
           cp config.toml "$distribution_directory/"
 
-      - name: Prepare distribution (macOS)
-        if: runner.os == 'macOS'
-        run: |
-          distribution_directory=dist/GoExport
-          mv dist/GoExport dist/GoExport-cli
-          mkdir "$distribution_directory"
-          mv dist/GoExport-cli "$distribution_directory/GoExport"
-          cp gui/dist/GoExport-GUI "$distribution_directory/"
-          cp gui/presets.toml "$distribution_directory/"
-          cp -r bin "$distribution_directory/"
-          cp -r resources "$distribution_directory/"
-          cp README.md "$distribution_directory/"
-          cp LICENSE "$distribution_directory/"
-          cp config.toml "$distribution_directory/"
-
       - name: Package Windows
         if: runner.os == 'Windows'
         shell: pwsh
@@ -179,14 +155,6 @@ jobs:
             -C dist \
             GoExport
 
-      - name: Package macOS
-        if: runner.os == 'macOS'
-        run: |
-          tar \
-            -czf GoExport-macos-x64.tar.gz \
-            -C dist \
-            GoExport
-
       - name: Upload Windows Artifact
         if: runner.os == 'Windows'
         uses: actions/upload-artifact@v4
@@ -200,13 +168,6 @@ jobs:
         with:
           name: GoExport-linux-x64
           path: GoExport-linux-x64.tar.gz
-
-      - name: Upload macOS Artifact
-        if: runner.os == 'macOS'
-        uses: actions/upload-artifact@v4
-        with:
-          name: GoExport-macos-x64
-          path: GoExport-macos-x64.tar.gz
 
   release:
     name: Create GitHub Release
@@ -255,16 +216,10 @@ jobs:
         with:
           name: GoExport-linux-x64
 
-      - name: Download macOS artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: GoExport-macos-x64
-
       - name: Verify release archives
         run: |
           test -f GoExport-windows-x64.zip
           test -f GoExport-linux-x64.tar.gz
-          test -f GoExport-macos-x64.tar.gz
 
       - name: Create Release
         timeout-minutes: 10
@@ -275,7 +230,6 @@ jobs:
           files: |
             GoExport-windows-x64.zip
             GoExport-linux-x64.tar.gz
-            GoExport-macos-x64.tar.gz
 
       - name: Notify Discord
         if: steps.changelog.outputs.is_prerelease == 'false'
