@@ -3,7 +3,7 @@
 GoExport 2.0 exports GoAnimate movies through a Flash-enabled Chromium browser.
 It has two CLI commands and no GUI:
 
-- `record` captures playback and audio with PyScap by default, or with an
+- `record` captures playback and audio with CaptureKit by default, or with an
   optional OBS Studio backend, then muxes the video and optionally
   appends an outro.
 - `export` seeks each movie frame, encodes browser screenshots, builds an audio
@@ -135,9 +135,9 @@ for line in process.stdout:
   template injection, and capture-target lookup. `close()` releases Chromium
   and the virtual display. `services/flash.py` waits for player readiness and
   the template's start/stop markers.
-- `services/recorder.py` coordinates playback, the stop watcher, capture, audio
-  alignment, and output cleanup. `services/capture.py` converts timestamps and
-  chooses frames for a constant frame rate.
+- `services/recorder.py` coordinates playback, the stop watcher, capture, and
+  output cleanup. `services/recording_backends/capturekit.py` binds the owned
+  browser window and lets CaptureKit synchronize video and audio.
 - `services/renderer.py` encodes frame-by-frame screenshots.
   `timeline_builder.py`, `asset_resolver.py`, and `audio.py` load movie sounds,
   resolve UGC/theme files, and send the timeline to the audio encoder.
@@ -146,7 +146,7 @@ for line in process.stdout:
   the `Timeline` model remains available, although export currently uses a list.
 - `goexport/dependencies/` defines, verifies, and selectively installs managed runtime files.
 - `scripts/download_dependencies.py` is the developer/build wrapper around that shared dependency manager.
-  `GoExport.spec` bundles Python code and PyScap libraries; the release workflow
+  `GoExport.spec` bundles CaptureKit's platform modules; the release workflow
   copies `bin/` and `resources/` alongside the executable separately.
 
 ## Development and verification
@@ -161,7 +161,6 @@ logging. Keep encoder stderr file-backed to avoid pipe deadlocks.
 ```sh
 python -m pip install -r requirements-dev.txt
 python -m unittest discover -s tests -v
-python3 -m unittest tests.test_macos_capture_diagnostic -v
 python -m ruff check goexport scripts tests main.py
 python -m ruff format --check goexport scripts tests main.py
 python -m mypy
@@ -179,20 +178,17 @@ capture, and encoder cleanup. Build output is ignored by Git.
 
 ## Platform behavior and remaining limits
 
-Windows selects the browser capture target by its unique recording title. On
-macOS, GoExport assigns a temporary unique title before fullscreen, remembers
-the matching window ID, and resolves that ID again after fullscreen because
-Chromium can expose a stale native title there. Linux explicitly uses PyScap's
-X11 backend and the current display's root window rather than enumerating
-windows. It tries to start an Xvfb display and logs a fallback to the current
-display if startup fails. Linux therefore needs an available X11 display/Xvfb;
-macOS may require screen-capture permission.
+Windows and Linux select the owned Chromium window by its unique recording title
+and retain its native handle. CaptureKit crops the physical-pixel viewport and
+records Chromium process audio without enabling a microphone. Linux passes
+GoExport's private Xvfb display explicitly; only that owned display may be used
+for the controlled monitor fallback when XComposite capture is unavailable.
+Wayland-only systems and macOS are unsupported by CaptureKit; use OBS on macOS.
 
-PyScap timestamps use integer nanoseconds within GoExport and are never compared
-with Python wall clocks. The recorder discards dequeued frames until `play()`
-returns, but queued frames can precede that call. Stop is bounded by the first
-dequeued frame after the watcher observes the stop marker. Exact player-marker
-alignment and cancellation of a blocked native capture read remain limitations.
+CaptureKit owns frame pacing and audio/video synchronization. GoExport starts it
+paused, resumes immediately before `player.play()`, and stops after the template's
+playback-stop event. Native capture behavior still requires platform testing;
+the opt-in native tests are disabled unless explicitly requested.
 
 The export command needs movie XML for local audio even though `--movie-xml` is
 not marked required by argparse. The shared HTML template plays by movie ID;

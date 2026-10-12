@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import re
 import subprocess
 import tempfile
 from pathlib import Path
@@ -9,6 +10,10 @@ from goexport.models.audio_clip import AudioClip
 from goexport.services.asset_resolver import AssetResolver
 
 logger = logging.getLogger(__name__)
+
+# One line per input stream in FFmpeg's input summary, e.g.
+# "  Stream #0:1(eng): Audio: pcm_s16le, 48000 Hz, stereo".
+_AUDIO_STREAM_PATTERN = re.compile(r"^\s*Stream #0:\d+\S*: Audio:", re.MULTILINE)
 
 
 class FFmpegError(RuntimeError):
@@ -103,78 +108,6 @@ class FFmpegVideoEncoder(_PipeEncoder):
                 "18",
                 "-preset",
                 "medium",
-                str(output_file),
-            ]
-        )
-
-
-class FFmpegRawVideoEncoder(_PipeEncoder):
-    def __init__(
-        self,
-        ffmpeg_path: Path,
-        output_file: Path,
-        width: int,
-        height: int,
-        output_width: int,
-        output_height: int,
-        fps: int = 24,
-    ):
-        if output_width > width or output_height > height:
-            raise ValueError(
-                f"Capture {width}x{height} is smaller than requested output {output_width}x{output_height}"
-            )
-        super().__init__(
-            [
-                str(ffmpeg_path),
-                "-y",
-                "-f",
-                "rawvideo",
-                "-pix_fmt",
-                "bgra",
-                "-s",
-                f"{width}x{height}",
-                "-framerate",
-                str(fps),
-                "-i",
-                "-",
-                "-vf",
-                f"crop={output_width}:{output_height}:0:0,pad=ceil(iw/2)*2:ceil(ih/2)*2",
-                "-c:v",
-                "libx264",
-                "-pix_fmt",
-                "yuv420p",
-                "-crf",
-                "18",
-                "-preset",
-                "medium",
-                str(output_file),
-            ]
-        )
-
-
-class FFmpegRawAudioEncoder(_PipeEncoder):
-    def __init__(
-        self,
-        ffmpeg_path: Path,
-        output_file: Path,
-        channels: int,
-        sample_rate: int,
-        sample_format: str,
-    ):
-        super().__init__(
-            [
-                str(ffmpeg_path),
-                "-y",
-                "-f",
-                sample_format,
-                "-ar",
-                str(sample_rate),
-                "-ac",
-                str(channels),
-                "-i",
-                "-",
-                "-c:a",
-                "pcm_s16le",
                 str(output_file),
             ]
         )
@@ -283,25 +216,67 @@ class FFmpegMuxer:
         if audio_file is not None:
             audio_file.unlink(missing_ok=True)
 
-    def mux_combined(self, media_file: Path, output_file: Path) -> None:
-        """Finalize an OBS recording that already contains synchronized A/V."""
+    def audio_stream_count(self, media_file: Path) -> int:
+        """Count the audio streams FFmpeg reports for ``media_file``."""
+        completed = subprocess.run(
+            [str(self.ffmpeg_path), "-hide_banner", "-nostdin", "-i", str(media_file)],
+            capture_output=True,
+            text=True,
+            errors="replace",
+        )
+        # Without an output FFmpeg always exits non-zero; the input summary is
+        # present only when it could actually open and probe the file.
+        if "Input #0" not in completed.stderr:
+            raise FFmpegError(
+                f"FFmpeg could not read {media_file}:\n{completed.stderr[-4000:]}"
+            )
+        return len(_AUDIO_STREAM_PATTERN.findall(completed.stderr))
+
+    def mux_combined(
+        self,
+        media_file: Path,
+        output_file: Path,
+        has_audio: bool | None = None,
+    ) -> None:
+        """Finalize a recording that already contains synchronized A/V.
+
+        ``has_audio`` is what the capture backend intended to record; the file
+        is always probed, and an expected track that is missing is an error
+        rather than a silent export. Recordings without audio get a silent
+        track so every container and the outro concat stay valid.
+        """
+        streams = self.audio_stream_count(media_file)
+        if has_audio and streams == 0:
+            raise FFmpegError(
+                f"{media_file} should contain recorded audio but has no audio stream"
+            )
+        if streams > 1:
+            logger.warning(
+                "%s has %d audio streams; using the first.", media_file, streams
+            )
+        command = [str(self.ffmpeg_path), "-y", "-i", str(media_file)]
+        if streams:
+            audio_map, limit = "0:a:0", []
+        else:
+            command += ["-f", "lavfi", "-i", "anullsrc=r=48000:cl=stereo"]
+            # Only the endless silent source needs bounding. With recorded
+            # audio, -shortest would drop the final stream-copied video
+            # frame(s) because the AAC output ends a little early.
+            audio_map, limit = "1:a:0", ["-shortest"]
         self._run(
-            [
-                str(self.ffmpeg_path),
-                "-y",
-                "-i",
-                str(media_file),
+            command
+            + [
                 "-map",
                 "0:v:0",
                 "-map",
-                "0:a:0",
+                audio_map,
                 "-c:v",
                 "copy",
                 "-c:a",
                 "aac",
                 "-b:a",
                 "192k",
-                "-shortest",
+                *limit,
                 str(output_file),
             ]
         )

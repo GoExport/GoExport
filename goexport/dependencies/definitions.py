@@ -17,12 +17,12 @@ DOWNLOADS = {
     "Windows": {
         "chromium": "https://github.com/tangalbert919/ungoogled-chromium-binaries/releases/download/87.0.4280.141-1/ungoogled-chromium_87.0.4280.141-1.1_windows-x64.zip",
         "chromedriver": "https://chromedriver.storage.googleapis.com/87.0.4280.88/chromedriver_win32.zip",
-        "ffmpeg": "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip",
+        "ffmpeg": "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-n9.0-latest-win64-gpl-9.0.zip",
         "flash": "https://github.com/GoExport/goexport-flash-player/releases/latest/download/pepflashplayer.zip",
     },
     "Linux": {
         "chromium": "https://github.com/LordTwix/ungoogled-chromium-binaries/releases/download/87.0.4280.141-1.1/ungoogled-chromium_87.0.4280.141-1.1_linux.tar.xz",
-        "ffmpeg": "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-linux64-gpl.tar.xz",
+        "ffmpeg": "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-n9.0-latest-linux64-gpl-9.0.tar.xz",
         "flash": "https://github.com/GoExport/goexport-flash-player/releases/latest/download/libpepflashplayer.zip",
     },
     "Darwin": {

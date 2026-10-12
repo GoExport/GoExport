@@ -7,13 +7,13 @@ from unittest.mock import Mock, call, patch
 
 from goexport.services.recording_backends import create_recording_backend, obs
 from goexport.services.recording_backends.base import CaptureArtifacts
+from goexport.services.recording_backends.capturekit import CaptureKitBackend
 from goexport.services.recording_backends.obs import (
     GOEXPORT_SCENE,
     OWNERSHIP_SLOT,
     REQUIRED_REQUESTS,
     OBSBackend,
 )
-from goexport.services.recording_backends.pyscap import PyScapBackend
 
 
 def response(**kwargs):
@@ -74,15 +74,31 @@ class OBSBackendTests(unittest.TestCase):
             client_factory=Mock(return_value=self.client),
         )
 
-    def test_factory_keeps_pyscap_as_explicit_backend(self):
-        backend = create_recording_backend(
-            "pyscap",
+    @staticmethod
+    def create(name):
+        return create_recording_backend(
+            name,
             args=Namespace(),
             reporter=Mock(),
             ffmpeg_path=Path("ffmpeg"),
             window_title="title",
         )
-        self.assertIsInstance(backend, PyScapBackend)
+
+    def test_factory_selects_capturekit_and_obs(self):
+        self.assertIsInstance(self.create("capturekit"), CaptureKitBackend)
+        self.assertIsInstance(self.create("obs"), OBSBackend)
+
+    def test_factory_rejects_removed_pyscap_backend_with_migration(self):
+        with self.assertRaisesRegex(ValueError, "removed.*capturekit"):
+            self.create("pyscap")
+
+    def test_obs_records_continuously_through_playback_start(self):
+        backend = self.backend()
+        backend.client = self.client
+        backend.start()
+        backend.before_playback()
+        self.client.start_record.assert_called_once_with()
+        self.client.stop_record.assert_not_called()
 
     def test_prepare_creates_persistent_resources_and_configures_video(self):
         with tempfile.TemporaryDirectory() as directory:

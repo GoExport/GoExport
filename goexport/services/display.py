@@ -44,8 +44,8 @@ class LinuxDisplay:
         self._display = display
         self.display = display.new_display_var
         # Do this explicitly as well as through PyVirtualDisplay so every
-        # in-process consumer (including native PyScap initialization) has the
-        # display owned by this session as its source of truth.
+        # in-process consumer has the display owned by this session as its
+        # source of truth. Capture backends still receive it explicitly.
         os.environ["DISPLAY"] = self.display
         return self.display
 

@@ -1,102 +1,14 @@
+import io
 import os
-import sys
 import unittest
 from argparse import Namespace
-from types import SimpleNamespace
-from unittest.mock import Mock, call, patch
+from contextlib import redirect_stderr
+from unittest.mock import Mock, patch
 
 from goexport import config
-from goexport.services.capture import (
-    VideoSelector,
-    audio_padding_samples,
-    audio_trim_samples,
-    cfr_index,
-    configure_backend,
-    configure_windows_dpi_awareness,
-    create_capturer,
-)
 
 
-class CaptureTimelineTests(unittest.TestCase):
-    def test_windows_uses_per_monitor_v2_dpi_awareness(self):
-        import goexport.services.capture as capture
-
-        windll = Mock()
-        windll.user32.SetProcessDpiAwarenessContext.return_value = True
-        with (
-            patch.object(config, "SYSTEM", "Windows"),
-            patch.object(capture, "_windows_dpi_configured", False),
-            patch.object(capture.ctypes, "windll", windll, create=True),
-        ):
-            configure_windows_dpi_awareness()
-
-        argument = windll.user32.SetProcessDpiAwarenessContext.call_args.args[0]
-        self.assertEqual(argument.value, capture.ctypes.c_void_p(-4).value)
-        windll.shcore.SetProcessDpiAwareness.assert_not_called()
-        windll.user32.SetProcessDPIAware.assert_not_called()
-
-    def test_windows_dpi_awareness_falls_back_for_older_versions(self):
-        import goexport.services.capture as capture
-
-        windll = Mock()
-        windll.user32.SetProcessDpiAwarenessContext.side_effect = AttributeError
-        windll.shcore.SetProcessDpiAwareness.return_value = 0
-        with (
-            patch.object(config, "SYSTEM", "Windows"),
-            patch.object(capture, "_windows_dpi_configured", False),
-            patch.object(capture.ctypes, "windll", windll, create=True),
-        ):
-            configure_windows_dpi_awareness()
-
-        self.assertEqual(windll.shcore.SetProcessDpiAwareness.call_args, call(2))
-        windll.user32.SetProcessDPIAware.assert_not_called()
-
-    def test_linux_backend_is_configured_before_scap_import(self):
-        scap = Mock()
-        scap.CaptureOptions.return_value = Mock()
-        with (
-            patch.object(config, "SYSTEM", "Linux"),
-            patch.dict(os.environ, {}, clear=True),
-            patch.dict(sys.modules, {"scap": scap}),
-        ):
-            create_capturer(None)
-            self.assertEqual(os.environ["SCAP_BACKEND"], "x11")
-
-        scap.Capturer.assert_called_once_with(scap.CaptureOptions.return_value)
-
-    def test_explicit_linux_backend_overrides_x11_default(self):
-        with (
-            patch.object(config, "SYSTEM", "Linux"),
-            patch.dict(os.environ, {"SCAP_BACKEND": "pipewire"}, clear=True),
-        ):
-            configure_backend()
-            self.assertEqual(os.environ["SCAP_BACKEND"], "pipewire")
-
-    def test_linux_capture_configuration_uses_owned_display(self):
-        with (
-            patch.object(config, "SYSTEM", "Linux"),
-            patch.dict(os.environ, {"DISPLAY": ":0"}, clear=True),
-        ):
-            configure_backend(":99")
-            self.assertEqual(os.environ["DISPLAY"], ":99")
-
-    def test_cfr_rounding_at_boundary(self):
-        origin = 1_000_000_000
-        self.assertEqual(cfr_index(origin + 20_833_333, origin, 24), 0)
-        self.assertEqual(cfr_index(origin + 20_833_334, origin, 24), 1)
-
-    def test_duplicate_nearest_and_missing_repeat(self):
-        origin = 0
-        selector = VideoSelector(24)
-        self.assertEqual(selector.add(origin, b"first"), [])
-        self.assertEqual(selector.add(42_000_000, b"late"), [b"first"])
-        # Slot one is settled as late; skipping to slot three repeats it for slot two.
-        self.assertEqual(selector.add(125_000_000, b"third"), [b"late", b"late"])
-
-    def test_initial_audio_offset_sample_math(self):
-        self.assertEqual(audio_padding_samples(500_000_000, 48_000), 24_000)
-        self.assertEqual(audio_trim_samples(-250_000_000, 48_000), 12_000)
-
+class OutputFormatTests(unittest.TestCase):
     def test_formats_do_not_advertise_gif(self):
         self.assertEqual(config.SUPPORTED_FORMATS, {"mp4", "mov", "mkv"})
 
@@ -139,7 +51,7 @@ class CliTests(unittest.TestCase):
         flashvars = first._build_replacements()["FLASHVARS"]
         self.assertIn("movieId=movie", flashvars)
 
-    def test_record_backend_defaults_to_pyscap_and_accepts_obs(self):
+    def test_record_backend_defaults_to_capturekit_and_accepts_obs(self):
         import goexport.cli as cli
 
         parser = cli.build_parser()
@@ -147,8 +59,32 @@ class CliTests(unittest.TestCase):
         selected = parser.parse_args(
             ["record", "-id", "movie", "--capture-backend", "obs"]
         )
-        self.assertEqual(defaults.capture_backend, config.RECORDING_BACKEND)
+        self.assertEqual(config.RECORDING_BACKEND, "capturekit")
+        self.assertEqual(defaults.capture_backend, "capturekit")
+        self.assertEqual(defaults.capturekit_audio, "process")
+        self.assertEqual(defaults.capturekit_encoder, "auto")
         self.assertEqual(selected.capture_backend, "obs")
+
+    def test_record_rejects_pyscap_with_migration_guidance(self):
+        import goexport.cli as cli
+
+        parser = cli.build_parser()
+        stderr = io.StringIO()
+        with redirect_stderr(stderr), self.assertRaises(SystemExit):
+            parser.parse_args(["record", "-id", "m", "--capture-backend", "pyscap"])
+        self.assertIn("--capture-backend capturekit", stderr.getvalue())
+
+    def test_record_audio_mode_never_offers_microphone(self):
+        import goexport.cli as cli
+
+        parser = cli.build_parser()
+        for mode in ("process", "system", "none"):
+            args = parser.parse_args(["record", "-id", "m", "--capturekit-audio", mode])
+            self.assertEqual(args.capturekit_audio, mode)
+        with redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
+            parser.parse_args(
+                ["record", "-id", "m", "--capturekit-audio", "microphone"]
+            )
 
     def test_record_accepts_force_obs_profile(self):
         import goexport.cli as cli
@@ -171,62 +107,20 @@ class BrowserCaptureTargetTests(unittest.TestCase):
             Mock(), Mock(), Mock(), "1", False, width=1280, height=720
         )
 
-    def test_linux_uses_x11_root_display_without_enumerating_windows(self):
-        scap = Mock()
-        with (
-            patch.object(config, "SYSTEM", "Linux"),
-            patch.dict(sys.modules, {"scap": scap}),
-        ):
-            self.assertIsNone(self._service().get_capture_target(Mock()))
-
-        scap.targets.assert_not_called()
-
-    def test_non_linux_retains_title_based_window_selection(self):
-        expected = SimpleNamespace(kind="window", title="Recorder - Chromium")
-        scap = Mock()
-        scap.targets.return_value = [expected]
-        driver = SimpleNamespace(title="Recorder")
-        with (
-            patch.object(config, "SYSTEM", "Windows"),
-            patch.dict(sys.modules, {"scap": scap}),
-        ):
-            self.assertIs(self._service().get_capture_target(driver), expected)
-
-    def test_macos_remembers_window_id_before_fullscreen(self):
-        service = self._service()
-        target = SimpleNamespace(kind="window", id=42, title="probe")
-        scap = Mock()
-        scap.targets.return_value = [target]
-        driver = Mock(title="Wrapper")
-
-        def execute_script(_script, title):
-            if title.startswith("GoExport Capture Probe "):
-                target.title = title
-
-        driver.execute_script.side_effect = execute_script
-        with (
-            patch.object(config, "SYSTEM", "Darwin"),
-            patch.dict(sys.modules, {"scap": scap}),
-        ):
-            service.remember_capture_target(driver)
-
-        self.assertEqual(service._capture_target_id, 42)
-        self.assertEqual(driver.execute_script.call_args_list[-1].args[1], "Wrapper")
-
-    def test_macos_uses_remembered_id_when_fullscreen_title_is_stale(self):
-        service = self._service()
-        service._capture_target_id = 42
-        expected = SimpleNamespace(
-            kind="window", id=42, title="Videos - Wrapper: Offline"
+    def test_viewport_metrics_report_css_size_and_pixel_ratio(self):
+        driver = Mock()
+        driver.execute_script.return_value = {
+            "width": 1280,
+            "height": 720,
+            "devicePixelRatio": 1,
+        }
+        self.assertEqual(
+            self._service().get_viewport_metrics(driver),
+            {"width": 1280, "height": 720, "devicePixelRatio": 1},
         )
-        scap = Mock()
-        scap.targets.return_value = [expected]
-        driver = SimpleNamespace(title="GoExport Recorder unique-title")
-        with (
-            patch.object(config, "SYSTEM", "Darwin"),
-            patch.dict(sys.modules, {"scap": scap}),
-        ):
-            self.assertIs(service.get_capture_target(driver), expected)
+        script = driver.execute_script.call_args.args[0]
+        self.assertIn("window.innerWidth", script)
+        self.assertIn("window.devicePixelRatio", script)
 
     def test_virtual_display_includes_browser_frame_margin(self):
         service = self._service()
@@ -285,21 +179,6 @@ class BrowserCaptureTargetTests(unittest.TestCase):
         driver.set_window_rect.assert_any_call(x=0, y=0, width=1510, height=740)
         driver.fullscreen_window.assert_not_called()
 
-    def test_xvfb_capture_uses_root_display_and_viewport_crop(self):
-        service = self._service()
-        service.display = Mock()
-        driver = Mock(title="GoExport Recorder id")
-        driver.get_window_rect.return_value = {
-            "x": 0,
-            "y": 0,
-            "width": 1510,
-            "height": 740,
-        }
-        driver.execute_script.return_value = {"innerHeight": 720, "outerHeight": 790}
-
-        self.assertIsNone(service.get_capture_target(driver))
-        self.assertEqual(service.get_capture_crop_area(driver), (0, 70, 1280, 720))
-
 
 class FlashPermissionTests(unittest.TestCase):
     def test_enable_flash_targets_chromium_plugins_permission(self):
@@ -312,7 +191,9 @@ class FlashPermissionTests(unittest.TestCase):
         driver.current_url = "http://localhost:4343/player"
         driver.execute_script.return_value = {"status": "changed"}
 
-        BrowserService.enable_flash(driver)
+        service = BrowserService.__new__(BrowserService)
+        service.electron = False
+        service.enable_flash(driver)
 
         self.assertIn("element.category === 'plugins'", FLASH_PERMISSION_SCRIPT)
         self.assertIn(
@@ -337,7 +218,9 @@ class FlashPermissionTests(unittest.TestCase):
         with self.assertRaisesRegex(
             RuntimeError, "Flash permission control is disabled"
         ):
-            BrowserService.enable_flash(driver)
+            service = BrowserService.__new__(BrowserService)
+            service.electron = False
+            service.enable_flash(driver)
 
         self.assertEqual(driver.get.call_count, 1)
 

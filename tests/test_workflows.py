@@ -1,6 +1,5 @@
 import io
 import os
-import sys
 import tempfile
 import unittest
 from argparse import Namespace
@@ -9,11 +8,11 @@ from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
 from goexport.commands import export
+from goexport.services import recorder as recorder_module
 from goexport.services.browser import BrowserService
 from goexport.services.ffmpeg import FFmpegError, FFmpegMuxer, _PipeEncoder
 from goexport.services.recorder import RecordingService
 from goexport.services.recording_backends.base import CaptureResult
-from goexport.services.recording_backends.pyscap import PyScapBackend
 from goexport.services.renderer import Renderer
 from goexport.services.timeline_builder import TimelineBuilder
 
@@ -85,32 +84,44 @@ class ResourceCleanupTests(unittest.TestCase):
             self.assertEqual(workspace, output.parent)
             self.assertTrue((workspace / "recording.mkv").exists())
 
-    def test_recording_probes_scap_after_browser_activates_display(self):
+    def test_capture_backend_receives_display_after_browser_activates_it(self):
         args = Namespace(output=Path("out"), format="mkv")
         recording = RecordingService(args)
         browser = Mock()
-        browser.capture_display = ":99"
-        scap = Mock()
-        scap.is_supported.side_effect = lambda: os.environ.get("DISPLAY") == ":99"
+        backend = Mock()
+        backend.check_available.side_effect = lambda display: self.assertEqual(
+            display, ":99"
+        )
+
+        def activate_browser():
+            # BrowserService.start_display selects Xvfb :99 before returning.
+            browser.capture_display = ":99"
+            return browser, Mock()
+
         with (
             patch.dict(os.environ, {"DISPLAY": ":0"}, clear=True),
-            patch.object(recording, "_prepare_browser", return_value=(browser, Mock())),
+            patch.object(recording, "_prepare_browser", side_effect=activate_browser),
             patch.object(
                 recording, "_create_output_path", return_value=Path("out.mkv")
             ),
+            patch.object(recording, "_create_backend", return_value=backend) as create,
             patch.object(recording, "_record_playback"),
             patch.object(recording, "_finish_recording"),
             patch.object(recording, "_finish_browser_setup"),
-            patch.dict(sys.modules, {"scap": scap}),
         ):
-            # This models BrowserService.start_display selecting Xvfb :99 before
-            # it returns control to RecordingService.run().
-            browser_activation = recording._prepare_browser
-            browser_activation.side_effect = lambda: (
-                os.environ.__setitem__("DISPLAY", ":99") or (browser, Mock())
-            )
             self.assertEqual(recording.run(), 0)
-        scap.is_supported.assert_called_once()
+        create.assert_called_once_with("capturekit")
+        backend.check_available.assert_called_once_with(":99")
+        backend.close.assert_called_once()
+        browser.close.assert_called_once()
+
+    def test_capturekit_records_on_a_private_virtual_display(self):
+        recording = RecordingService(
+            Namespace(capture_backend="capturekit", resolution=(1280, 720))
+        )
+        obs = RecordingService(Namespace(capture_backend="obs", resolution=(1280, 720)))
+        self.assertTrue(recording._create_browser_service().use_virtual_display)
+        self.assertFalse(obs._create_browser_service().use_virtual_display)
 
     def test_linux_browser_stops_before_selenium_for_missing_dependencies(self):
         service = BrowserService(Path("chrome"), Mock(), Mock(), "1")
@@ -156,6 +167,42 @@ class ResourceCleanupTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, "navigation"):
                 recording._prepare_browser()
         service.close.assert_called_once()
+
+    def test_playback_resumes_capture_immediately_before_play(self):
+        recording = RecordingService(Namespace())
+        events = []
+        driver = Mock()
+        driver.execute_script.side_effect = lambda script, *a: events.append(script)
+        backend = Mock()
+        backend.start.side_effect = lambda: events.append("start")
+        backend.before_playback.side_effect = lambda: events.append("before_playback")
+
+        def capture(started, stopped, total_duration_ns):
+            events.append(("capture", started.is_set(), total_duration_ns))
+            return "result"
+
+        backend.capture_until_stopped.side_effect = capture
+        with (
+            patch("goexport.services.recorder.await_started"),
+            patch("goexport.services.recorder.await_stopped") as await_stopped,
+            patch("goexport.services.recorder.get_total_frames", return_value=48),
+        ):
+            self.assertEqual(recording._record_playback(driver, backend), "result")
+        self.assertEqual(
+            events,
+            [
+                "player.pause();",
+                "start",
+                "before_playback",
+                "player.play();",
+                ("capture", True, 2_000_000_000),
+            ],
+        )
+        self.assertEqual(
+            await_stopped.call_args.kwargs["poll_frequency"],
+            recorder_module.STOP_POLL_SECONDS,
+        )
+        backend.stop.assert_not_called()
 
     def test_capture_start_failure_is_not_hidden_by_join(self):
         recording = RecordingService(Namespace())
@@ -269,16 +316,3 @@ class EncodingTests(unittest.TestCase):
             )
             with self.assertRaisesRegex(ValueError, "sfile"):
                 TimelineBuilder(xml).build()
-
-    def test_audio_alignment_and_stop_buffer_trim(self):
-        recording = PyScapBackend(Namespace(), Mock(), Path("ffmpeg"), "window")
-        recording._audio_aligned = False
-        recording._sample_bytes = 2
-        frame = SimpleNamespace(data=Mock(), channels=1, rate=4, sample_count=4)
-        frame.data.tobytes.return_value = b"abcdefgh"
-        encoder = Mock()
-        recording._write_audio(frame, 500_000_000, 0, encoder, 1_000_000_000)
-        self.assertEqual(
-            [call.args[0] for call in encoder.write_frame.call_args_list],
-            [b"\0" * 4, b"abcd"],
-        )

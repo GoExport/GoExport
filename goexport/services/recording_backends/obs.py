@@ -10,7 +10,11 @@ import uuid
 from pathlib import Path
 
 from goexport import config
-from goexport.services.recording_backends.base import CaptureArtifacts, CaptureResult
+from goexport.services.recording_backends.base import (
+    CaptureArtifacts,
+    CaptureResult,
+    report_recording_progress,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -387,15 +391,19 @@ class OBSBackend:
         self.client.start_record()
         self.recording_started = True
 
+    def before_playback(self):
+        # OBS records continuously from start(); its output keeps that pre-roll.
+        pass
+
     def capture_until_stopped(self, started, stopped, total_duration_ns):
         began = time.monotonic_ns()
         while not stopped.wait(0.1):
             status = self.client.get_record_status()
             if not status.output_active:
                 raise RuntimeError("OBS stopped recording before playback finished.")
-            elapsed = time.monotonic_ns() - began
-            percent = min(100, int(elapsed * 100 / total_duration_ns))
-            self.reporter.progress(5 + percent * 0.79, "recording")
+            report_recording_progress(
+                self.reporter, time.monotonic_ns() - began, total_duration_ns
+            )
         return self.stop()
 
     def stop(self):

@@ -103,18 +103,18 @@ jobs:
           APPIMAGETOOL="$PWD/appimagetool-x86_64.AppImage" bash packaging/build_appimage.sh
           APPIMAGE_EXTRACT_AND_RUN=1 timeout 30s xvfb-run -a ./dist/GoExport-GUI-x86_64.AppImage --smoke-test
 
-      - name: Packaged PyScap smoke test (Windows)
+      - name: Packaged CaptureKit smoke test (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
           dist/GoExport.exe --help
-          python -c "import scap; print('PyScap import OK')"
+          python -c "import capturekit; print(capturekit.get_capabilities().summary())"
 
-      - name: Packaged PyScap smoke test (Unix)
+      - name: Packaged CaptureKit smoke test (Unix)
         if: runner.os != 'Windows'
         run: |
           ./dist/GoExport --help
-          python -c "import scap; print('PyScap import OK')"
+          python -c "import capturekit; print(capturekit.get_capabilities().summary())"
 
       - name: Prepare distribution (Windows)
         if: runner.os == 'Windows'

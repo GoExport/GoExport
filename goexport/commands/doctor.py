@@ -20,7 +20,6 @@ from goexport.dependencies.definitions import dependency_registry
 from goexport.dependencies.models import DependencyStatus
 from goexport.helpers import add_runtime_arguments
 from goexport.reporting import get_reporter
-from goexport.services.capture import configure_backend
 from goexport.services.chromium import (
     ChromiumDependencyCheckError,
     find_linux_chromium_missing_dependencies,
@@ -330,12 +329,12 @@ def _check_platform() -> Iterable[Check]:
         yield from _check_linux_display()
     elif config.SYSTEM == "Darwin":
         yield Check(
-            "macOS screen capture",
+            "CaptureKit",
             "warning",
-            "Grant screen-recording permission to the terminal or GoExport app before recording.",
+            "CaptureKit does not support macOS; record with --capture-backend obs.",
         )
     elif config.SYSTEM == "Windows":
-        yield Check("Windows capture", "ok", "Native Windows capture will be used.")
+        yield from _check_capturekit(None)
     else:
         yield Check(
             "Platform", "error", f"Unsupported operating system: {config.SYSTEM}"
@@ -377,17 +376,46 @@ def _check_linux_display() -> Iterable[Check]:
             )
             return
         yield Check("Capture display", "ok", capture_display)
-        configure_backend()
-        import scap
-
-        supported = scap.is_supported()
-        yield Check(
-            "Scap capture support",
-            "ok" if supported else "error",
-            "Available" if supported else f"Unavailable on {capture_display}",
+        yield from _check_capturekit(
+            capture_display,
+            owned_display=virtual_display is not None and virtual_display.active,
         )
-    except Exception as error:
-        yield Check("Scap capture support", "error", str(error))
     finally:
         if virtual_display is not None and virtual_display.active:
             virtual_display.stop()
+
+
+def _check_capturekit(
+    display: str | None, owned_display: bool = False
+) -> Iterable[Check]:
+    """Report what the CaptureKit recording backend can do on ``display``."""
+    try:
+        import capturekit
+
+        caps = capturekit.get_capabilities(display)
+    except Exception as error:
+        yield Check("CaptureKit", "error", f"Unavailable: {error}")
+        return
+    yield Check("CaptureKit", "ok", f"{capturekit.__version__} ({caps.platform})")
+    if caps.window_capture:
+        yield Check("CaptureKit window capture", "ok", caps.window_capture.reason)
+    elif owned_display and caps.monitor_capture:
+        yield Check(
+            "CaptureKit window capture",
+            "warning",
+            f"{caps.window_capture.reason}; recording will fall back to "
+            "GoExport's private Xvfb display region.",
+        )
+    else:
+        yield Check("CaptureKit window capture", "error", caps.window_capture.reason)
+    yield Check(
+        "CaptureKit application audio",
+        "ok" if caps.process_audio else "warning",
+        caps.process_audio.reason
+        + ("" if caps.process_audio else "; use --capturekit-audio system or none."),
+    )
+    yield Check(
+        "CaptureKit recording",
+        "ok" if caps.recording else "error",
+        caps.recording.reason,
+    )

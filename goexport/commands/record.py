@@ -6,6 +6,11 @@ from goexport import config
 from goexport.helpers import add_player_arguments
 from goexport.helpers import parse_resolution as parse_resolution
 from goexport.services.recorder import RecordingService
+from goexport.services.recording_backends import (
+    PYSCAP_MIGRATION_MESSAGE,
+    RECORDING_BACKENDS,
+)
+from goexport.services.recording_backends.capturekit import AUDIO_MODES
 
 logger = logging.getLogger(__name__)
 
@@ -18,6 +23,12 @@ def parse_port(value: str) -> int:
     if not 1 <= port <= 65535:
         raise argparse.ArgumentTypeError("OBS port must be between 1 and 65535")
     return port
+
+
+def parse_capture_backend(value: str) -> str:
+    if value == "pyscap":
+        raise argparse.ArgumentTypeError(PYSCAP_MIGRATION_MESSAGE)
+    return value
 
 
 def register(subparsers: argparse._SubParsersAction) -> None:
@@ -64,9 +75,32 @@ def register(subparsers: argparse._SubParsersAction) -> None:
 
     parser.add_argument(
         "--capture-backend",
-        choices=("pyscap", "obs"),
+        type=parse_capture_backend,
+        choices=RECORDING_BACKENDS,
         default=config.RECORDING_BACKEND,
-        help="Screen-recording backend.",
+        help=(
+            "Screen-recording backend: CaptureKit (Windows and Linux X11/Xvfb) "
+            "or OBS Studio."
+        ),
+    )
+    parser.add_argument(
+        "--capturekit-audio",
+        choices=AUDIO_MODES,
+        default=config.CAPTUREKIT_AUDIO,
+        help=(
+            "Audio recorded by the CaptureKit backend: 'process' records only "
+            "this export's Chromium, 'system' records everything played on the "
+            "default output device, 'none' records silent video."
+        ),
+    )
+    parser.add_argument(
+        "--capturekit-encoder",
+        default=config.CAPTUREKIT_ENCODER,
+        help=(
+            "H.264 encoder for the CaptureKit backend: 'auto' validates NVENC, "
+            "QSV and AMF before falling back to libx264, or name an FFmpeg "
+            "encoder such as libx264."
+        ),
     )
     parser.add_argument(
         "--obs-host",

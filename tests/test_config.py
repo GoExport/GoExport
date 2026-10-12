@@ -44,7 +44,7 @@ class ConfigurationTests(unittest.TestCase):
             absolute = base_dir / "absolute-ffmpeg"
             path = base_dir / "config.toml"
             path.write_text(
-                f"[paths]\nchrome = 'bin/custom-chrome'\nffmpeg = {str(absolute)!r}\n"
+                f"[browser]\nchrome = 'bin/custom-chrome'\nffmpeg = {str(absolute)!r}\n"
             )
             overrides = load_overrides(path, base_dir, config.SUPPORTED_FORMATS)
 
@@ -112,9 +112,30 @@ class ConfigurationTests(unittest.TestCase):
         self.assertEqual(overrides["RECORDING_BACKEND"], "obs")
         self.assertEqual(overrides["OBS_PORT"], 4455)
 
+    def test_capturekit_configuration_is_validated(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "config.toml"
+            path.write_text(
+                "[recording]\nbackend = 'capturekit'\n\n"
+                "[capturekit]\naudio = 'none'\nencoder = 'libx264'\n"
+            )
+            overrides = load_overrides(path, config.BASE_DIR, config.SUPPORTED_FORMATS)
+        self.assertEqual(overrides["RECORDING_BACKEND"], "capturekit")
+        self.assertEqual(overrides["CAPTUREKIT_AUDIO"], "none")
+        self.assertEqual(overrides["CAPTUREKIT_ENCODER"], "libx264")
+
+    def test_pyscap_configuration_explains_migration(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "config.toml"
+            path.write_text("[recording]\nbackend = 'pyscap'\n")
+            with self.assertRaisesRegex(ConfigurationError, "capturekit"):
+                load_overrides(path, config.BASE_DIR, config.SUPPORTED_FORMATS)
+
     def test_invalid_obs_configuration_is_rejected(self):
         invalid_configs = (
             "[recording]\nbackend = 'other'\n",
+            "[capturekit]\naudio = 'microphone'\n",
+            "[capturekit]\nencoder = ''\n",
             "[obs]\nport = 0\n",
             "[obs]\nport = 65536\n",
             "[obs]\nprofile = ''\n",

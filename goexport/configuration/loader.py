@@ -105,6 +105,7 @@ def load_overrides(
     browser = _section(data, "browser")
     flash = _section(data, "flash")
     recording = _section(data, "recording")
+    capturekit = _section(data, "capturekit")
     obs = _section(data, "obs")
     result: dict[str, Any] = {}
     replacements = _string_map(data, "replacements")
@@ -157,11 +158,28 @@ def load_overrides(
     )
 
     backend = _string(recording, "backend", "recording.backend")
-    if backend is not None and backend not in {"pyscap", "obs"}:
+    if backend == "pyscap":
         raise ConfigurationError(
-            f"recording.backend must be one of obs, pyscap; got {backend!r}"
+            "recording.backend = 'pyscap' is no longer supported: PyScap was "
+            'replaced by CaptureKit. Set backend = "capturekit" (or "obs") '
+            "under [recording]."
+        )
+    if backend is not None and backend not in {"capturekit", "obs"}:
+        raise ConfigurationError(
+            f"recording.backend must be one of capturekit, obs; got {backend!r}"
         )
     _add(result, "RECORDING_BACKEND", backend)
+    audio = _string(capturekit, "audio", "capturekit.audio")
+    if audio is not None and audio not in {"process", "system", "none"}:
+        raise ConfigurationError(
+            f"capturekit.audio must be one of none, process, system; got {audio!r}"
+        )
+    _add(result, "CAPTUREKIT_AUDIO", audio)
+    _add(
+        result,
+        "CAPTUREKIT_ENCODER",
+        _string(capturekit, "encoder", "capturekit.encoder"),
+    )
     _add(result, "OBS_HOST", _string(obs, "host", "obs.host"))
     _add(result, "OBS_PORT", _port(obs, "port", "obs.port"))
     _add(result, "OBS_PROFILE", _string(obs, "profile", "obs.profile"))

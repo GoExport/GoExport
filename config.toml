@@ -25,7 +25,14 @@
 # plugin_version = "32.0.0.371"
 
 [recording]
-# backend = "pyscap"
+# backend = "capturekit"   # or "obs"
+
+[capturekit]
+# Audio to record: "process" (only GoExport's Chromium), "system" (everything
+# on the default output device), or "none".
+# audio = "process"
+# H.264 encoder: "auto" validates NVENC, QSV and AMF before using libx264.
+# encoder = "auto"
 
 [obs]
 # host = "127.0.0.1"

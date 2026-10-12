@@ -9,6 +9,9 @@ from goexport import cli
 from goexport.commands import doctor
 from goexport.reporting import Reporter
 from goexport.services.recorder import recording_progress
+from goexport.services.recording_backends.base import (
+    report_recording_progress,
+)
 from goexport.services.renderer import Renderer
 
 
@@ -52,9 +55,17 @@ class ReporterTests(unittest.TestCase):
         self.assertTrue(all(event["progress"] < 100 for event in events[:-1]))
 
     def test_recording_timeline_progress_is_clamped(self):
-        self.assertEqual(recording_progress(50, 100, 1000), 0)
-        self.assertEqual(recording_progress(600, 100, 1000), 50)
-        self.assertEqual(recording_progress(1200, 100, 1000), 100)
+        self.assertEqual(recording_progress(-50, 1000), 0)
+        self.assertEqual(recording_progress(500, 1000), 50)
+        self.assertEqual(recording_progress(1100, 1000), 100)
+        self.assertEqual(recording_progress(500, 0), 0)
+
+    def test_recording_progress_leaves_room_for_muxing_and_outro(self):
+        reporter = Mock()
+        report_recording_progress(reporter, 0, 1000)
+        report_recording_progress(reporter, 5000, 1000)
+        values = [call.args[0] for call in reporter.progress.call_args_list]
+        self.assertEqual(values, [5, 84])
 
     def test_renderer_uses_progress_callback_contract(self):
         driver = Mock()

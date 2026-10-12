@@ -24,9 +24,14 @@ from goexport.services.recording_backends import (
     CaptureArtifacts,
     create_recording_backend,
 )
-from goexport.services.recording_backends.pyscap import recording_progress
+from goexport.services.recording_backends.base import recording_progress
 
 logger = logging.getLogger(__name__)
+
+# How often the playback watcher polls the template's stop flag. The delay
+# between Flash's stop command and the recording stopping is at most this
+# plus one WebDriver round trip.
+STOP_POLL_SECONDS = 0.05
 
 
 class RecordingService:
@@ -51,15 +56,12 @@ class RecordingService:
             raise
         return service, driver
 
-    def _finish_browser_setup(self, service, driver, backend_name="pyscap"):
-        if backend_name == "pyscap":
-            service.remember_capture_target(driver)
-        else:
-            # Bind OBS to the unique title even if macOS exposes the
-            # pre-fullscreen native title after Chromium enters fullscreen.
-            driver.execute_script(
-                "document.title = arguments[0];", self._capture_window_title
-            )
+    def _finish_browser_setup(self, service, driver):
+        # Publish the unique title before fullscreen so window lookup never
+        # depends on a title Chromium's native window may expose late (macOS).
+        driver.execute_script(
+            "document.title = arguments[0];", self._capture_window_title
+        )
         service.enter_fullscreen(driver)
         service.validate_screen_resolution(driver)
         service.assert_full_resolution()
@@ -75,7 +77,7 @@ class RecordingService:
     @staticmethod
     def _watch(driver, stopped, errors):
         try:
-            await_stopped(driver)
+            await_stopped(driver, poll_frequency=STOP_POLL_SECONDS)
         except Exception as exc:
             errors.append(exc)
         finally:
@@ -100,9 +102,15 @@ class RecordingService:
             if total_frames <= 0:
                 raise RuntimeError("The movie has no frames to record")
             total_duration_ns = total_frames * 1_000_000_000 // config.FPS
-            watcher.start()
+            # Nothing may run between these two calls: the backend's timeline
+            # starts here and Flash playback starts with the next round trip.
+            backend.before_playback()
             driver.execute_script("player.play();")
             started.set()
+            # The stop flag is sticky, so the watcher cannot miss it by
+            # starting after play(); starting it here keeps the play() call
+            # free of a concurrent WebDriver request.
+            watcher.start()
             result = backend.capture_until_stopped(started, stopped, total_duration_ns)
             watcher.join(30)
             if watcher.is_alive():
@@ -124,7 +132,7 @@ class RecordingService:
         muxer = FFmpegMuxer(self._ffmpeg_path())
         self.reporter.progress(85, "muxing")
         if result.audio_is_muxed:
-            muxer.mux_combined(result.video, output)
+            muxer.mux_combined(result.video, output, has_audio=result.has_audio)
         else:
             muxer.mux(result.video, result.audio, output)
         if not self.args.no_outro:
@@ -147,7 +155,7 @@ class RecordingService:
             getattr(self.args, "electron", config.ELECTRON),
             *self.args.resolution,
             use_virtual_display=(
-                getattr(self.args, "capture_backend", "pyscap") != "obs"
+                getattr(self.args, "capture_backend", config.RECORDING_BACKEND) != "obs"
             ),
         )
 
@@ -191,7 +199,9 @@ class RecordingService:
                 try:
                     path.rmdir()
                 except OSError:
-                    logger.warning("OBS intermediate directory is not empty: %s", path)
+                    logger.warning(
+                        "Capture intermediate directory is not empty: %s", path
+                    )
 
     def run(self):
         self.reporter.progress(0, "preparing")
@@ -201,14 +211,14 @@ class RecordingService:
             output.with_name(f"{output.stem}.audio.wav"),
             output.parent,
         )
-        backend_name = getattr(self.args, "capture_backend", "pyscap")
+        backend_name = getattr(self.args, "capture_backend", config.RECORDING_BACKEND)
         backend = self._create_backend(backend_name)
         service = driver = result = None
         complete = False
         try:
             service, driver = self._prepare_browser()
             backend.check_available(service.capture_display)
-            self._finish_browser_setup(service, driver, backend_name)
+            self._finish_browser_setup(service, driver)
             backend.prepare(service, driver, artifacts)
             self.reporter.progress(5, "recording")
             result = self._record_playback(driver, backend, service)
