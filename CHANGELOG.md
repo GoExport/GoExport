@@ -10,3 +10,5 @@
 - Added Windows, Linux, and macOS recording and release builds, including packaged GoExport GUI companions.
 - Added automated Chromium, ChromeDriver, Flash, and FFmpeg runtime dependency installation.
 - Improved recording, audio alignment, FFmpeg processing, cleanup, and cross-platform stability.
+- Added interactive Cloudflare verification: GoExport pauses when a challenge appears and lets you complete it in its own browser session (the Chromium window on Windows, a bundled VNC viewer on Linux), then resumes the export automatically.
+- Added Anubis verification support for sites such as FlashThemes: GoExport waits for Anubis' proof-of-work check to finish in its own browser, only showing the browser if the check stalls, and explains when a site's check cannot run in Chromium 87.

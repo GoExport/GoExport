@@ -23,6 +23,7 @@ from goexport.reporting import get_reporter
 from goexport.services.chromium import (
     ChromiumDependencyCheckError,
     find_linux_chromium_missing_dependencies,
+    find_linux_missing_libraries,
 )
 from goexport.services.display import LinuxDisplay
 
@@ -327,6 +328,7 @@ def _check_resources() -> Iterable[Check]:
 def _check_platform() -> Iterable[Check]:
     if config.SYSTEM == "Linux":
         yield from _check_linux_display()
+        yield from _check_verification_tools()
     elif config.SYSTEM == "Darwin":
         yield Check(
             "CaptureKit",
@@ -419,3 +421,40 @@ def _check_capturekit(
         "ok" if caps.recording else "error",
         caps.recording.reason,
     )
+
+
+def _check_verification_tools(vnc_dir: Path | None = None) -> Iterable[Check]:
+    """Check the VNC tools used to show Cloudflare verification on Linux."""
+    from goexport.services.verification import PresentationError
+    from goexport.services.vnc import find_tools
+
+    try:
+        tools = find_tools(vnc_dir)
+    except PresentationError:
+        yield Check(
+            "Verification viewer",
+            "warning",
+            f"Bundled VNC tools are missing from {vnc_dir or config.VNC_DIR}; "
+            "Cloudflare verification cannot be shown.",
+        )
+        return
+
+    library_dirs = (tools.library_dir,) if tools.library_dir is not None else ()
+    for name, path in (("x11vnc", tools.server), ("vncviewer", tools.viewer)):
+        permission_check = _check_executable_permissions(f"Verification {name}", path)
+        if permission_check is not None:
+            yield Check(permission_check.name, "warning", permission_check.detail)
+            continue
+        try:
+            missing = find_linux_missing_libraries(path, library_dirs)
+        except ChromiumDependencyCheckError as error:
+            yield Check(f"Verification {name}", "warning", str(error))
+            continue
+        if missing:
+            yield Check(
+                f"Verification {name}",
+                "warning",
+                "Missing shared libraries: " + ", ".join(missing),
+            )
+        else:
+            yield Check(f"Verification {name}", "ok", str(path))

@@ -2,6 +2,8 @@ import argparse
 import logging
 from pathlib import Path
 
+from selenium.common.exceptions import WebDriverException
+
 from goexport import config
 from goexport.helpers import add_player_arguments, existing_directory, existing_file
 from goexport.helpers import calculate_aspect_ratio as calculate_aspect_ratio
@@ -15,6 +17,7 @@ from goexport.services.ffmpeg import FFmpegAudioEncoder, FFmpegMuxer, FFmpegVide
 from goexport.services.flash import await_started
 from goexport.services.renderer import Renderer
 from goexport.services.timeline_builder import TimelineBuilder
+from goexport.services.verification import explain_interruption, verify_browser
 
 logger = logging.getLogger(__name__)
 
@@ -114,12 +117,14 @@ def export_video(args: argparse.Namespace) -> int:
         driver = browser_service.create_driver()
 
         driver.get(args.url)
+        verify_browser(browser_service, driver, args, reporter)
 
         browser_service.enter_fullscreen(driver)
         browser_service.validate_screen_resolution(driver)
         browser_service.assert_full_resolution()
 
         browser_service.enable_flash(driver)
+        verify_browser(browser_service, driver, args, reporter)
 
         player_values = {
             "WINDOW_TITLE": "GoExport Export",
@@ -172,7 +177,11 @@ def export_video(args: argparse.Namespace) -> int:
         )
 
         reporter.progress(5, "rendering")
-        renderer.render()
+        try:
+            renderer.render()
+        except WebDriverException as error:
+            explain_interruption(driver, error)
+            raise
         reporter.progress(85, "audio")
         timeline = timeline_builder.build()
         audio = audio_processor.process(timeline, renderer.duration_frames)

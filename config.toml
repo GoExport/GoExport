@@ -34,6 +34,17 @@
 # H.264 encoder: "auto" validates NVENC, QSV and AMF before using libx264.
 # encoder = "auto"
 
+[verification]
+# Complete Cloudflare and Anubis verification in GoExport's own browser session.
+# Anubis proof-of-work checks finish by themselves; the browser is only shown
+# (on Linux through the bundled VNC viewer) when the user must help.
+# interactive = true
+# Seconds to wait for verification; 0 waits indefinitely.
+# timeout = 300
+# Seconds an automatic Anubis check may run before asking for manual help;
+# 0 keeps waiting until the timeout above.
+# automatic_timeout = 60
+
 [obs]
 # host = "127.0.0.1"
 # port = 4455

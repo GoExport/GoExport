@@ -123,5 +123,36 @@ class DoctorTests(unittest.TestCase):
         )
 
 
+class VerificationToolCheckTests(unittest.TestCase):
+    def test_missing_bundled_tools_are_a_warning(self):
+        with (
+            patch("goexport.services.vnc.shutil.which", return_value=None),
+            patch("goexport.services.vnc.Path.is_file", return_value=False),
+        ):
+            checks = list(doctor._check_verification_tools(Path("/missing/vnc")))
+        self.assertEqual([check.status for check in checks], ["warning"])
+        self.assertIn("/missing/vnc", checks[0].detail.replace("\\", "/"))
+
+    def test_bundled_tools_are_checked_with_their_private_libraries(self):
+        tools = Mock(
+            server=Path("/opt/vnc/x11vnc"),
+            viewer=Path("/opt/vnc/vncviewer"),
+            library_dir=Path("/opt/vnc/lib"),
+        )
+        with (
+            patch("goexport.services.vnc.find_tools", return_value=tools),
+            patch.object(doctor, "_check_executable_permissions", return_value=None),
+            patch.object(
+                doctor,
+                "find_linux_missing_libraries",
+                side_effect=[(), ("libfltk.so.1.3",)],
+            ) as find_missing,
+        ):
+            checks = list(doctor._check_verification_tools())
+        self.assertEqual([check.status for check in checks], ["ok", "warning"])
+        self.assertIn("libfltk.so.1.3", checks[1].detail)
+        self.assertEqual(find_missing.call_args.args[1], (Path("/opt/vnc/lib"),))
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -54,6 +54,73 @@ class Reporter:
         else:
             logging.getLogger("goexport.cli").error(message)
 
+    def verification_required(
+        self,
+        provider: str,
+        message: str,
+        presentation: str | None,
+        timeout: float | None,
+        interaction: str = "manual",
+    ) -> None:
+        """Report that verification started.
+
+        ``interaction`` is ``automatic`` while a challenge completes by itself
+        (nothing is shown, ``presentation`` is None) and ``manual`` when the
+        user must act in the shown ``presentation`` (``window`` or ``vnc``).
+        ``reason`` repeats ``provider`` for consumers of the original event.
+        """
+        # Never include connection details or credentials: consumers only
+        # need to know that the user must act and where.
+        if self.json_mode:
+            self._emit(
+                {
+                    "event": "verification_required",
+                    "reason": provider,
+                    "provider": provider,
+                    "interaction": interaction,
+                    "message": message,
+                    "presentation": presentation,
+                    "timeout": timeout,
+                }
+            )
+        elif interaction == "automatic":
+            logging.getLogger("goexport.verification").info(
+                "%s Waiting for it to finish.", message
+            )
+        else:
+            waiting = f"Waiting up to {int(timeout)} seconds" if timeout else "Waiting"
+            logging.getLogger("goexport.verification").warning(
+                "%s %s; press Ctrl+C to cancel.", message, waiting
+            )
+
+    def verification_complete(self, provider: str | None = None) -> None:
+        if self.json_mode:
+            event: dict[str, Any] = {"event": "verification_complete"}
+            if provider:
+                event["provider"] = provider
+            self._emit(event)
+        else:
+            name = {"anubis": "Anubis", "cloudflare": "Browser"}.get(
+                provider or "", "Browser"
+            )
+            logging.getLogger("goexport.verification").info(
+                "%s verification complete; resuming export.", name
+            )
+
+    def verification_failed(
+        self, message: str, reason: str, provider: str | None = None
+    ) -> None:
+        # The command's error event follows; normal mode logs the error once.
+        if self.json_mode:
+            event: dict[str, Any] = {
+                "event": "verification_failed",
+                "message": message,
+                "reason": reason,
+            }
+            if provider:
+                event["provider"] = provider
+            self._emit(event)
+
     def result(self, **fields: Any) -> None:
         if self.json_mode:
             self._emit({"event": "result", **fields})

@@ -72,6 +72,41 @@ jobs:
         run: |
           python scripts/download_dependencies.py
 
+      # Cloudflare verification on Linux shows GoExport's private Xvfb display
+      # through x11vnc and TigerVNC's viewer. Both are bundled in bin/vnc with
+      # their private libraries, so users need no packages or sudo.
+      - name: Bundle Linux verification viewer
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get install -y --no-install-recommends x11vnc tigervnc-viewer
+          python scripts/bundle_linux_vnc.py
+          cat bin/vnc/SOURCES.txt
+
+      - name: Smoke test bundled verification viewer
+        if: runner.os == 'Linux'
+        run: |
+          env -u LD_LIBRARY_PATH LD_LIBRARY_PATH="$PWD/bin/vnc/lib" bin/vnc/x11vnc -version
+          (env -u LD_LIBRARY_PATH LD_LIBRARY_PATH="$PWD/bin/vnc/lib" bin/vnc/vncviewer -h 2>&1 || true) | grep "TigerVNC viewer"
+          GOEXPORT_VNC_INTEGRATION=1 timeout 120s xvfb-run -a python -m unittest tests.test_vnc -v
+
+      # x11vnc, TigerVNC and several bundled libraries are GPL/LGPL licensed;
+      # publish their exact corresponding source with the release.
+      - name: Collect verification viewer sources
+        if: runner.os == 'Linux'
+        run: |
+          grep -h '^deb ' /etc/apt/sources.list /etc/apt/sources.list.d/*.list 2>/dev/null \
+            | sed 's/^deb /deb-src /' \
+            | sudo tee /etc/apt/sources.list.d/goexport-vnc-sources.list > /dev/null
+          sudo apt-get update
+          mkdir vnc-sources
+          cp bin/vnc/SOURCES.txt vnc-sources/
+          (cd vnc-sources && xargs -a ../bin/vnc/source-packages.txt apt-get source --download-only)
+          tar -czf GoExport-linux-vnc-sources.tar.gz vnc-sources
+
+      - name: Verification unit tests
+        run: |
+          python -m unittest tests.test_challenge tests.test_anubis tests.test_verification tests.test_window_presenter tests.test_vnc -v
+
       - name: Build GoExport
         run: |
           pyinstaller GoExport.spec
@@ -167,7 +202,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: GoExport-linux-x64
-          path: GoExport-linux-x64.tar.gz
+          path: |
+            GoExport-linux-x64.tar.gz
+            GoExport-linux-vnc-sources.tar.gz
 
   release:
     name: Create GitHub Release
@@ -220,6 +257,13 @@ jobs:
         run: |
           test -f GoExport-windows-x64.zip
           test -f GoExport-linux-x64.tar.gz
+          test -f GoExport-linux-vnc-sources.tar.gz
+          tar -tzf GoExport-linux-x64.tar.gz | grep -q '^GoExport/bin/vnc/x11vnc$'
+          tar -tzf GoExport-linux-x64.tar.gz | grep -q '^GoExport/bin/vnc/vncviewer$'
+          if unzip -l GoExport-windows-x64.zip | grep -Eq 'bin[/\]vnc'; then
+            echo "The Windows release must not contain Linux VNC tools." >&2
+            exit 1
+          fi
 
       - name: Create Release
         timeout-minutes: 10
@@ -230,6 +274,7 @@ jobs:
           files: |
             GoExport-windows-x64.zip
             GoExport-linux-x64.tar.gz
+            GoExport-linux-vnc-sources.tar.gz
 
       - name: Notify Discord
         if: steps.changelog.outputs.is_prerelease == 'false'

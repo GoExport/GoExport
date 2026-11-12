@@ -124,6 +124,61 @@ for line in process.stdout:
         update_progress(event["progress"])
 ```
 
+Browser verification emits
+`{"event":"verification_required","reason":"cloudflare","provider":"cloudflare","interaction":"manual","message":"...","presentation":"window","timeout":300}`.
+`provider` is `cloudflare` or `anubis` (`reason` repeats it for older
+consumers). `interaction` is `automatic` while the browser completes an Anubis
+check by itself (`presentation` is then `null`) and `manual` when the user must
+act: `presentation` is `window` when the Chromium window itself is shown and
+`vnc` when the Linux verification viewer is shown. An automatic check that needs
+help is followed by a second, `manual` event. Verification ends with either
+`{"event":"verification_complete","provider":"anubis"}` or
+`{"event":"verification_failed","message":"...","reason":"timeout","provider":"anubis"}`
+followed by the command's `error` event; failure reasons include `timeout`,
+`cancelled`, `unsupported`, `blocked`, `repeated` and `failed`. Events never contain VNC ports or credentials. While
+verification is pending, a controlling process may write
+`{"command":"cancel"}` and a newline to GoExport's stdin to cancel cleanly; the
+command exits with code 130.
+
+### Cloudflare verification
+
+When the Wrapper page shows a Cloudflare challenge (detected by the
+`cf-mitigated: challenge` header, the "Just a moment..." page, or Cloudflare's
+challenge-page elements), GoExport pauses before Flash setup, DOM injection and
+recording, and lets you complete the check yourself in its existing browser
+session; cookies, profile and WebDriver are kept, and no second browser starts.
+
+- Windows, and Linux with `--capture-backend obs`, bring the existing Chromium
+  window to the front, then restore its minimized state and position.
+- Linux with GoExport's private Xvfb display opens the bundled TigerVNC viewer
+  on your desktop, connected through the bundled `x11vnc` to that display on
+  localhost with a single-use password. Both close when verification ends.
+
+The export resumes automatically. Use `--verification-timeout SECONDS` (default
+300, `0` waits indefinitely) or `--no-interactive-verification` to fail
+immediately instead; both are also available as `[verification]` settings in
+`config.toml`. GoExport never solves, bypasses or spoofs verification.
+
+### Anubis verification
+
+Sites such as FlashThemes are protected by
+[Anubis](https://github.com/TecharoHQ/anubis), whose "Making sure you're not a
+bot!" page runs a proof-of-work calculation in the browser. GoExport recognizes
+it by Anubis' challenge data and its `/.within.website/x/cmd/anubis/` scripts
+(never by a title or a mention of Anubis alone), lets the existing Chromium
+session complete the calculation unattended, waits for the real page to load,
+and continues; nothing is shown and the session's Anubis cookie is kept for the
+rest of the export.
+
+The browser is only shown, as for Cloudflare, when the check stops making
+progress for 20 seconds or has not finished after
+`--automatic-verification-timeout SECONDS` (default 60; `automatic_timeout` in
+`[verification]`). With `--no-interactive-verification` such a check fails
+instead. GoExport stops at once, with the page's own message, when Anubis
+reports that the browser cannot run its check, shows an error, or denies
+access, and stops after three successive challenges whose passes Anubis did not
+accept, rather than retrying indefinitely.
+
 ## Code map
 
 - `main.py` calls `goexport/cli.py`, which parses once, sets up Rich logging, and
@@ -138,6 +193,11 @@ for line in process.stdout:
 - `services/recorder.py` coordinates playback, the stop watcher, capture, and
   output cleanup. `services/recording_backends/capturekit.py` binds the owned
   browser window and lets CaptureKit synchronize video and audio.
+- `services/challenge.py` detects Cloudflare and Anubis challenges, and
+  `services/verification.py` pauses export preparation while the user completes
+  one in the existing session. `services/window_presenter.py` raises the
+  Chromium window (Windows); `services/vnc.py` shows the Linux Xvfb display
+  through the bundled VNC tools that `scripts/bundle_linux_vnc.py` packages.
 - `services/renderer.py` encodes frame-by-frame screenshots.
   `timeline_builder.py`, `asset_resolver.py`, and `audio.py` load movie sounds,
   resolve UGC/theme files, and send the timeline to the audio encoder.
@@ -189,6 +249,28 @@ CaptureKit owns frame pacing and audio/video synchronization. GoExport starts it
 paused, resumes immediately before `player.play()`, and stops after the template's
 playback-stop event. Native capture behavior still requires platform testing;
 the opt-in native tests are disabled unless explicitly requested.
+
+FlashThemes' Anubis check (the `fast` SHA-256 proof-of-work, difficulty 4)
+completes in about a second in GoExport's Chromium 87: Anubis' scripts use only
+features Chromium 87 supports, and that algorithm needs no WebAssembly. Sites
+that configure Anubis' WebAssembly algorithms (`argon2id`, `hashx`, `sha256`)
+fall back to Anubis' non-SIMD builds in Chromium 87 and were not tested; if
+Anubis cannot run there, GoExport reports the page's error as a Chromium 87
+limitation. High difficulties can take minutes, and such checks run until the
+verification timeout.
+
+Cloudflare can refuse or endlessly repeat challenges for GoExport's Chromium 87,
+which Selenium controls and which cannot be updated without losing Flash; GoExport
+reports this as unsupported or as a timeout rather than working around it. Only
+the Wrapper page itself is checked: a challenge on a separate SWF or asset host
+appears as a Flash loading failure. A challenge that replaces the player after
+recording or rendering started stops the export with a clear error instead of
+recording the challenge. Linux verification needs a graphical X11 or XWayland
+desktop; on a headless server it fails with an explanation. Xvfb itself is still
+a system requirement on Linux. The bundled VNC tools come from Ubuntu 22.04 and
+need glibc 2.35 or newer, as does the rest of the Linux release; set
+`GOEXPORT_VNC_INTEGRATION=1` or `GOEXPORT_BROWSER_TESTS=1` to run the opt-in
+VNC and Chromium verification tests.
 
 The export command needs movie XML for local audio even though `--movie-xml` is
 not marked required by argparse. The shared HTML template plays by movie ID;

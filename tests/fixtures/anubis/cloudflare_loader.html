@@ -1,0 +1,15 @@
+<script>
+  // Stand-in for the bot-management loader Cloudflare's CDN injects into
+  // proxied pages (FlashThemes included): a hidden iframe whose document loads
+  // /cdn-cgi/challenge-platform/scripts/jsd/main.js. It is not a challenge.
+  (function () {
+    var frame = document.createElement('iframe');
+    frame.width = frame.height = 1;
+    frame.style.visibility = 'hidden';
+    document.body.appendChild(frame);
+    var doc = frame.contentDocument;
+    var script = doc.createElement('script');
+    script.src = location.origin + '/cdn-cgi/challenge-platform/scripts/jsd/main.js?ray=test';
+    doc.head.appendChild(script);
+  })();
+</script>

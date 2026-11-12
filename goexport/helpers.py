@@ -22,6 +22,18 @@ def parse_resolution(value: str) -> tuple[int, int]:
         ) from exc
 
 
+def non_negative_seconds(value: str) -> int:
+    try:
+        seconds = int(value)
+    except ValueError as error:
+        raise argparse.ArgumentTypeError(
+            f"Expected a whole number of seconds, got '{value}'."
+        ) from error
+    if seconds < 0:
+        raise argparse.ArgumentTypeError("Seconds cannot be negative.")
+    return seconds
+
+
 def existing_file(path: str) -> Path:
     file_path = Path(path)
 
@@ -121,6 +133,40 @@ def add_player_arguments(parser: argparse.ArgumentParser) -> None:
         "--no-flash-timeout",
         action="store_true",
         help="Wait indefinitely for the Flash player to load.",
+    )
+
+    parser.add_argument(
+        "--verification-timeout",
+        type=non_negative_seconds,
+        default=config.VERIFICATION_TIMEOUT,
+        metavar="SECONDS",
+        help=(
+            "Seconds to wait for Cloudflare or Anubis verification in the "
+            "browser (0 waits indefinitely)."
+        ),
+    )
+
+    parser.add_argument(
+        "--automatic-verification-timeout",
+        type=non_negative_seconds,
+        default=config.VERIFICATION_AUTOMATIC_TIMEOUT,
+        metavar="SECONDS",
+        help=(
+            "Seconds an automatic Anubis check may run before the browser is "
+            "shown for manual verification (0 keeps waiting until "
+            "--verification-timeout)."
+        ),
+    )
+
+    parser.add_argument(
+        "--no-interactive-verification",
+        action="store_false",
+        dest="interactive_verification",
+        default=config.VERIFICATION_INTERACTIVE,
+        help=(
+            "Fail instead of showing the browser when a Cloudflare or Anubis "
+            "challenge requires manual verification."
+        ),
     )
 
     parser.add_argument(

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+<title>Just a moment...</title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="robots" content="noindex,nofollow">
+</head>
+<body>
+<div class="main-wrapper" role="main">
+  <div class="main-content">
+    <h1 class="zone-name-title h1">wrapper.example</h1>
+    <h2 id="challenge-running" class="h2">Checking if the site connection is secure</h2>
+    <div id="challenge-stage"></div>
+    <div id="challenge-body-text" class="core-msg spacer">
+      wrapper.example needs to review the security of your connection before proceeding.
+    </div>
+  </div>
+</div>
+<script>
+  // Mock of Cloudflare's challenge script: a local stand-in that "passes"
+  // after a short delay by setting a clearance cookie and reloading.
+  window._cf_chl_opt = {cvId: '3', cType: 'managed', cRay: 'mock'};
+  setTimeout(function () {
+    document.cookie = 'cf_clearance=mock; path=/';
+    location.reload();
+  }, Number(new URLSearchParams(location.search).get('delay') || 1500));
+</script>
+</body>
+</html>

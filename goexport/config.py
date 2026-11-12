@@ -23,6 +23,8 @@ SYSTEM = platform.system()
 
 CHROMIUM_DIR = BASE_DIR / "bin" / "ungoogled-chromium"
 FFMPEG_DIR = BASE_DIR / "bin" / "ffmpeg"
+# Linux only: x11vnc, TigerVNC's vncviewer and their private libraries.
+VNC_DIR = BASE_DIR / "bin" / "vnc"
 RESOURCES_DIR = BASE_DIR / "resources"
 
 if SYSTEM == "Windows":
@@ -67,6 +69,13 @@ OBS_HOST = "127.0.0.1"
 OBS_PORT = 4455
 OBS_PROFILE = "GoExport"
 OBS_SCENE_COLLECTION = "GoExport"
+
+# Pause for browser verification (Cloudflare, Anubis); 0 waits indefinitely.
+VERIFICATION_INTERACTIVE = True
+VERIFICATION_TIMEOUT = 300
+# Seconds an automatic Anubis check may run before the browser is shown for
+# manual help; 0 keeps waiting until VERIFICATION_TIMEOUT.
+VERIFICATION_AUTOMATIC_TIMEOUT = 60
 
 ELECTRON = False
 URL = "http://localhost:4343/"

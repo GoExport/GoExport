@@ -1,6 +1,8 @@
 import argparse
 import logging
+import signal
 import sys
+import threading
 from contextlib import nullcontext, redirect_stdout
 
 from goexport.commands import COMMANDS
@@ -8,6 +10,7 @@ from goexport.config import APP_NAME
 from goexport.dependencies import DependencyBootstrapError, DependencyManager
 from goexport.log import setup_logging
 from goexport.reporting import Reporter
+from goexport.services.verification import VerificationCancelled
 from goexport.version import VERSION
 
 logger = logging.getLogger(__name__)
@@ -50,8 +53,24 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _terminate(_signum, _frame) -> None:
+    raise KeyboardInterrupt
+
+
+def install_termination_handler() -> None:
+    """Run normal cleanup when the GUI terminates GoExport.
+
+    Cleanup stops the browser, its virtual display and any verification
+    viewer instead of leaving them behind.
+    """
+    if hasattr(signal, "SIGTERM") and sys.platform != "win32":
+        if threading.current_thread() is threading.main_thread():
+            signal.signal(signal.SIGTERM, _terminate)
+
+
 def main() -> int:
     args = build_parser().parse_args()
+    install_termination_handler()
     json_mode = bool(getattr(args, "json", False))
     reporter = Reporter(json_mode=json_mode, stream=sys.stdout)
     args.reporter = reporter
@@ -64,6 +83,12 @@ def main() -> int:
             if runtime_dependencies:
                 DependencyManager().bootstrap(args, runtime_dependencies)
             return args.func(args)
+    except VerificationCancelled as error:
+        if json_mode:
+            reporter.error(str(error), 130)
+        else:
+            logger.warning(str(error))
+        return 130
     except KeyboardInterrupt:
         if json_mode:
             reporter.error("Operation cancelled by user.", 130)

@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import os
 import re
 import subprocess
+from collections.abc import Iterable
 from pathlib import Path
 
 MISSING_LIBRARY_PATTERN = re.compile(
@@ -26,13 +28,33 @@ def parse_ldd_missing_dependencies(output: str) -> tuple[str, ...]:
 def find_linux_chromium_missing_dependencies(chrome_path: Path) -> tuple[str, ...]:
     """Inspect Chromium with ``ldd`` and return any unavailable shared libraries."""
 
+    return find_linux_missing_libraries(chrome_path)
+
+
+def find_linux_missing_libraries(
+    executable: Path, library_dirs: Iterable[Path] = ()
+) -> tuple[str, ...]:
+    """Return the shared libraries ``ldd`` cannot resolve for ``executable``.
+
+    ``library_dirs`` are searched first, as the executable's launcher does
+    through LD_LIBRARY_PATH for bundled private libraries.
+    """
+
+    env = None
+    directories = [str(directory) for directory in library_dirs]
+    if directories:
+        env = dict(os.environ)
+        env["LD_LIBRARY_PATH"] = os.pathsep.join(
+            [*directories, *filter(None, [env.get("LD_LIBRARY_PATH")])]
+        )
     try:
         result = subprocess.run(
-            ["ldd", str(chrome_path)],
+            ["ldd", str(executable)],
             capture_output=True,
             text=True,
             timeout=10,
             check=False,
+            env=env,
         )
     except FileNotFoundError as error:
         raise ChromiumDependencyCheckError(
@@ -50,7 +72,7 @@ def find_linux_chromium_missing_dependencies(chrome_path: Path) -> tuple[str, ..
         detail = output.strip().splitlines()
         message = detail[0] if detail else f"ldd exited with {result.returncode}."
         raise ChromiumDependencyCheckError(
-            f"ldd could not inspect {chrome_path}: {message}"
+            f"ldd could not inspect {executable}: {message}"
         )
 
     return ()

@@ -21,7 +21,10 @@ class LinuxDisplay:
         self.size = size
         self.color_depth = color_depth
         self._display: Display | None = None
+        # The user's desktop, preserved before PyVirtualDisplay replaces
+        # DISPLAY: verification shows its VNC viewer there.
         self.inherited_display = os.environ.get("DISPLAY")
+        self.inherited_xauthority = os.environ.get("XAUTHORITY")
         self.display: str | None = None
 
     @property

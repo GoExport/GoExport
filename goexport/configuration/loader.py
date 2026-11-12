@@ -36,6 +36,17 @@ def _positive_integer(values: dict[str, Any], name: str, setting: str) -> int | 
     return value
 
 
+def _non_negative_integer(
+    values: dict[str, Any], name: str, setting: str
+) -> int | None:
+    if name not in values:
+        return None
+    value = values[name]
+    if type(value) is not int or value < 0:
+        raise ConfigurationError(f"{setting} must be a non-negative integer")
+    return value
+
+
 def _port(values: dict[str, Any], name: str, setting: str) -> int | None:
     value = _positive_integer(values, name, setting)
     if value is not None and value > 65535:
@@ -107,6 +118,7 @@ def load_overrides(
     recording = _section(data, "recording")
     capturekit = _section(data, "capturekit")
     obs = _section(data, "obs")
+    verification = _section(data, "verification")
     result: dict[str, Any] = {}
     replacements = _string_map(data, "replacements")
     if replacements:
@@ -187,5 +199,22 @@ def load_overrides(
         result,
         "OBS_SCENE_COLLECTION",
         _string(obs, "scene_collection", "obs.scene_collection"),
+    )
+    _add(
+        result,
+        "VERIFICATION_INTERACTIVE",
+        _boolean(verification, "interactive", "verification.interactive"),
+    )
+    _add(
+        result,
+        "VERIFICATION_TIMEOUT",
+        _non_negative_integer(verification, "timeout", "verification.timeout"),
+    )
+    _add(
+        result,
+        "VERIFICATION_AUTOMATIC_TIMEOUT",
+        _non_negative_integer(
+            verification, "automatic_timeout", "verification.automatic_timeout"
+        ),
     )
     return result

@@ -15,6 +15,7 @@ from goexport.reporting import get_reporter
 from goexport.services.browser import BrowserService
 from goexport.services.ffmpeg import FFmpegMuxer
 from goexport.services.flash import (
+    PlayerReplacedError,
     await_player_ready,
     await_started,
     await_stopped,
@@ -25,6 +26,7 @@ from goexport.services.recording_backends import (
     create_recording_backend,
 )
 from goexport.services.recording_backends.base import recording_progress
+from goexport.services.verification import explain_interruption, verify_browser
 
 logger = logging.getLogger(__name__)
 
@@ -51,6 +53,9 @@ class RecordingService:
         try:
             driver = service.create_driver()
             driver.get(self.args.url)
+            # Before capture checks, Flash setup and DOM injection, so neither
+            # the recording nor Flash ever starts on a challenge page.
+            verify_browser(service, driver, self.args, self.reporter)
         except BaseException:
             service.close()
             raise
@@ -66,6 +71,9 @@ class RecordingService:
         service.validate_screen_resolution(driver)
         service.assert_full_resolution()
         service.enable_flash(driver)
+        # enable_flash navigates back to the movie page, which can be
+        # challenged again.
+        verify_browser(service, driver, self.args, self.reporter)
         service.inject_dom(
             driver, config.TEMPLATE_HTML_PATH, self._build_replacements()
         )
@@ -116,6 +124,8 @@ class RecordingService:
             if watcher.is_alive():
                 raise TimeoutError("Playback did not stop within 30 seconds")
             if errors:
+                if isinstance(errors[0], PlayerReplacedError):
+                    explain_interruption(driver, errors[0])
                 raise errors[0]
             return result
         finally:
