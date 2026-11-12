@@ -86,7 +86,11 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           env -u LD_LIBRARY_PATH LD_LIBRARY_PATH="$PWD/bin/vnc/lib" bin/vnc/x11vnc -version
-          (env -u LD_LIBRARY_PATH LD_LIBRARY_PATH="$PWD/bin/vnc/lib" bin/vnc/vncviewer -h 2>&1 || true) | grep "TigerVNC viewer"
+          # TigerVNC 1.12 (Ubuntu 22.04) prints "TigerVNC Viewer", newer
+          # releases "TigerVNC viewer"; show the output so failures are visible.
+          viewer_output=$(env -u LD_LIBRARY_PATH LD_LIBRARY_PATH="$PWD/bin/vnc/lib" bin/vnc/vncviewer -h 2>&1 || true)
+          printf '%s\n' "$viewer_output" | head -n 5
+          printf '%s\n' "$viewer_output" | grep -qi "TigerVNC viewer"
           GOEXPORT_VNC_INTEGRATION=1 timeout 120s xvfb-run -a python -m unittest tests.test_vnc -v
 
       # x11vnc, TigerVNC and several bundled libraries are GPL/LGPL licensed;
