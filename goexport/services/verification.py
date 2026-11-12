@@ -149,6 +149,8 @@ class VerificationPresenter(Protocol):
 
 # Set by the GUI's JSON ``cancel`` command or by direct callers.
 CANCEL_EVENT = threading.Event()
+COMMAND_POLL_SECONDS = 0.2
+ERROR_BROKEN_PIPE = 109
 _listener_lock = threading.Lock()
 _listener: threading.Thread | None = None
 
@@ -173,18 +175,81 @@ def listen_for_commands(stream: IO[str] | None = None) -> None:
         _listener.start()
 
 
+def _handle_command(line: str) -> None:
+    try:
+        command = json.loads(line)
+    except ValueError:
+        return
+    if isinstance(command, dict) and command.get("command") == "cancel":
+        logger.info("Cancellation requested by the controlling application.")
+        CANCEL_EVENT.set()
+
+
 def _read_commands(stream: IO[str]) -> None:
     try:
+        if config.SYSTEM == "Windows" and _read_windows_pipe(stream):
+            return
         for line in stream:
-            try:
-                command = json.loads(line)
-            except ValueError:
-                continue
-            if isinstance(command, dict) and command.get("command") == "cancel":
-                logger.info("Cancellation requested by the controlling application.")
-                CANCEL_EVENT.set()
+            _handle_command(line)
     except (OSError, ValueError):
         logger.debug("Command stream closed.", exc_info=True)
+
+
+def _read_windows_pipe(stream: IO[str]) -> bool:
+    """Read commands from a Windows pipe without leaving a read pending.
+
+    While one thread is blocked reading a synchronous pipe, Windows makes
+    file information queries on that handle from any other thread wait for
+    the read to finish. Native libraries query the standard handles while
+    loading (numpy's DLLs, imported by CaptureKit after verification, do), so
+    a pending read on the GUI's stdin pipe froze the export forever. Only
+    bytes that PeekNamedPipe reports as already waiting are read, so no read
+    is ever left pending.
+    Returns False if the stream is not a pipe (a console or a file).
+    """
+    import ctypes
+    import msvcrt
+    import os
+    from ctypes import wintypes
+
+    try:
+        fd = stream.fileno()
+        handle = msvcrt.get_osfhandle(fd)
+    except (AttributeError, OSError, ValueError):
+        return False
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    peek = kernel32.PeekNamedPipe
+    peek.argtypes = [
+        wintypes.HANDLE,
+        ctypes.c_void_p,
+        wintypes.DWORD,
+        ctypes.c_void_p,
+        ctypes.POINTER(wintypes.DWORD),
+        ctypes.c_void_p,
+    ]
+    peek.restype = wintypes.BOOL
+    available = wintypes.DWORD()
+    if not peek(handle, None, 0, None, ctypes.byref(available), None):
+        if ctypes.get_last_error() == ERROR_BROKEN_PIPE:
+            return True
+        return False
+
+    pending = b""
+    while True:
+        if not peek(handle, None, 0, None, ctypes.byref(available), None):
+            # The controlling application closed its end of the pipe.
+            logger.debug("Command pipe closed (error %s).", ctypes.get_last_error())
+            return True
+        if not available.value:
+            time.sleep(COMMAND_POLL_SECONDS)
+            continue
+        data = os.read(fd, available.value)
+        if not data:
+            return True
+        pending += data
+        *lines, pending = pending.split(b"\n")
+        for line in lines:
+            _handle_command(line.decode("utf-8", errors="replace"))
 
 
 def _page_detail(result: ChallengeResult) -> str:

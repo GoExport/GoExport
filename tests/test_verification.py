@@ -533,6 +533,50 @@ class CliTests(unittest.TestCase):
             parser.parse_args(["record", "-id", "1", "--verification-timeout", "-1"])
 
 
+@unittest.skipUnless(config.SYSTEM == "Windows", "Windows pipe behaviour")
+class WindowsCommandPipeTests(unittest.TestCase):
+    """The GUI's stdin pipe must never have a read pending (see _read_windows_pipe)."""
+
+    def test_pipe_commands_are_read_without_blocking_other_threads(self):
+        import ctypes
+        import msvcrt
+        import os
+
+        read_fd, write_fd = os.pipe()
+        stream = os.fdopen(read_fd, "r", encoding="utf-8")
+        event = verification.CANCEL_EVENT
+        event.clear()
+        reader = threading.Thread(
+            target=verification._read_commands, args=(stream,), daemon=True
+        )
+        reader.start()
+        try:
+            time.sleep(0.5)
+            # File information queries (made, for example, while numpy's DLLs
+            # initialize) wait behind a synchronous read pending on the pipe.
+            handle = msvcrt.get_osfhandle(read_fd)
+            information = ctypes.create_string_buffer(52)
+            probe = threading.Thread(
+                target=ctypes.windll.kernel32.GetFileInformationByHandle,
+                args=(handle, information),
+                daemon=True,
+            )
+            probe.start()
+            probe.join(3)
+            self.assertFalse(probe.is_alive(), "a file query blocked on the pipe")
+
+            os.write(write_fd, b'{"command": ')
+            time.sleep(0.3)
+            os.write(write_fd, b'"cancel"}\n')
+            self.assertTrue(event.wait(3))
+        finally:
+            os.close(write_fd)
+            reader.join(3)
+            event.clear()
+            stream.close()
+        self.assertFalse(reader.is_alive(), "listener did not stop at end of pipe")
+
+
 class ListenerThreadTests(unittest.TestCase):
     def test_listener_starts_once(self):
         stream = io.StringIO("")
