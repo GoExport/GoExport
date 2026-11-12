@@ -335,7 +335,18 @@ class RealVNCIntegrationTests(unittest.TestCase):
         virtual.start()
         try:
             presenter = VNCPresenter(virtual)
-            presenter.show()
+            # x11vnc logs dozens of lines once a client connects, so "Got
+            # connection" quickly leaves the presenter's short output buffer;
+            # record every line instead.
+            server_lines: list[str] = []
+            watch = presenter._watch_server_line
+
+            def record(line: str) -> None:
+                server_lines.append(line)
+                watch(line)
+
+            with patch.object(presenter, "_watch_server_line", side_effect=record):
+                presenter.show()
             workdir = presenter.workdir
             server, viewer = presenter.server, presenter.viewer
             try:
@@ -343,12 +354,13 @@ class RealVNCIntegrationTests(unittest.TestCase):
                 self.assertEqual(os.listdir(workdir), ["viewer.passwd"])
                 deadline = time.monotonic() + 10
                 while time.monotonic() < deadline and not any(
-                    "Got connection" in line for line in presenter._server_output
+                    "Got connection" in line for line in server_lines
                 ):
                     time.sleep(0.2)
                 self.assertIsNone(presenter.poll())
                 self.assertTrue(
-                    any("Got connection" in line for line in presenter._server_output)
+                    any("Got connection" in line for line in server_lines),
+                    "x11vnc output:\n" + "\n".join(server_lines),
                 )
             finally:
                 presenter.restore()
