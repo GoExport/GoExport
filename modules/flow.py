@@ -4,7 +4,7 @@ from modules.editor import Editor
 from modules.navigator import Interface
 from modules.capture import Capture
 from modules.server import Server
-from modules.exceptions import TimeoutError, BrowserClosedError
+from modules.exceptions import TimeoutError, BrowserClosedError, BotProtectionError
 from rich.prompt import Prompt, IntPrompt, Confirm
 from rich import print
 from modules.logger import logger
@@ -275,6 +275,11 @@ class Controller:
     def verify_server_reachable(self):
         logger.info(f"Checking if {self.svr_name} is reachable...")
         self.serverOnline, self.serverStatus = helpers.try_url(helpers.get_url(self.svr_domain))
+        if not self.serverOnline and not self.svr_hostable and self.serverStatus in (401, 403, 429, 503):
+            # Anti-bot protection (Anubis/Cloudflare) often answers plain HTTP
+            # requests with these codes. Let the browser check decide instead.
+            logger.warning(f"{self.svr_name} responded with status {self.serverStatus}, it may be behind bot protection. Continuing so the browser can verify.")
+            return True
         if not self.serverOnline:
             if self.svr_hostable:
                 logger.error(f"Could not reach {self.svr_name} (status: {self.serverStatus}), please ensure it is running and try again.")
@@ -371,6 +376,10 @@ class Controller:
             except Exception as e:
                 raise RuntimeError(f"Failed to load {self.svr_url}: {e}")
 
+            # Wait for Anubis to verify us (or refuse on Cloudflare) before
+            # touching the page, so the site data check below sees the real site.
+            self.browser.await_verification()
+
             # Check if the site has any data; if so, do nothing
             if self.browser.check_data(self.svr_url):
                 offset = 1
@@ -380,6 +389,9 @@ class Controller:
             if not self.browser.enable_flash(offset=offset):
                 logger.error("Could not enable flash")
                 return False
+
+            # enable_flash() reloads the page, which may show the check again
+            self.browser.await_verification()
 
             for script in self.afterloadscripts:
                 self.browser.inject_now(self.format(script))
@@ -474,6 +486,9 @@ class Controller:
                 return True
         except BrowserClosedError as e:
             logger.error(str(e))
+            return False
+        except BotProtectionError as e:
+            logger.error(f"{self.svr_name}: {e}")
             return False
         except Exception as e:
             logger.error(f"Error in export process: {e}")

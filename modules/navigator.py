@@ -1,6 +1,6 @@
 import helpers
 from modules.logger import logger
-from modules.exceptions import TimeoutError, BrowserClosedError
+from modules.exceptions import TimeoutError, BrowserClosedError, BotProtectionError
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
@@ -10,6 +10,39 @@ from selenium.webdriver.support.wait import WebDriverWait
 from selenium.common.exceptions import TimeoutException, InvalidSessionIdException, NoSuchWindowException, WebDriverException
 import urllib
 import os
+import time
+
+# Inspects the current page and reports which anti-bot protection (if any) is
+# being shown. Returns "cloudflare", "anubis", "loading" or null.
+PROTECTION_DETECTION_SCRIPT = r"""
+return (function () {
+    var d = document;
+    if (d.readyState !== "complete") return "loading";
+    var title = (d.title || "").toLowerCase();
+
+    // Cloudflare challenge / block pages. Cloudflare also injects scripts into
+    // normal pages, so only match markers that appear on interstitials.
+    if (
+        window._cf_chl_opt ||
+        d.getElementById("challenge-form") ||
+        d.getElementById("cf-challenge-running") ||
+        d.getElementById("challenge-running") ||
+        d.querySelector(".cf-error-details") ||
+        title.indexOf("just a moment") === 0 ||
+        title.indexOf("attention required! | cloudflare") !== -1
+    ) return "cloudflare";
+
+    // Anubis proof-of-work challenge pages.
+    if (
+        d.getElementById("anubis_challenge") ||
+        d.getElementById("anubis_version") ||
+        d.querySelector('script[src*="/.within.website/"]') ||
+        title.indexOf("making sure you're not a bot") !== -1
+    ) return "anubis";
+
+    return null;
+})();
+"""
 
 class Interface:
     def __init__(self, obs: bool = False):
@@ -145,6 +178,73 @@ class Interface:
             self._translate_webdriver_error(error)
         self.log_browser_console()
         return True
+
+    def detect_protection(self):
+        """
+        Report which anti-bot protection the current page is showing.
+
+        :return: "cloudflare", "anubis", "loading" (page is mid-navigation) or None
+        """
+        try:
+            return self.driver.execute_script(PROTECTION_DETECTION_SCRIPT)
+        except Exception as error:
+            if self._is_browser_closed_error(error):
+                self._translate_webdriver_error(error)
+            # Anubis redirects once it passes, so the page can disappear while
+            # the script runs. Treat that as still loading and poll again.
+            logger.debug(f"Could not inspect page for bot protection: {error}")
+            return "loading"
+
+    def await_verification(self, timeout_seconds: float | None = None, poll_interval: float = 0.5):
+        """
+        Wait for the website's anti-bot verification to finish.
+
+        Anubis only needs a few seconds of JavaScript proof-of-work, so we wait
+        for it to pass. Cloudflare challenges cannot be completed automatically,
+        so we refuse to continue.
+
+        :param timeout_seconds: Maximum seconds to wait for Anubis
+            (defaults to ANUBIS_VERIFICATION_TIMEOUT)
+        :raises BotProtectionError: If a Cloudflare challenge is shown, or
+            Anubis does not finish within the timeout
+        :return: True once the page is free of any verification
+        """
+        if timeout_seconds is None:
+            timeout_seconds = helpers.get_config("ANUBIS_VERIFICATION_TIMEOUT") or 60
+
+        deadline = time.monotonic() + timeout_seconds
+        waited_for_anubis = False
+
+        while True:
+            protection = self.detect_protection()
+
+            if protection == "cloudflare":
+                self.log_browser_console()
+                raise BotProtectionError(
+                    "The website is showing a Cloudflare challenge, which GoExport cannot complete. "
+                    "This usually means the site is under heavy load or attack; please try again later.",
+                    protection="cloudflare",
+                )
+
+            if protection is None:
+                if waited_for_anubis:
+                    logger.info("Anubis verification complete, continuing with the export")
+                self.log_browser_console()
+                return True
+
+            if protection == "anubis" and not waited_for_anubis:
+                logger.info("The website is verifying the browser with Anubis, waiting for it to finish...")
+                waited_for_anubis = True
+
+            if time.monotonic() >= deadline:
+                self.log_browser_console()
+                raise BotProtectionError(
+                    f"Anubis verification did not complete within {timeout_seconds} seconds. "
+                    "Please check your internet connection and try again.",
+                    protection="anubis",
+                )
+
+            time.sleep(poll_interval)
 
     def start(self):
         """Initializes and starts the Selenium WebDriver."""

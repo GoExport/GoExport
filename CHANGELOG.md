@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Added more debugging for browsers
 - Added a failure when you close Chromium while it's recording
+- Added Cloudflare and Anubis detection for FlashThemes
 
 ## [1.2.2] - 2026-03-22
 

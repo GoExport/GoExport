@@ -245,6 +245,7 @@ PATH_FLASH_VERSION_LINUX = "34.0.0.137"
 
 # Data
 UPDATE_CHECK_INTERVAL = 60 * 1000  # 1 minute in milliseconds
+ANUBIS_VERIFICATION_TIMEOUT = 60  # Seconds to wait for an Anubis check to pass
 PATH_DATA_FILE = ["data.json"]
 BROWSER_NAME = "Chromium"
 
