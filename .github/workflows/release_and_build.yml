@@ -2,11 +2,10 @@ name: Build, Release, and Notify
 on:
   push:
     tags:
-      - "v*"
+      - 'v1.*.*'
       - "b*"
     branches:
-      - main
-      - master
+      - v1
   workflow_dispatch:
 
 jobs:
