@@ -1,6 +1,10 @@
 import argparse
+import sys
 from math import gcd
 from pathlib import Path
+
+from rich.console import Console
+from rich.prompt import Confirm
 
 from goexport import config
 from goexport.player_options import parse_flashvars, parse_replacement
@@ -52,6 +56,37 @@ def existing_directory(path: str) -> Path:
         )
 
     return dir_path
+
+
+class ConfirmationDeclined(RuntimeError):
+    """A change needed approval that was refused or could not be requested."""
+
+
+def interactive_terminal() -> bool:
+    return bool(sys.stdin.isatty() and sys.stdout.isatty())
+
+
+def require_confirmation(
+    args: argparse.Namespace, question: str, details: list[str]
+) -> None:
+    """Ask before a system change unless ``--yes`` was given.
+
+    JSON mode and non-interactive sessions cannot be prompted, so they fail
+    instead of waiting for input that will never arrive.
+    """
+    if getattr(args, "yes", False):
+        return
+    if getattr(args, "json", False) or not interactive_terminal():
+        raise ConfirmationDeclined(
+            "This change needs confirmation, and GoExport cannot prompt for it "
+            "here. Re-run with -y or --yes to approve it."
+        )
+    console = Console()
+    for line in details:
+        console.print(line, markup=False, highlight=False)
+    console.print()
+    if not Confirm.ask(question, default=False, console=console):
+        raise ConfirmationDeclined("Cancelled; nothing was changed.")
 
 
 def calculate_aspect_ratio(width: int, height: int) -> tuple[int, int]:

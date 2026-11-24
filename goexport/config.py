@@ -91,6 +91,10 @@ PLACEHOLDER_REPLACEMENTS = {
     "owner_id": "{user_id}",
 }
 
+# Recordings requested through goexport:// URLs are written here; URLs cannot
+# choose an output path.
+PROTOCOL_OUTPUT_DIR = BASE_DIR / "exports"
+
 CONFIG_PATH = BASE_DIR / "config.toml"
 
 # The loader returns only explicitly configured values; all other names above

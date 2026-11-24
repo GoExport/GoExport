@@ -6,11 +6,14 @@ import threading
 from contextlib import nullcontext, redirect_stdout
 
 from goexport.commands import COMMANDS
+from goexport.components import ComponentError
 from goexport.config import APP_NAME
 from goexport.dependencies import DependencyBootstrapError, DependencyManager
+from goexport.helpers import ConfirmationDeclined, interactive_terminal
 from goexport.log import setup_logging
 from goexport.reporting import Reporter
 from goexport.services.verification import VerificationCancelled
+from goexport.url_request import RequestError
 from goexport.version import VERSION
 
 logger = logging.getLogger(__name__)
@@ -42,7 +45,10 @@ def build_parser() -> argparse.ArgumentParser:
         "-y",
         "--yes",
         action="store_true",
-        help="Automatically install or repair required runtime dependencies",
+        help=(
+            "Approve changes without asking: installing or repairing runtime "
+            "dependencies, component changes, and goexport:// requests"
+        ),
     )
 
     subparsers = parser.add_subparsers(required=True)
@@ -70,6 +76,27 @@ def install_termination_handler() -> None:
 
 def main() -> int:
     args = build_parser().parse_args()
+    code = run(args)
+    if getattr(args, "pause_on_exit", False) and not args.json:
+        pause_before_exit()
+    return code
+
+
+def pause_before_exit() -> None:
+    """Keep a terminal opened for a goexport:// link readable at the end.
+
+    Windows closes the console it opened for the URL handler as soon as
+    GoExport exits, which would hide the result or the error.
+    """
+    if not interactive_terminal():
+        return
+    try:
+        input("Press Enter to close this window.")
+    except (EOFError, KeyboardInterrupt):
+        pass
+
+
+def run(args: argparse.Namespace) -> int:
     install_termination_handler()
     json_mode = bool(getattr(args, "json", False))
     reporter = Reporter(json_mode=json_mode, stream=sys.stdout)
@@ -95,7 +122,12 @@ def main() -> int:
         else:
             logger.warning("Operation cancelled by user.")
         return 130
-    except DependencyBootstrapError as error:
+    except (
+        DependencyBootstrapError,
+        ComponentError,
+        ConfirmationDeclined,
+        RequestError,
+    ) as error:
         if json_mode:
             reporter.error(str(error), 1)
         else:

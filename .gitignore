@@ -4,6 +4,10 @@
 
 /bin
 
+# Created at runtime: goexport:// recordings and the macOS URL handler applet
+/exports/
+/GoExport URL Handler.app/
+
 # ============================================================
 # Python
 # ============================================================

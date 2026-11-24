@@ -119,6 +119,7 @@ def load_overrides(
     capturekit = _section(data, "capturekit")
     obs = _section(data, "obs")
     verification = _section(data, "verification")
+    protocol = _section(data, "protocol")
     result: dict[str, Any] = {}
     replacements = _string_map(data, "replacements")
     if replacements:
@@ -216,5 +217,10 @@ def load_overrides(
         _non_negative_integer(
             verification, "automatic_timeout", "verification.automatic_timeout"
         ),
+    )
+    _add(
+        result,
+        "PROTOCOL_OUTPUT_DIR",
+        _path(protocol, "output_dir", "protocol.output_dir", base_dir),
     )
     return result

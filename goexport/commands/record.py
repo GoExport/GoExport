@@ -57,7 +57,7 @@ def register(subparsers: argparse._SubParsersAction) -> None:
         "--output",
         type=Path,
         default=Path("final_output"),
-        help="Output video filename (default: final_output)",
+        help="Output video filename; the format extension is added when missing.",
     )
 
     parser.add_argument(

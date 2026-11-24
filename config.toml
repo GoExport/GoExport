@@ -45,6 +45,11 @@
 # 0 keeps waiting until the timeout above.
 # automatic_timeout = 60
 
+[protocol]
+# Folder for recordings requested through goexport:// links. Relative paths
+# are resolved from the GoExport folder.
+# output_dir = "exports"
+
 [obs]
 # host = "127.0.0.1"
 # port = 4455
